@@ -129,9 +129,29 @@ export const PAYMENT_METHODS = [
   { value: "CREDIT", label: "Credit" },
 ] as const;
 
-export const SUBSCRIPTION_PLANS = [
+export type SubscriptionPlanId = "STARTER" | "BUSINESS" | "AI_PRO";
+
+export type PlanFeature =
+  | "inventory"
+  | "pos"
+  | "reports"
+  | "debts"
+  | "export"
+  | "ai"
+  | "whatsapp";
+
+export interface SubscriptionPlanDefinition {
+  id: SubscriptionPlanId;
+  name: string;
+  price: number;
+  priceKobo: number;
+  features: string[];
+  highlights: PlanFeature[];
+}
+
+export const SUBSCRIPTION_PLANS: readonly SubscriptionPlanDefinition[] = [
   {
-    id: "STARTER" as const,
+    id: "STARTER",
     name: "Starter",
     price: 5000,
     priceKobo: 500000,
@@ -139,7 +159,7 @@ export const SUBSCRIPTION_PLANS = [
     highlights: ["inventory", "pos", "reports"],
   },
   {
-    id: "BUSINESS" as const,
+    id: "BUSINESS",
     name: "Business",
     price: 15000,
     priceKobo: 1500000,
@@ -152,7 +172,7 @@ export const SUBSCRIPTION_PLANS = [
     highlights: ["inventory", "pos", "reports", "debts", "export"],
   },
   {
-    id: "AI_PRO" as const,
+    id: "AI_PRO",
     name: "AI Pro",
     price: 30000,
     priceKobo: 3000000,
@@ -165,7 +185,4 @@ export const SUBSCRIPTION_PLANS = [
     ],
     highlights: ["inventory", "pos", "reports", "debts", "export", "ai", "whatsapp"],
   },
-] as const;
-
-export type SubscriptionPlanId = (typeof SUBSCRIPTION_PLANS)[number]["id"];
-export type PlanFeature = (typeof SUBSCRIPTION_PLANS)[number]["highlights"][number];
+];
