@@ -1,0 +1,39 @@
+"use client";
+
+import { UserButton } from "@clerk/nextjs";
+import { Bell } from "lucide-react";
+
+interface HeaderProps {
+  title: string;
+  subtitle?: string;
+}
+
+export function Header({ title, subtitle }: HeaderProps) {
+  return (
+    <header className="sticky top-0 z-40 flex h-14 md:h-16 items-center justify-between border-b border-border/50 bg-white/80 backdrop-blur-xl px-4 md:px-6 safe-area-pt">
+      <div className="min-w-0 flex-1 md:ml-64">
+        <h1 className="text-lg font-bold text-foreground truncate">{title}</h1>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl hover:bg-accent transition-colors"
+          aria-label="Notifications"
+        >
+          <Bell className="h-5 w-5 text-muted-foreground" />
+        </button>
+        <UserButton
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9",
+            },
+          }}
+        />
+      </div>
+    </header>
+  );
+}

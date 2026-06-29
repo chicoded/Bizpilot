@@ -1,0 +1,375 @@
+// Prisma schema for BizPilot AI — multi-tenant SaaS for African SMEs
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  MANAGER
+  CASHIER
+  STAFF
+}
+
+enum Industry {
+  PHARMACY
+  RETAIL
+  SUPERMARKET
+  COSMETICS
+  FASHION
+  MINI_MART
+  ELECTRONICS
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  POS
+  CREDIT
+}
+
+enum ExpenseCategory {
+  RENT
+  FUEL
+  SALARY
+  TRANSPORTATION
+  ELECTRICITY
+  SUPPLIES
+  MAINTENANCE
+  OTHER
+}
+
+enum SubscriptionPlan {
+  STARTER
+  BUSINESS
+  AI_PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIAL
+}
+
+enum StockAdjustmentType {
+  PURCHASE
+  SALE
+  DAMAGE
+  THEFT
+  EXPIRED
+  RETURN
+  MANUAL
+}
+
+// ─── Multi-tenant core ───────────────────────────────────────────────────────
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  industry  Industry @default(OTHER)
+  currency  String   @default("NGN")
+  logo      String?
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships    Membership[]
+  products       Product[]
+  sales          Sale[]
+  expenses       Expense[]
+  customers      Customer[]
+  suppliers      Supplier[]
+  employees      Employee[]
+  purchaseOrders PurchaseOrder[]
+  subscription   Subscription?
+  auditLogs      AuditLog[]
+  healthScores   BusinessHealthScore[]
+
+  @@map("businesses")
+}
+
+model User {
+  id        String   @id // Clerk user ID
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  role       Role     @default(STAFF)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@index([businessId])
+  @@map("memberships")
+}
+
+// ─── Inventory ───────────────────────────────────────────────────────────────
+
+model Product {
+  id             String    @id @default(cuid())
+  businessId     String
+  name           String
+  sku            String?
+  barcode        String?
+  category       String?
+  supplierId     String?
+  purchasePrice  Decimal   @default(0) @db.Decimal(12, 2)
+  sellingPrice   Decimal   @default(0) @db.Decimal(12, 2)
+  quantity       Int       @default(0)
+  reorderLevel   Int       @default(5)
+  batchNumber    String?
+  expiryDate     DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  business         Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier         Supplier?         @relation(fields: [supplierId], references: [id])
+  saleItems        SaleItem[]
+  stockAdjustments StockAdjustment[]
+
+  @@unique([businessId, sku])
+  @@index([businessId])
+  @@index([businessId, barcode])
+  @@index([businessId, category])
+  @@map("products")
+}
+
+model StockAdjustment {
+  id         String              @id @default(cuid())
+  productId  String
+  businessId String
+  type       StockAdjustmentType
+  quantity   Int
+  reason     String?
+  createdBy  String?
+  createdAt  DateTime            @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([productId])
+  @@map("stock_adjustments")
+}
+
+// ─── Sales ───────────────────────────────────────────────────────────────────
+
+model Sale {
+  id            String        @id @default(cuid())
+  businessId    String
+  customerId    String?
+  paymentMethod PaymentMethod @default(CASH)
+  subtotal      Decimal       @default(0) @db.Decimal(12, 2)
+  discount      Decimal       @default(0) @db.Decimal(12, 2)
+  tax           Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @default(0) @db.Decimal(12, 2)
+  profit        Decimal       @default(0) @db.Decimal(12, 2)
+  isCredit      Boolean       @default(false)
+  dueDate       DateTime?
+  notes         String?
+  createdBy     String?
+  createdAt     DateTime      @default(now())
+
+  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer?  @relation(fields: [customerId], references: [id])
+  items    SaleItem[]
+
+  @@index([businessId])
+  @@index([businessId, createdAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id           String  @id @default(cuid())
+  saleId       String
+  productId    String
+  quantity     Int
+  cost         Decimal @db.Decimal(12, 2)
+  sellingPrice Decimal @db.Decimal(12, 2)
+  total        Decimal @db.Decimal(12, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([saleId])
+  @@map("sale_items")
+}
+
+// ─── Expenses ────────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String          @id @default(cuid())
+  businessId  String
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(12, 2)
+  description String?
+  date        DateTime        @default(now())
+  createdBy   String?
+  createdAt   DateTime        @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([businessId, date])
+  @@map("expenses")
+}
+
+// ─── Customers ───────────────────────────────────────────────────────────────
+
+model Customer {
+  id            String   @id @default(cuid())
+  businessId    String
+  name          String
+  phone         String?
+  email         String?
+  debt          Decimal  @default(0) @db.Decimal(12, 2)
+  lifetimeValue Decimal  @default(0) @db.Decimal(12, 2)
+  lastPurchase  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales    Sale[]
+
+  @@index([businessId])
+  @@map("customers")
+}
+
+// ─── Suppliers ───────────────────────────────────────────────────────────────
+
+model Supplier {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  contact    String?
+  email      String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@index([businessId])
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id         String   @id @default(cuid())
+  businessId String
+  supplierId String
+  total      Decimal  @default(0) @db.Decimal(12, 2)
+  status     String   @default("pending")
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([businessId])
+  @@map("purchase_orders")
+}
+
+// ─── Employees ─────────────────────────────────────────────────────────────
+
+model Employee {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  role        Role     @default(STAFF)
+  phone       String?
+  permissions Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("employees")
+}
+
+// ─── Subscriptions (Paystack) ────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  businessId           String             @unique
+  plan                 SubscriptionPlan   @default(STARTER)
+  status               SubscriptionStatus @default(TRIAL)
+  paystackCustomerCode String?
+  paystackSubCode      String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ─── Business Health Score ───────────────────────────────────────────────────
+
+model BusinessHealthScore {
+  id              String   @id @default(cuid())
+  businessId      String
+  score           Int      // 0-100
+  strengths       Json     // string[]
+  warnings        Json     // string[]
+  recommendations Json     // string[]
+  breakdown       Json?    // { sales: 85, inventory: 70, ... }
+  createdAt       DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@map("business_health_scores")
+}
+
+// ─── Audit & Activity ────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String?
+  action     String
+  entity     String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([businessId, createdAt])
+  @@map("audit_logs")
+}

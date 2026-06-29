@@ -1,0 +1,15 @@
+"use client";
+
+import Link from "next/link";
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
+
+export function PWAProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <ServiceWorkerRegister />
+      <OfflineBanner />
+      {children}
+    </>
+  );
+}
