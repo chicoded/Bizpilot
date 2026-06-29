@@ -39,7 +39,7 @@ export const saleItemSchema = z.object({
 export const saleSchema = z.object({
   items: z.array(saleItemSchema).min(1, "Add at least one item"),
   customerId: z.string().optional(),
-  paymentMethod: z.enum(["CASH", "TRANSFER", "POS", "CREIT"]),
+  paymentMethod: z.enum(["CASH", "TRANSFER", "POS", "CREDIT"]),
   discount: z.coerce.number().min(0).default(0),
   tax: z.coerce.number().min(0).default(0),
   isCredit: z.boolean().default(false),
