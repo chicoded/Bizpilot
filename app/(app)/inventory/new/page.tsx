@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createProduct } from "@/actions/business";
 import { Header } from "@/components/layout/header";
