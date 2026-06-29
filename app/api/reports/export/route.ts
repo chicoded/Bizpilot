@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { requireBusinessContext } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getFullReport } from "@/services/reports";
-import { generateExcelBuffer, generatePdfBuffer } from "@/lib/export";
+import {
+  generateExcelBuffer,
+  generatePdfBuffer,
+  toExportBlob,
+} from "@/lib/export";
 import { canAccessFeature } from "@/lib/subscription";
 import type { ReportPeriod } from "@/types";
 import { format } from "date-fns";
@@ -39,20 +43,22 @@ export async function GET(request: Request) {
     const dateSlug = format(new Date(), "yyyy-MM-dd");
 
     if (formatType === "excel") {
-      const buffer = generateExcelBuffer(report, ctx.business.name);
-      return new NextResponse(buffer, {
+      const bytes = generateExcelBuffer(report, ctx.business.name);
+      const mimeType =
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      return new NextResponse(toExportBlob(bytes, mimeType), {
         headers: {
-          "Content-Type":
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Type": mimeType,
           "Content-Disposition": `attachment; filename="bizpilot-${slug}-${period}-${dateSlug}.xlsx"`,
         },
       });
     }
 
-    const buffer = generatePdfBuffer(report, ctx.business.name);
-    return new NextResponse(buffer, {
+    const bytes = generatePdfBuffer(report, ctx.business.name);
+    const mimeType = "application/pdf";
+    return new NextResponse(toExportBlob(bytes, mimeType), {
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type": mimeType,
         "Content-Disposition": `attachment; filename="bizpilot-${slug}-${period}-${dateSlug}.pdf"`,
       },
     });

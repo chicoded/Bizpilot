@@ -164,3 +164,10 @@ export function generatePdfBuffer(
 
   return new Uint8Array(doc.output("arraybuffer"));
 }
+
+/** Web Fetch API body — copies bytes so TS accepts BlobPart (ArrayBuffer, not ArrayBufferLike). */
+export function toExportBlob(data: Uint8Array, mimeType: string): Blob {
+  const bytes = new Uint8Array(data.byteLength);
+  bytes.set(data);
+  return new Blob([bytes], { type: mimeType });
+}
