@@ -558,6 +558,7 @@ export async function createSale(data: {
   });
 
   revalidatePath("/sales");
+  revalidatePath("/sales/history");
   revalidatePath("/dashboard");
   revalidatePath("/inventory");
   revalidatePath("/customers");

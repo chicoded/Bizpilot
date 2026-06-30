@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ import {
   ShoppingCart,
   Check,
   Loader2,
+  History,
+  FileText,
 } from "lucide-react";
 
 interface Product {
@@ -45,6 +48,7 @@ export default function SalesPage() {
   const [saleError, setSaleError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [saleComplete, setSaleComplete] = useState(false);
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -116,7 +120,8 @@ export default function SalesPage() {
         setCart([]);
         setCustomerId("");
         setSaleComplete(true);
-        setTimeout(() => setSaleComplete(false), 3000);
+        setLastSaleId(result.sale?.id ?? null);
+        setTimeout(() => setSaleComplete(false), 8000);
         fetch("/api/customers")
           .then((r) => r.json())
           .then((data) => setCustomers(data.customers ?? []))
@@ -133,6 +138,15 @@ export default function SalesPage() {
     <>
       <Header title="Point of Sale" subtitle="Tap products to add to cart" />
       <main className="p-4 md:p-6 max-w-7xl mobile-page">
+        <div className="flex justify-end mb-3">
+          <Link
+            href="/sales/history"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-biz-blue hover:underline"
+          >
+            <History className="h-4 w-4" />
+            Sales history
+          </Link>
+        </div>
         <div className="grid gap-4 lg:grid-cols-5">
           {/* Product search */}
           <div className="lg:col-span-3 space-y-4">
@@ -268,6 +282,16 @@ export default function SalesPage() {
 
                   {saleError && (
                     <p className="text-sm text-red-500 text-center">{saleError}</p>
+                  )}
+
+                  {saleComplete && lastSaleId && (
+                    <Link
+                      href={`/sales/${lastSaleId}`}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-medium py-2.5 hover:bg-emerald-100 transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View receipt
+                    </Link>
                   )}
 
                   <Button
