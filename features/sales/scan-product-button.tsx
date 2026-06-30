@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Loader2, ScanBarcode } from "lucide-react";
+import { normalizeBarcode } from "@/lib/barcode";
 
 const MobileBarcodeScanner = dynamic(
   () =>
@@ -37,6 +38,7 @@ export function ScanProductButton({
   const [isLookingUp, startLookup] = useTransition();
 
   function handleScan(barcode: string) {
+    const normalized = normalizeBarcode(barcode);
     setScannerOpen(false);
     setLookupError(null);
     setNotFoundBarcode(null);
@@ -44,7 +46,7 @@ export function ScanProductButton({
     startLookup(async () => {
       try {
         const response = await fetch(
-          `/api/products/barcode?code=${encodeURIComponent(barcode)}`
+          `/api/products/barcode?code=${encodeURIComponent(normalized)}`
         );
 
         if (!response.ok) {
@@ -65,7 +67,7 @@ export function ScanProductButton({
           return;
         }
 
-        setNotFoundBarcode(barcode);
+        setNotFoundBarcode(normalized);
       } catch {
         setLookupError("Network error. Check your connection and try again.");
       }

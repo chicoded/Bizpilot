@@ -1,28 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireBusinessContext } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { barcodeLookupVariants, normalizeBarcode } from "@/lib/barcode";
 
 export const dynamic = "force-dynamic";
-
-function barcodeLookupVariants(code: string): string[] {
-  const trimmed = code.trim();
-  const variants = new Set<string>([trimmed]);
-
-  if (/^\d{13}$/.test(trimmed) && trimmed.startsWith("0")) {
-    variants.add(trimmed.slice(1));
-  }
-  if (/^\d{12}$/.test(trimmed)) {
-    variants.add(`0${trimmed}`);
-  }
-
-  return [...variants];
-}
 
 export async function GET(request: Request) {
   try {
     const ctx = await requireBusinessContext();
     const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code")?.trim();
+    const code = normalizeBarcode(searchParams.get("code") ?? "");
 
     if (!code) {
       return NextResponse.json({ error: "Barcode required" }, { status: 400 });

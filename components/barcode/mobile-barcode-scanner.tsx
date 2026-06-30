@@ -1,10 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  X,
+  Camera,
+  AlertCircle,
+  CheckCircle2,
+  Flashlight,
+  FlashlightOff,
+  Bug,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  formatBarcodeType,
+  validateScannedBarcode,
+  ZXING_RETAIL_FORMATS,
+} from "@/lib/barcode";
+
+type ScannerControls = { stop: () => void };
 
 export interface MobileBarcodeScannerProps {
   open: boolean;
@@ -12,72 +28,73 @@ export interface MobileBarcodeScannerProps {
   onScan: (barcode: string) => void;
 }
 
-const SCAN_TIMEOUT_MS = 60_000;
+type ScanDebugInfo = {
+  raw: string;
+  normalized: string;
+  format: string;
+  camera: string;
+  confidence: string;
+  frames: number;
+  valid: boolean;
+  reason?: string;
+};
 
-const ALLOWED_FORMAT_NAMES = new Set([
-  "EAN_13",
-  "EAN_8",
-  "UPC_A",
-  "UPC_E",
-  "CODE_128",
-]);
+const DUPLICATE_DEBOUNCE_MS = 1800;
 
 function vibrateOnSuccess() {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-    navigator.vibrate(120);
+    navigator.vibrate([80, 40, 80]);
   }
 }
 
-function resolveFormatName(value: unknown): string | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "string") return value;
-  if (typeof value === "number") {
-    const enumNames = [
-      "QR_CODE",
-      "AZTEC",
-      "CODABAR",
-      "CODE_39",
-      "CODE_93",
-      "CODE_128",
-      "DATA_MATRIX",
-      "MAXICODE",
-      "ITF",
-      "EAN_13",
-      "EAN_8",
-      "PDF_417",
-      "RSS_14",
-      "RSS_EXPANDED",
-      "UPC_A",
-      "UPC_E",
-      "UPC_EAN_EXTENSION",
-    ];
-    return enumNames[value];
+async function pickRearCameraId(
+  listDevices: () => Promise<MediaDeviceInfo[]>
+): Promise<{ deviceId: string | undefined; label: string }> {
+  const devices = await listDevices();
+  if (!devices.length) {
+    throw new Error("No camera found on this device.");
   }
-  return undefined;
-}
 
-function getDecodedFormatName(decodedResult: {
-  result?: { format?: { formatName?: unknown; format?: unknown } };
-}): string | undefined {
-  const format = decodedResult?.result?.format;
-  if (!format) return undefined;
-  return (
-    resolveFormatName(format.formatName) ?? resolveFormatName(format.format)
+  const rear = devices.find((device) =>
+    /back|rear|environment|trás|arrière|camera2 0/i.test(device.label)
   );
+
+  const selected = rear ?? devices[devices.length - 1];
+  return {
+    deviceId: selected.deviceId || undefined,
+    label: selected.label || "Rear camera",
+  };
 }
 
-function isAllowedBarcode(code: string, formatName?: string): boolean {
-  const trimmed = code.trim();
-  if (!trimmed || trimmed.length < 4) return false;
+async function applyCameraEnhancements(stream: MediaStream) {
+  const track = stream.getVideoTracks()[0];
+  if (!track) return;
 
-  if (formatName) {
-    return ALLOWED_FORMAT_NAMES.has(formatName);
+  const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & {
+    torch?: boolean;
+    exposureMode?: string[];
+    focusMode?: string[];
+  };
+
+  const advanced: Record<string, unknown>[] = [];
+
+  if (capabilities?.focusMode?.includes("continuous")) {
+    advanced.push({ focusMode: "continuous" });
+  }
+  if (capabilities?.exposureMode?.includes("continuous")) {
+    advanced.push({ exposureMode: "continuous" });
+  }
+  if (capabilities?.torch) {
+    advanced.push({ exposureCompensation: 1 });
   }
 
-  if (/^\d{12,13}$/.test(trimmed)) return true;
-  if (/^[\x20-\x7E]{4,48}$/.test(trimmed)) return true;
-
-  return false;
+  if (advanced.length > 0) {
+    try {
+      await track.applyConstraints({ advanced } as MediaTrackConstraints);
+    } catch {
+      // Optional enhancements — ignore if unsupported.
+    }
+  }
 }
 
 export function MobileBarcodeScanner({
@@ -85,65 +102,129 @@ export function MobileBarcodeScanner({
   onClose,
   onScan,
 }: MobileBarcodeScannerProps) {
-  const containerId = useId().replace(/:/g, "");
-  const scannerRef = useRef<{ stop: () => Promise<void> } | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const readerRef = useRef<import("@zxing/browser").BrowserMultiFormatReader | null>(
+    null
+  );
+  const controlsRef = useRef<ScannerControls | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const handledRef = useRef(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const frameCountRef = useRef(0);
+  const lastDuplicateRef = useRef<{ code: string; at: number } | null>(null);
 
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [cameraAttempt, setCameraAttempt] = useState(0);
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<ScanDebugInfo | null>(null);
+  const [cameraLabel, setCameraLabel] = useState("");
 
   const stopScanner = useCallback(async () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    handledRef.current = false;
+    frameCountRef.current = 0;
+    setTorchOn(false);
+    setTorchSupported(false);
+
+    try {
+      controlsRef.current?.stop();
+    } catch {
+      // Controls may already be stopped.
+    }
+    controlsRef.current = null;
+
+    readerRef.current = null;
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
 
-    const scanner = scannerRef.current;
-    scannerRef.current = null;
-
-    if (scanner) {
-      try {
-        await scanner.stop();
-      } catch {
-        // Camera may already be stopped.
+    try {
+      if (videoRef.current) {
+        const { BrowserCodeReader } = await import("@zxing/browser");
+        BrowserCodeReader.cleanVideoSource(videoRef.current);
       }
+      const { BrowserCodeReader } = await import("@zxing/browser");
+      BrowserCodeReader.releaseAllStreams();
+    } catch {
+      // Cleanup best-effort.
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   }, []);
 
   const handleClose = useCallback(async () => {
-    handledRef.current = false;
     setSuccess(false);
     setError(null);
     setLoading(true);
+    setDebugInfo(null);
     await stopScanner();
     onClose();
   }, [onClose, stopScanner]);
 
-  const handleScanSuccess = useCallback(
-    async (decodedText: string, formatName?: string) => {
+  const toggleTorch = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+
+    const next = !torchOn;
+    try {
+      const { BrowserCodeReader } = await import("@zxing/browser");
+      await BrowserCodeReader.mediaStreamSetTorch(track, next);
+      setTorchOn(next);
+    } catch {
+      setTorchSupported(false);
+    }
+  }, [torchOn]);
+
+  const acceptScan = useCallback(
+    async (raw: string, format: unknown, camera: string) => {
       if (handledRef.current) return;
 
-      if (!isAllowedBarcode(decodedText, formatName)) {
+      const validation = validateScannedBarcode(raw, format);
+      const formatLabel = formatBarcodeType(format);
+
+      setDebugInfo({
+        raw,
+        normalized: validation.normalized,
+        format: formatLabel,
+        camera,
+        confidence: validation.valid ? "Checksum OK" : "Rejected",
+        frames: frameCountRef.current,
+        valid: validation.valid,
+        reason: validation.reason,
+      });
+
+      if (!validation.valid) return;
+
+      const now = Date.now();
+      const last = lastDuplicateRef.current;
+      if (
+        last &&
+        last.code === validation.normalized &&
+        now - last.at < DUPLICATE_DEBOUNCE_MS
+      ) {
         return;
       }
+      lastDuplicateRef.current = { code: validation.normalized, at: now };
 
       handledRef.current = true;
       vibrateOnSuccess();
       setSuccess(true);
-
       await stopScanner();
 
       window.setTimeout(() => {
-        onScan(decodedText.trim());
+        onScan(validation.normalized);
         onClose();
         setSuccess(false);
         setLoading(true);
         handledRef.current = false;
-      }, 450);
+      }, 500);
     },
     [onClose, onScan, stopScanner]
   );
@@ -157,146 +238,104 @@ export function MobileBarcodeScanner({
 
     let cancelled = false;
     handledRef.current = false;
+    frameCountRef.current = 0;
+    lastDuplicateRef.current = null;
     setLoading(true);
     setError(null);
     setSuccess(false);
+    setDebugInfo(null);
 
     async function startScanner() {
       try {
-        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import(
-          "html5-qrcode"
+        const { BrowserMultiFormatReader, BrowserCodeReader } = await import(
+          "@zxing/browser"
         );
+        const { DecodeHintType } = await import("@zxing/library");
 
-        if (cancelled) return;
+        if (cancelled || !videoRef.current) return;
 
-        const scanner = new Html5Qrcode(containerId, {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.CODE_128,
-          ],
-          verbose: false,
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, ZXING_RETAIL_FORMATS);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        hints.set(DecodeHintType.ASSUME_GS1, true);
+
+        const reader = new BrowserMultiFormatReader(hints, {
+          delayBetweenScanAttempts: 80,
+          delayBetweenScanSuccess: DUPLICATE_DEBOUNCE_MS,
         });
+        readerRef.current = reader;
 
-        scannerRef.current = scanner;
+        const { deviceId, label } = await pickRearCameraId(() =>
+          BrowserCodeReader.listVideoInputDevices()
+        );
+        setCameraLabel(label);
 
-        const viewfinderWidth = Math.min(window.innerWidth - 48, 360);
-        const viewfinderHeight = Math.round(viewfinderWidth * 0.55);
+        const videoConstraints: MediaTrackConstraints = {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          facingMode: { ideal: "environment" },
+          width: { min: 640, ideal: 1920, max: 3840 },
+          height: { min: 480, ideal: 1080, max: 2160 },
+          frameRate: { ideal: 30, min: 15 },
+        };
 
-        await scanner.start(
-          { facingMode: { exact: "environment" } },
-          {
-            fps: 12,
-            qrbox: { width: viewfinderWidth, height: viewfinderHeight },
-            aspectRatio: 1.7777778,
-            disableFlip: true,
-          },
-          (decodedText, decodedResult) => {
-            void handleScanSuccess(
-              decodedText,
-              getDecodedFormatName(decodedResult)
-            );
-          },
-          () => {
-            // Scan attempt failed — keep scanning.
+        const controls = await reader.decodeFromConstraints(
+          { video: videoConstraints },
+          videoRef.current,
+          (result) => {
+            frameCountRef.current += 1;
+
+            const stream = videoRef.current?.srcObject;
+            if (stream instanceof MediaStream) {
+              streamRef.current = stream;
+            }
+
+            if (result && !handledRef.current) {
+              void acceptScan(
+                result.getText(),
+                result.getBarcodeFormat(),
+                label
+              );
+            }
           }
         );
 
-        if (cancelled) {
-          await scanner.stop().catch(() => undefined);
-          return;
+        controlsRef.current = controls;
+
+        const stream = videoRef.current.srcObject;
+        if (stream instanceof MediaStream) {
+          streamRef.current = stream;
+          await applyCameraEnhancements(stream);
+          const track = stream.getVideoTracks()[0];
+          if (track) {
+            setTorchSupported(
+              BrowserCodeReader.mediaStreamIsTorchCompatibleTrack(track)
+            );
+          }
         }
 
-        setLoading(false);
-
-        timeoutRef.current = setTimeout(() => {
-          if (!handledRef.current) {
-            void stopScanner();
-            setError(
-              "No barcode detected. Move closer to the label and try again."
-            );
-            setLoading(false);
-          }
-        }, SCAN_TIMEOUT_MS);
-      } catch (firstError) {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      } catch (err) {
         if (cancelled) return;
 
-        try {
-          const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import(
-            "html5-qrcode"
+        const message = err instanceof Error ? err.message : String(err);
+        const lower = message.toLowerCase();
+
+        if (lower.includes("permission") || lower.includes("notallowed")) {
+          setError(
+            "Camera access denied. Open browser settings, allow camera for this site, then try again."
           );
-
-          const scanner = new Html5Qrcode(containerId, {
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.CODE_128,
-            ],
-            verbose: false,
-          });
-
-          scannerRef.current = scanner;
-
-          const viewfinderWidth = Math.min(window.innerWidth - 48, 360);
-          const viewfinderHeight = Math.round(viewfinderWidth * 0.55);
-
-          await scanner.start(
-            { facingMode: "environment" },
-            {
-              fps: 12,
-              qrbox: { width: viewfinderWidth, height: viewfinderHeight },
-              aspectRatio: 1.7777778,
-              disableFlip: true,
-            },
-            (decodedText, decodedResult) => {
-              void handleScanSuccess(
-                decodedText,
-                getDecodedFormatName(decodedResult)
-              );
-            },
-            () => undefined
+        } else if (lower.includes("notfound") || lower.includes("no camera")) {
+          setError(
+            "No rear camera found. Barcode scanning needs a phone with a back camera."
           );
-
-          if (cancelled) {
-            await scanner.stop().catch(() => undefined);
-            return;
-          }
-
-          setLoading(false);
-
-          timeoutRef.current = setTimeout(() => {
-            if (!handledRef.current) {
-              void stopScanner();
-              setError(
-                "No barcode detected. Move closer to the label and try again."
-              );
-              setLoading(false);
-            }
-          }, SCAN_TIMEOUT_MS);
-        } catch {
-          if (cancelled) return;
-
-          const message =
-            firstError instanceof Error ? firstError.message : String(firstError);
-
-          if (
-            message.toLowerCase().includes("permission") ||
-            message.toLowerCase().includes("notallowed")
-          ) {
-            setError(
-              "Camera access denied. Allow camera permission in your browser settings, then try again."
-            );
-          } else if (message.toLowerCase().includes("notfound")) {
-            setError(
-              "No camera found on this device. Barcode scanning needs a phone with a rear camera."
-            );
-          } else {
-            setError(
-              "Could not open the camera. Use Chrome on your phone and allow camera access."
-            );
-          }
-          setLoading(false);
+        } else {
+          setError(
+            "Could not start the camera. Use Chrome on Android and hold the phone steady on the barcode."
+          );
         }
+        setLoading(false);
       }
     }
 
@@ -306,16 +345,11 @@ export function MobileBarcodeScanner({
       cancelled = true;
       void stopScanner();
     };
-  }, [
-    open,
-    mounted,
-    containerId,
-    handleScanSuccess,
-    stopScanner,
-    cameraAttempt,
-  ]);
+  }, [open, mounted, cameraAttempt, acceptScan, stopScanner]);
 
   if (!mounted || !open) return null;
+
+  const scanBoxWidth = "min(80vw, 100%)";
 
   return createPortal(
     <div
@@ -324,98 +358,153 @@ export function MobileBarcodeScanner({
       aria-modal="true"
       aria-label="Scan product barcode"
     >
-      <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
-        <div>
+      <div className="flex items-center justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
+        <div className="min-w-0">
           <p className="text-lg font-semibold">Scan Product</p>
-          <p className="text-sm text-white/70">Point at the barcode label</p>
+          <p className="text-sm text-white/70 truncate">
+            Align the barcode inside the box
+          </p>
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          className="h-12 w-12 rounded-full p-0 shrink-0"
-          onClick={() => void handleClose()}
-          aria-label="Close scanner"
-        >
-          <X className="h-6 w-6" />
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {torchSupported && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="h-12 w-12 rounded-full p-0"
+              onClick={() => void toggleTorch()}
+              aria-label={torchOn ? "Turn off flashlight" : "Turn on flashlight"}
+            >
+              {torchOn ? (
+                <FlashlightOff className="h-5 w-5" />
+              ) : (
+                <Flashlight className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="h-12 w-12 rounded-full p-0"
+            onClick={() => setShowDebug((value) => !value)}
+            aria-label="Toggle debug info"
+          >
+            <Bug className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="h-12 w-12 rounded-full p-0"
+            onClick={() => void handleClose()}
+            aria-label="Close scanner"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
-      <div className="relative flex-1 min-h-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black">
-          <div id={containerId} className="h-full w-full [&_video]:object-cover" />
+      <div className="relative flex-1 min-h-0">
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          playsInline
+          muted
+          autoPlay
+        />
 
+        <div
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
           <div
-            className="pointer-events-none absolute inset-0 flex items-center justify-center"
-            aria-hidden
+            className={cn(
+              "relative rounded-2xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]",
+              success && "border-emerald-400"
+            )}
+            style={{
+              width: scanBoxWidth,
+              height: "28vh",
+              minHeight: "140px",
+              maxHeight: "220px",
+            }}
           >
-            <div
-              className={cn(
-                "relative w-[min(92vw,360px)] aspect-[16/10] rounded-2xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]",
-                success && "border-emerald-400"
-              )}
-            >
-              <div className="absolute left-3 top-3 h-8 w-8 border-l-4 border-t-4 border-white rounded-tl-lg" />
-              <div className="absolute right-3 top-3 h-8 w-8 border-r-4 border-t-4 border-white rounded-tr-lg" />
-              <div className="absolute left-3 bottom-3 h-8 w-8 border-l-4 border-b-4 border-white rounded-bl-lg" />
-              <div className="absolute right-3 bottom-3 h-8 w-8 border-r-4 border-b-4 border-white rounded-br-lg" />
-              {!success && !loading && !error && (
-                <div className="absolute inset-x-8 top-1/2 h-0.5 -translate-y-1/2 bg-red-500/80 animate-pulse" />
-              )}
+            <div className="absolute left-2 top-2 h-10 w-10 border-l-4 border-t-4 border-white rounded-tl-xl" />
+            <div className="absolute right-2 top-2 h-10 w-10 border-r-4 border-t-4 border-white rounded-tr-xl" />
+            <div className="absolute left-2 bottom-2 h-10 w-10 border-l-4 border-b-4 border-white rounded-bl-xl" />
+            <div className="absolute right-2 bottom-2 h-10 w-10 border-r-4 border-b-4 border-white rounded-br-xl" />
+            {!success && !loading && !error && (
+              <div className="absolute inset-x-4 top-1/2 h-0.5 -translate-y-1/2 bg-red-500 animate-pulse" />
+            )}
+          </div>
+        </div>
+
+        {loading && !error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/50">
+            <Loader2 className="h-10 w-10 animate-spin text-white" />
+            <p className="text-sm text-white/80">Starting rear camera…</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-emerald-600/85 animate-in fade-in zoom-in duration-300">
+            <CheckCircle2 className="h-20 w-20 text-white" />
+            <p className="text-xl font-semibold">Barcode scanned</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-amber-400" />
+            <p className="text-base text-white/90 max-w-sm">{error}</p>
+            <div className="flex w-full max-w-sm flex-col gap-3">
+              <Button
+                type="button"
+                size="lg"
+                className="h-12 w-full"
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  handledRef.current = false;
+                  setCameraAttempt((value) => value + 1);
+                }}
+              >
+                <Camera className="h-5 w-5" />
+                Try again
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="h-12 w-full"
+                onClick={() => void handleClose()}
+              >
+                Close
+              </Button>
             </div>
           </div>
-
-          {loading && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
-              <Loader2 className="h-10 w-10 animate-spin text-white" />
-              <p className="text-sm text-white/80">Starting camera…</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-emerald-600/80 animate-in fade-in zoom-in duration-300">
-              <CheckCircle2 className="h-16 w-16 text-white" />
-              <p className="text-lg font-semibold">Barcode scanned</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 p-6 text-center">
-              <AlertCircle className="h-12 w-12 text-amber-400" />
-              <p className="text-base text-white/90">{error}</p>
-              <div className="flex w-full max-w-sm flex-col gap-3">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="h-12 w-full"
-                  onClick={() => {
-                    setError(null);
-                    setLoading(true);
-                    handledRef.current = false;
-                    setCameraAttempt((value) => value + 1);
-                  }}
-                >
-                  <Camera className="h-5 w-5" />
-                  Try again
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="lg"
-                  className="h-12 w-full"
-                  onClick={() => void handleClose()}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      <p className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-white/60">
-        EAN-13 · UPC · Code 128 only
-      </p>
+      <div className="px-4 py-3 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2">
+        <p className="text-center text-xs text-white/70">
+          EAN-13 · EAN-8 · UPC · Code 128 — keep barcode flat and well lit
+        </p>
+
+        {(showDebug || debugInfo) && (
+          <div className="rounded-xl bg-white/10 p-3 text-xs font-mono space-y-1 text-white/90">
+            <p className="font-semibold text-white">Debug</p>
+            <p>Camera: {cameraLabel || "—"}</p>
+            <p>Frames: {debugInfo?.frames ?? frameCountRef.current}</p>
+            <p>Raw: {debugInfo?.raw ?? "—"}</p>
+            <p>Normalized: {debugInfo?.normalized ?? "—"}</p>
+            <p>Type: {debugInfo?.format ?? "—"}</p>
+            <p>Confidence: {debugInfo?.confidence ?? "Scanning…"}</p>
+            {debugInfo?.reason && <p>Reason: {debugInfo.reason}</p>}
+          </div>
+        )}
+      </div>
     </div>,
     document.body
   );

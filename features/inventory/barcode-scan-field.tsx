@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScanBarcode } from "lucide-react";
+import { normalizeBarcode } from "@/lib/barcode";
 
 const MobileBarcodeScanner = dynamic(
   () =>
@@ -54,7 +55,7 @@ export function BarcodeScanField({
   const [checking, setChecking] = useState(false);
 
   async function applyBarcode(code: string) {
-    const trimmed = code.trim();
+    const trimmed = normalizeBarcode(code);
     if (!trimmed) return;
 
     onChange(trimmed);
