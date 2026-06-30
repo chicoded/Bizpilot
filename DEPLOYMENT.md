@@ -24,13 +24,23 @@ DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supab
 DIRECT_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
 ```
 
-5. Push schema:
+5. Push schema (first time only — pick one):
 
 ```bash
+npm run db:setup
+# or
 npx prisma db push
 # or for production migrations:
 npx prisma migrate deploy
 ```
+
+If you used `db push` / `db:setup` first, **baseline** before enabling migrate on Vercel:
+
+```bash
+npx prisma migrate resolve --applied 20250329000000_init
+```
+
+Then set `RUN_PRISMA_MIGRATE=true` in Vercel to auto-apply future migrations on deploy.
 
 6. Run RLS policies: paste `database/rls-policies.sql` in Supabase SQL Editor
 
@@ -57,7 +67,7 @@ npx prisma migrate deploy
 1. **Push your latest code** to `https://github.com/chicoded/Bizpilot`
 2. Go to [vercel.com/new](https://vercel.com/new) → **Import** the `Bizpilot` repo
 3. Framework: **Next.js** (auto-detected)
-4. Build command: leave default — uses `vercel.json` → `prisma generate && prisma migrate deploy && next build`
+4. Build command: leave default — uses `vercel.json` → `node scripts/vercel-build.mjs`
 5. Copy env vars from [`vercel.env.example`](./vercel.env.example) into **Environment Variables**
 6. Click **Deploy**
 
