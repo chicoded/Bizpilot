@@ -5,6 +5,11 @@ import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
+import {
+  deleteProductImage,
+  uploadProductImage,
+  validateProductImageFile,
+} from "@/lib/product-images";
 import { Role, Prisma } from "@prisma/client";
 
 export async function createBusiness(formData: FormData) {
@@ -74,6 +79,42 @@ function formatFieldErrors(error: Record<string, string[] | undefined>): string 
   return message ?? "Please check your inputs";
 }
 
+async function applyProductImageFromForm(
+  formData: FormData,
+  businessId: string,
+  productId: string,
+  existingImageUrl: string | null
+): Promise<{ imageUrl: string | null; unchanged: boolean; error?: string }> {
+  const removeImage = formData.get("removeImage") === "true";
+  const imageFile = formData.get("image");
+
+  if (removeImage) {
+    await deleteProductImage(existingImageUrl);
+    return { imageUrl: null, unchanged: false };
+  }
+
+  if (!(imageFile instanceof File) || imageFile.size === 0) {
+    return { imageUrl: existingImageUrl, unchanged: true };
+  }
+
+  const validationError = validateProductImageFile(imageFile);
+  if (validationError) {
+    return { imageUrl: existingImageUrl, unchanged: true, error: validationError };
+  }
+
+  try {
+    if (existingImageUrl) {
+      await deleteProductImage(existingImageUrl);
+    }
+    const imageUrl = await uploadProductImage(businessId, imageFile, productId);
+    return { imageUrl, unchanged: false };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not upload image";
+    return { imageUrl: existingImageUrl, unchanged: true, error: message };
+  }
+}
+
 export async function createProduct(formData: FormData) {
   try {
     const user = await currentUser();
@@ -126,6 +167,29 @@ export async function createProduct(formData: FormData) {
       },
     });
 
+    const imageResult = await applyProductImageFromForm(
+      formData,
+      ctx.businessId,
+      product.id,
+      null
+    );
+
+    if (imageResult.error) {
+      revalidatePath("/inventory");
+      return {
+        success: true,
+        product,
+        warning: `Product saved, but image upload failed: ${imageResult.error}`,
+      };
+    }
+
+    if (!imageResult.unchanged) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { imageUrl: imageResult.imageUrl },
+      });
+    }
+
     revalidatePath("/inventory");
     return { success: true, product };
   } catch (error) {
@@ -176,6 +240,17 @@ export async function updateProduct(productId: string, formData: FormData) {
 
     const quantityDelta = quantity - existing.quantity;
 
+    const imageResult = await applyProductImageFromForm(
+      formData,
+      ctx.businessId,
+      productId,
+      existing.imageUrl
+    );
+
+    if (imageResult.error) {
+      return { error: imageResult.error };
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id: productId },
@@ -187,6 +262,7 @@ export async function updateProduct(productId: string, formData: FormData) {
           category: category ?? null,
           batchNumber: batchNumber ?? null,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
+          ...(imageResult.unchanged ? {} : { imageUrl: imageResult.imageUrl }),
         },
       });
 

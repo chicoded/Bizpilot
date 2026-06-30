@@ -34,6 +34,7 @@ export default async function ProductDetailPage({
         expiryDate: product.expiryDate
           ? format(product.expiryDate, "yyyy-MM-dd")
           : null,
+        imageUrl: product.imageUrl,
       }}
     />
   );

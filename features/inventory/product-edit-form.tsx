@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { ProductImageField } from "@/features/inventory/product-image-field";
 
 interface ProductEditFormProps {
   product: {
@@ -22,6 +23,7 @@ interface ProductEditFormProps {
     quantity: number;
     reorderLevel: number;
     expiryDate: string | null;
+    imageUrl: string | null;
   };
 }
 
@@ -64,7 +66,11 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
         </Link>
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
+              <ProductImageField
+                currentImageUrl={product.imageUrl}
+                disabled={isPending}
+              />
               <div className="space-y-2">
                 <Label htmlFor="name">Product name *</Label>
                 <Input

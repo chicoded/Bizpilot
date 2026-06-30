@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { ProductImageField } from "@/features/inventory/product-image-field";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -48,7 +49,8 @@ export default function NewProductPage() {
         </Link>
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
+              <ProductImageField disabled={isPending} />
               <div className="space-y-2">
                 <Label htmlFor="name">Product name *</Label>
                 <Input id="name" name="name" required placeholder="Paracetamol 500mg" />
@@ -119,6 +121,7 @@ export default function NewProductPage() {
                   <Input id="expiryDate" name="expiryDate" type="date" />
                 </div>
               </div>
+
 
               {error && (
                 <p className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2">

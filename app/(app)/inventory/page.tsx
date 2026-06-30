@@ -88,6 +88,7 @@ export default async function InventoryPage() {
                     quantity: product.quantity,
                     reorderLevel: product.reorderLevel,
                     expiryDate: product.expiryDate,
+                    imageUrl: product.imageUrl,
                   }}
                   currency={ctx.business.currency}
                   isLowStock={isLowStock}
