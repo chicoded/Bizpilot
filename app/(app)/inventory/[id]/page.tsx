@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getBusinessContext } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getInventoryProduct } from "@/lib/products";
 import { ProductEditForm } from "@/features/inventory/product-edit-form";
 import { format } from "date-fns";
 
@@ -14,9 +14,7 @@ export default async function ProductDetailPage({
 
   const { id } = await params;
 
-  const product = await prisma.product.findFirst({
-    where: { id, businessId: ctx.businessId, isActive: true },
-  });
+  const product = await getInventoryProduct(ctx.businessId, id);
 
   if (!product) notFound();
 
@@ -27,8 +25,8 @@ export default async function ProductDetailPage({
         name: product.name,
         category: product.category,
         barcode: product.barcode,
-        purchasePrice: Number(product.purchasePrice),
-        sellingPrice: Number(product.sellingPrice),
+        purchasePrice: product.purchasePrice,
+        sellingPrice: product.sellingPrice,
         quantity: product.quantity,
         reorderLevel: product.reorderLevel,
         expiryDate: product.expiryDate

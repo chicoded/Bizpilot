@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
 import {
@@ -155,16 +156,14 @@ export async function createProduct(formData: FormData) {
     const { expiryDate, sku, barcode, category, batchNumber, ...rest } =
       parsed.data;
 
-    const product = await prisma.product.create({
-      data: {
-        ...rest,
-        sku: sku ?? null,
-        barcode: barcode ?? null,
-        category: category ?? null,
-        batchNumber: batchNumber ?? null,
-        businessId: ctx.businessId,
-        expiryDate: expiryDate ? new Date(expiryDate) : null,
-      },
+    const product = await createInventoryProduct({
+      ...rest,
+      sku: sku ?? null,
+      barcode: barcode ?? null,
+      category: category ?? null,
+      batchNumber: batchNumber ?? null,
+      businessId: ctx.businessId,
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
     });
 
     const imageResult = await applyProductImageFromForm(
@@ -183,11 +182,10 @@ export async function createProduct(formData: FormData) {
       };
     }
 
-    if (!imageResult.unchanged) {
-      await prisma.product.update({
-        where: { id: product.id },
-        data: { imageUrl: imageResult.imageUrl },
-      });
+    if (!imageResult.unchanged && imageResult.imageUrl !== null) {
+      await updateProductImageUrl(product.id, imageResult.imageUrl);
+    } else if (!imageResult.unchanged && imageResult.imageUrl === null) {
+      await updateProductImageUrl(product.id, null);
     }
 
     revalidatePath("/inventory");
@@ -211,9 +209,7 @@ export async function updateProduct(productId: string, formData: FormData) {
       return { error: "Set up your business first at onboarding" };
     }
 
-    const existing = await prisma.product.findFirst({
-      where: { id: productId, businessId: ctx.businessId, isActive: true },
-    });
+    const existing = await getInventoryProduct(ctx.businessId, productId);
     if (!existing) {
       return { error: "Product not found" };
     }
@@ -262,7 +258,6 @@ export async function updateProduct(productId: string, formData: FormData) {
           category: category ?? null,
           batchNumber: batchNumber ?? null,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
-          ...(imageResult.unchanged ? {} : { imageUrl: imageResult.imageUrl }),
         },
       });
 
@@ -279,6 +274,10 @@ export async function updateProduct(productId: string, formData: FormData) {
         });
       }
     });
+
+    if (!imageResult.unchanged) {
+      await updateProductImageUrl(productId, imageResult.imageUrl);
+    }
 
     revalidatePath("/inventory");
     revalidatePath(`/inventory/${productId}`);
@@ -348,12 +347,10 @@ export async function createSale(data: {
     }
   }
 
-  const products = await prisma.product.findMany({
-    where: {
-      id: { in: parsed.data.items.map((i) => i.productId) },
-      businessId: ctx.businessId,
-    },
-  });
+  const products = await getProductsForSale(
+    ctx.businessId,
+    parsed.data.items.map((i) => i.productId)
+  );
 
   const productMap = new Map(products.map((p) => [p.id, p]));
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getBusinessContext } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { listInventoryProducts } from "@/lib/products";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,10 +13,7 @@ export default async function InventoryPage() {
   const ctx = await getBusinessContext();
   if (!ctx) redirect("/onboarding");
 
-  const products = await prisma.product.findMany({
-    where: { businessId: ctx.businessId, isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const products = await listInventoryProducts(ctx.businessId);
 
   const lowStockCount = products.filter(
     (p) => p.quantity <= p.reorderLevel
@@ -84,7 +81,7 @@ export default async function InventoryPage() {
                     id: product.id,
                     name: product.name,
                     category: product.category,
-                    sellingPrice: Number(product.sellingPrice),
+                    sellingPrice: product.sellingPrice,
                     quantity: product.quantity,
                     reorderLevel: product.reorderLevel,
                     expiryDate: product.expiryDate,
