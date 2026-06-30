@@ -14,6 +14,10 @@ import {
   type CustomerOption,
 } from "@/features/sales/credit-customer-picker";
 import {
+  ScanProductButton,
+  type ScannableProduct,
+} from "@/features/sales/scan-product-button";
+import {
   Search,
   Plus,
   Minus,
@@ -72,7 +76,7 @@ export default function SalesPage() {
     0
   );
 
-  function addToCart(product: Product) {
+  function addToCart(product: Product | ScannableProduct) {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -150,6 +154,7 @@ export default function SalesPage() {
         <div className="grid gap-4 lg:grid-cols-5">
           {/* Product search */}
           <div className="lg:col-span-3 space-y-4">
+            <ScanProductButton onProductFound={addToCart} disabled={isPending} />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
