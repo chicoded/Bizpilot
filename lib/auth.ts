@@ -27,25 +27,83 @@ export async function getBusinessContext(businessId?: string) {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const membership = businessId
-    ? await prisma.membership.findUnique({
-        where: { userId_businessId: { userId, businessId } },
-        include: { business: true },
-      })
-    : await prisma.membership.findFirst({
-        where: { userId },
-        include: { business: true },
-        orderBy: { createdAt: "asc" },
-      });
+  try {
+    const membership = businessId
+      ? await prisma.membership.findUnique({
+          where: { userId_businessId: { userId, businessId } },
+          include: { business: true },
+        })
+      : await prisma.membership.findFirst({
+          where: { userId },
+          include: { business: true },
+          orderBy: { createdAt: "asc" },
+        });
 
-  if (!membership) return null;
+    if (!membership) return null;
 
-  return {
-    userId,
-    businessId: membership.businessId,
-    role: membership.role,
-    business: membership.business,
-  };
+    return {
+      userId,
+      businessId: membership.businessId,
+      role: membership.role,
+      business: membership.business,
+    };
+  } catch (error) {
+    const missingRolePermissions =
+      error instanceof Error &&
+      /rolePermissions|column.*does not exist|P2022/i.test(error.message);
+
+    if (!missingRolePermissions) {
+      throw error;
+    }
+
+    const membership = businessId
+      ? await prisma.membership.findUnique({
+          where: { userId_businessId: { userId, businessId } },
+          include: {
+            business: {
+              select: {
+                id: true,
+                name: true,
+                industry: true,
+                currency: true,
+                logo: true,
+                address: true,
+                phone: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        })
+      : await prisma.membership.findFirst({
+          where: { userId },
+          include: {
+            business: {
+              select: {
+                id: true,
+                name: true,
+                industry: true,
+                currency: true,
+                logo: true,
+                address: true,
+                phone: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+    if (!membership) return null;
+
+    return {
+      userId,
+      businessId: membership.businessId,
+      role: membership.role,
+      business: { ...membership.business, rolePermissions: null },
+    };
+  }
 }
 
 export async function requireBusinessContext(businessId?: string) {
