@@ -15,6 +15,11 @@ if (process.env.DATABASE_URL) {
       "Schema ensure step failed — inventory will still load using safe fallbacks."
     );
   }
+  try {
+    run("node scripts/ensure-team-schema.mjs");
+  } catch {
+    console.warn("Team schema ensure step failed.");
+  }
 }
 
 if (process.env.RUN_PRISMA_MIGRATE === "true") {

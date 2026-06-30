@@ -12,6 +12,13 @@ import {
 import { getPlanDetails } from "@/lib/subscription";
 import { Building2, CreditCard, Users, ChevronRight } from "lucide-react";
 import { BusinessProfileForm } from "@/features/settings/business-profile-form";
+import { TeamPanel } from "@/features/settings/team-panel";
+import { canChangeRoles, canManageTeam } from "@/lib/auth";
+import {
+  getTeamMembers,
+  getPendingInvites,
+  inviteableRolesFor,
+} from "@/lib/team";
 
 export default async function SettingsPage() {
   const ctx = await getBusinessContext();
@@ -26,6 +33,11 @@ export default async function SettingsPage() {
     : getPlanDetails("STARTER");
   const daysLeft = getDaysRemaining(subscription);
   const active = isSubscriptionActive(subscription);
+
+  const [members, pendingInvites] = await Promise.all([
+    getTeamMembers(ctx.businessId),
+    getPendingInvites(ctx.businessId),
+  ]);
 
   return (
     <>
@@ -82,9 +94,14 @@ export default async function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Invite managers, cashiers, and staff. Coming soon.
-            </p>
+            <TeamPanel
+              members={members}
+              pendingInvites={pendingInvites}
+              currentUserId={ctx.userId}
+              canManage={canManageTeam(ctx.role)}
+              canChangeRoles={canChangeRoles(ctx.role)}
+              inviteableRoles={inviteableRolesFor(ctx.role)}
+            />
           </CardContent>
         </Card>
 

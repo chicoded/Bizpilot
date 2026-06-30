@@ -62,6 +62,22 @@ export function hasPermission(role: Role, required: Role[]): boolean {
   return required.some((r) => userLevel >= hierarchy[r]);
 }
 
+export function canManageTeam(role: Role): boolean {
+  return hasPermission(role, [Role.OWNER, Role.MANAGER]);
+}
+
+export function canChangeRoles(role: Role): boolean {
+  return role === Role.OWNER;
+}
+
+export async function requireTeamManager() {
+  const ctx = await requireBusinessContext();
+  if (!canManageTeam(ctx.role)) {
+    throw new Error("Only owners and managers can manage the team");
+  }
+  return ctx;
+}
+
 export async function syncClerkUser(clerkUser: {
   id: string;
   emailAddresses: { emailAddress: string }[];

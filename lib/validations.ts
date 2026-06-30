@@ -111,6 +111,16 @@ export const whatsappConfigSchema = z.object({
   greetingMessage: z.string().max(500).optional(),
 });
 
+export const teamInviteSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+  role: z.enum(["MANAGER", "CASHIER", "STAFF"]),
+});
+
+export const updateMemberRoleSchema = z.object({
+  userId: z.string().min(1),
+  role: z.enum(["MANAGER", "CASHIER", "STAFF"]),
+});
+
 export type BusinessInput = z.infer<typeof businessSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type SaleInput = z.infer<typeof saleSchema>;

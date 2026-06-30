@@ -92,6 +92,7 @@ model Business {
   updatedAt DateTime @updatedAt
 
   memberships    Membership[]
+  teamInvites    TeamInvite[]
   products       Product[]
   sales          Sale[]
   expenses       Expense[]
@@ -119,6 +120,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   memberships Membership[]
+  teamInvites TeamInvite[] @relation("TeamInvitesSent")
   auditLogs   AuditLog[]
 
   @@map("users")
@@ -138,6 +140,25 @@ model Membership {
   @@unique([userId, businessId])
   @@index([businessId])
   @@map("memberships")
+}
+
+model TeamInvite {
+  id         String    @id @default(cuid())
+  businessId String
+  email      String
+  role       Role      @default(STAFF)
+  token      String    @unique
+  invitedBy  String
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  inviter  User     @relation("TeamInvitesSent", fields: [invitedBy], references: [id])
+
+  @@unique([businessId, email])
+  @@index([businessId])
+  @@map("team_invites")
 }
 
 model Product {
