@@ -10,6 +10,12 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const envPath = resolve(root, ".env.local");
 
+const REPAIR_STATEMENTS = [
+  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;',
+  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "barcode" TEXT;',
+  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;',
+];
+
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
   const content = readFileSync(path, "utf8");
@@ -51,13 +57,13 @@ const prisma = new PrismaClient(
 );
 
 try {
-  await prisma.$executeRawUnsafe(
-    'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;'
-  );
-  console.log("✓ Ensured products.imageUrl column exists");
+  for (const sql of REPAIR_STATEMENTS) {
+    await prisma.$executeRawUnsafe(sql);
+  }
+  console.log("✓ Ensured products.imageUrl, barcode, and sku columns exist");
 } catch (error) {
   console.warn(
-    "Could not ensure products.imageUrl:",
+    "Could not ensure product schema:",
     error instanceof Error ? error.message : error
   );
 } finally {

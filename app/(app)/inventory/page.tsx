@@ -9,8 +9,13 @@ import { Plus, Package } from "lucide-react";
 import { addDays } from "date-fns";
 import { ProductCard } from "@/features/inventory/product-card";
 import { ScanToAddProductButton } from "@/features/inventory/scan-to-add-button";
+import { RepairDatabaseButton } from "@/components/inventory/repair-database-button";
+
+export const dynamic = "force-dynamic";
 
 function InventoryLoadError({ message }: { message: string }) {
+  const schemaMismatch = /imageUrl|schema|column|products table/i.test(message);
+
   return (
     <>
       <Header title="Inventory" subtitle="Could not load" />
@@ -19,7 +24,12 @@ function InventoryLoadError({ message }: { message: string }) {
           <CardContent className="py-10 text-center space-y-4">
             <Package className="h-12 w-12 text-muted-foreground mx-auto" />
             <h2 className="font-semibold text-lg">Could not load inventory</h2>
-            <p className="text-sm text-muted-foreground">{message}</p>
+            <p className="text-sm text-muted-foreground">
+              {schemaMismatch
+                ? "Database update required."
+                : message}
+            </p>
+            {schemaMismatch && <RepairDatabaseButton />}
             <div className="flex flex-col gap-2">
               <Button asChild>
                 <Link href="/inventory">Try again</Link>

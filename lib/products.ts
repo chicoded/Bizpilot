@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/db";
-import { hasProductImageColumn, ensureProductImageColumn } from "@/lib/schema";
+import {
+  getProductSchemaStatus,
+  repairProductSchema,
+  checkProductColumn,
+} from "@/lib/schema";
 import type {
   InventoryDetailProduct,
   InventoryListProduct,
@@ -95,11 +99,16 @@ async function fetchInventoryList(
 export async function listInventoryProducts(
   businessId: string
 ): Promise<InventoryListProduct[]> {
-  if (!(await hasProductImageColumn())) {
-    await ensureProductImageColumn();
+  const schema = await getProductSchemaStatus();
+  if (!schema.ok) {
+    console.warn(
+      "[inventory] Missing product columns:",
+      schema.missing.join(", ")
+    );
+    await repairProductSchema();
   }
 
-  const withImages = await hasProductImageColumn();
+  const withImages = await checkProductColumn("imageUrl");
 
   try {
     const products = await fetchInventoryList(businessId, withImages);
@@ -124,7 +133,7 @@ export async function getInventoryProduct(
   businessId: string,
   productId: string
 ): Promise<InventoryDetailProduct | null> {
-  const withImages = await hasProductImageColumn();
+  const withImages = await checkProductColumn("imageUrl");
 
   try {
     const product = await prisma.product.findFirst({
@@ -159,7 +168,7 @@ export async function getInventoryProduct(
 export async function listProductsForApi(
   businessId: string
 ): Promise<ProductApiItem[]> {
-  const withImages = await hasProductImageColumn();
+  const withImages = await checkProductColumn("imageUrl");
 
   try {
     const products = await prisma.product.findMany({
@@ -207,7 +216,7 @@ export async function updateProductImageUrl(
   productId: string,
   imageUrl: string | null
 ): Promise<boolean> {
-  if (!(await hasProductImageColumn())) {
+  if (!(await checkProductColumn("imageUrl"))) {
     return false;
   }
 

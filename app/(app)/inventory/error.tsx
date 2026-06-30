@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RepairDatabaseButton } from "@/components/inventory/repair-database-button";
 
 export default function InventoryError({
   error,
@@ -16,6 +17,8 @@ export default function InventoryError({
   }, [error]);
 
   const detail = error.message || error.digest || "Unknown error";
+  const schemaMismatch =
+    /imageUrl|schema|column|products table/i.test(detail);
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
@@ -23,16 +26,29 @@ export default function InventoryError({
         Could not load inventory
       </h1>
       <p className="text-muted-foreground max-w-md mb-4">
-        Something went wrong loading your products. Try refreshing the page.
+        {schemaMismatch
+          ? "Database update required. Your products table may be missing optional columns."
+          : "Something went wrong loading your products."}
       </p>
+      {schemaMismatch && (
+        <p className="text-sm text-muted-foreground max-w-lg mb-4 font-mono bg-muted px-3 py-2 rounded-lg break-all text-left">
+          ALTER TABLE &quot;products&quot; ADD COLUMN IF NOT EXISTS
+          &quot;imageUrl&quot; TEXT;
+        </p>
+      )}
       <p className="text-xs text-muted-foreground max-w-lg mb-6 font-mono bg-muted px-3 py-2 rounded-lg break-all">
         {detail}
       </p>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button onClick={() => reset()}>Try again</Button>
-        <Button variant="outline" asChild>
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
+      <div className="flex flex-col items-center gap-3 w-full max-w-sm">
+        <RepairDatabaseButton onSuccess={() => reset()} />
+        <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+          <Button variant="outline" onClick={() => reset()}>
+            Try again
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

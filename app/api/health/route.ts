@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateServerEnv, getAppUrl } from "@/lib/env";
 import { isProductImageUploadEnabled } from "@/lib/product-images";
-import { ensureProductImageColumn } from "@/lib/schema";
+import {
+  getProductSchemaStatus,
+  repairProductSchema,
+} from "@/lib/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,6 +17,7 @@ export async function GET() {
   let database: "ok" | "error" = "error";
   let databaseLatencyMs = 0;
   let schema: "ok" | "error" = "error";
+  let missingColumns: string[] = [];
 
   if (envCheck.valid) {
     try {
@@ -22,20 +26,15 @@ export async function GET() {
       databaseLatencyMs = Date.now() - dbStart;
       database = "ok";
 
-      try {
-        await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
+      const status = await getProductSchemaStatus();
+      if (status.ok) {
         schema = "ok";
-      } catch {
-        const repaired = await ensureProductImageColumn();
-        if (repaired) {
-          try {
-            await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
-            schema = "ok";
-          } catch {
-            schema = "error";
-          }
-        } else {
-          schema = "error";
+      } else {
+        missingColumns = status.missing;
+        const repaired = await repairProductSchema();
+        schema = repaired.ok ? "ok" : "error";
+        if (!repaired.ok) {
+          missingColumns = repaired.stillMissing;
         }
       }
     } catch {
@@ -58,6 +57,7 @@ export async function GET() {
         schema,
         productImages: isProductImageUploadEnabled() ? "ok" : "error",
       },
+      ...(missingColumns.length > 0 && { missingColumns }),
       ...(envCheck.missing.length > 0 && { missingEnv: envCheck.missing }),
       databaseLatencyMs,
       responseTimeMs: Date.now() - started,

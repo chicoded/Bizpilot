@@ -1,6 +1,6 @@
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
-export const PRODUCT_PLACEHOLDER_SRC = "/product-placeholder.svg";
+export const PRODUCT_PLACEHOLDER_SRC = "/images/product-placeholder.svg";
 
 const BUCKET = "product-images";
 const MAX_BYTES = 5 * 1024 * 1024;
