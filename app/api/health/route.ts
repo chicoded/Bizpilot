@@ -11,6 +11,7 @@ export async function GET() {
 
   let database: "ok" | "error" = "error";
   let databaseLatencyMs = 0;
+  let schema: "ok" | "error" = "error";
 
   if (envCheck.valid) {
     try {
@@ -18,12 +19,19 @@ export async function GET() {
       await prisma.$queryRaw`SELECT 1`;
       databaseLatencyMs = Date.now() - dbStart;
       database = "ok";
+
+      try {
+        await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
+        schema = "ok";
+      } catch {
+        schema = "error";
+      }
     } catch {
       database = "error";
     }
   }
 
-  const healthy = envCheck.valid && database === "ok";
+  const healthy = envCheck.valid && database === "ok" && schema === "ok";
   const status = healthy ? 200 : 503;
 
   return NextResponse.json(
@@ -35,6 +43,7 @@ export async function GET() {
       checks: {
         env: envCheck.valid ? "ok" : "error",
         database,
+        schema,
       },
       ...(envCheck.missing.length > 0 && { missingEnv: envCheck.missing }),
       databaseLatencyMs,

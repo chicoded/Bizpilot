@@ -75,6 +75,7 @@ export async function generateAIInsights(
           isActive: true,
           quantity: { lte: 10 },
         },
+        select: { id: true, name: true, quantity: true },
         take: 5,
         orderBy: { quantity: "asc" },
       }),
@@ -83,6 +84,7 @@ export async function generateAIInsights(
           businessId,
           expiryDate: { lte: expiryThreshold, gte: new Date() },
         },
+        select: { id: true, name: true, expiryDate: true },
         take: 3,
       }),
       prisma.customer.findMany({
@@ -315,14 +317,19 @@ export async function saveHealthScore(
   businessId: string,
   health: BusinessHealthResult
 ) {
-  return prisma.businessHealthScore.create({
-    data: {
-      businessId,
-      score: health.score,
-      strengths: health.strengths,
-      warnings: health.warnings,
-      recommendations: health.recommendations,
-      breakdown: health.breakdown,
-    },
-  });
+  try {
+    return await prisma.businessHealthScore.create({
+      data: {
+        businessId,
+        score: health.score,
+        strengths: health.strengths,
+        warnings: health.warnings,
+        recommendations: health.recommendations,
+        breakdown: health.breakdown,
+      },
+    });
+  } catch (error) {
+    console.error("saveHealthScore failed:", error);
+    return null;
+  }
 }

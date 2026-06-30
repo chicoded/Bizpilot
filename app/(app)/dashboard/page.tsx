@@ -12,19 +12,53 @@ import {
 } from "@/services/dashboard";
 import { Package, AlertTriangle, Users } from "lucide-react";
 import { RevenueChart } from "@/features/dashboard/revenue-chart";
+import type { DashboardKPIs, AIInsight, BusinessHealthResult } from "@/types";
+
+const emptyKPIs: DashboardKPIs = {
+  revenueToday: 0,
+  expensesToday: 0,
+  profitToday: 0,
+  lowStockCount: 0,
+  expiringCount: 0,
+  debtorsCount: 0,
+  totalDebt: 0,
+};
+
+const emptyHealth: BusinessHealthResult = {
+  score: 0,
+  strengths: [],
+  warnings: ["Could not load health data"],
+  recommendations: ["Refresh the page or check your database connection"],
+  breakdown: {
+    sales: 0,
+    profit: 0,
+    inventory: 0,
+    cashflow: 0,
+    customers: 0,
+  },
+};
 
 export default async function DashboardPage() {
   const ctx = await getBusinessContext();
   if (!ctx) redirect("/onboarding");
 
-  const [kpis, health, insights] = await Promise.all([
-    getDashboardKPIs(ctx.businessId),
-    calculateBusinessHealth(ctx.businessId),
-    generateAIInsights(ctx.businessId),
-  ]);
+  let kpis = emptyKPIs;
+  let health = emptyHealth;
+  let insights: AIInsight[] = [];
+  let loadError: string | null = null;
 
-  // Persist health score (fire and forget)
-  saveHealthScore(ctx.businessId, health).catch(() => {});
+  try {
+    [kpis, health, insights] = await Promise.all([
+      getDashboardKPIs(ctx.businessId),
+      calculateBusinessHealth(ctx.businessId),
+      generateAIInsights(ctx.businessId),
+    ]);
+    saveHealthScore(ctx.businessId, health);
+  } catch (error) {
+    console.error("Dashboard load failed:", error);
+    loadError =
+      "Some dashboard data could not be loaded. Try refreshing the page.";
+  }
 
   const currency = ctx.business.currency;
 
@@ -35,7 +69,12 @@ export default async function DashboardPage() {
         subtitle={`Good ${getGreeting()}, ${ctx.business.name}`}
       />
       <main className="p-4 md:p-6 space-y-6 max-w-7xl mobile-page">
-        {/* KPI Grid */}
+        {loadError && (
+          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            {loadError}
+          </p>
+        )}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <KPICard
             title="Sales Today"
@@ -71,7 +110,6 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Alert pills */}
         <div className="flex flex-wrap gap-2">
           {kpis.lowStockCount > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700">
@@ -93,7 +131,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Health Score + Insights */}
         <div className="grid gap-6 lg:grid-cols-2">
           <BusinessHealthScore health={health} />
           <div className="space-y-6">
