@@ -1,7 +1,12 @@
-const CACHE_NAME = "bizpilot-v3";
+const CACHE_NAME = "bizpilot-v4";
 const OFFLINE_URL = "/offline";
 
 const PRECACHE_URLS = [OFFLINE_URL];
+
+const SKIP_CACHE_PATHS = [
+  "/manifest.webmanifest",
+  "/sw.js",
+];
 
 function isNextAppRequest(request) {
   const url = new URL(request.url);
@@ -18,6 +23,12 @@ function isNextAppRequest(request) {
   }
 
   return false;
+}
+
+function shouldBypassServiceWorker(url) {
+  return SKIP_CACHE_PATHS.some(
+    (path) => url.pathname === path || url.pathname.endsWith(path)
+  );
 }
 
 self.addEventListener("install", (event) => {
@@ -46,6 +57,8 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
+  if (shouldBypassServiceWorker(url)) return;
+
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/sign-in") ||
@@ -65,21 +78,30 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL))
+      fetch(request).catch(() =>
+        caches.match(OFFLINE_URL).then(
+          (offline) =>
+            offline ??
+            new Response("Offline", {
+              status: 503,
+              headers: { "Content-Type": "text/plain" },
+            })
+        )
+      )
     );
     return;
   }
 
   if (
     url.pathname.match(
-      /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|webmanifest)$/
+      /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/
     )
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const fetchPromise = fetch(request)
+        const network = fetch(request)
           .then((response) => {
-            if (response.ok) {
+            if (response.ok && response.type === "basic") {
               const clone = response.clone();
               caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
             }
@@ -87,7 +109,11 @@ self.addEventListener("fetch", (event) => {
           })
           .catch(() => cached);
 
-        return cached ?? fetchPromise;
+        return (
+          cached ??
+          network ??
+          new Response("", { status: 504, statusText: "Offline" })
+        );
       })
     );
   }

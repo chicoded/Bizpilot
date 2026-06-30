@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     "AI-powered business management for pharmacies, retail shops, supermarkets and more. Inventory, POS, expenses, debt tracking, and AI insights.",
   keywords: ["SME", "Nigeria", "POS", "inventory", "AI", "business"],
   applicationName: "BizPilot AI",
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
