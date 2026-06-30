@@ -31,17 +31,22 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setWarning(null);
     setSaved(false);
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await updateProduct(product.id, formData);
       if (result.success) {
         setSaved(true);
+        if ("warning" in result && typeof result.warning === "string") {
+          setWarning(result.warning);
+        }
         router.refresh();
         return;
       }
@@ -165,7 +170,12 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                   {error}
                 </p>
               )}
-              {saved && (
+              {warning && (
+                <p className="text-sm text-amber-700 rounded-lg bg-amber-50 px-3 py-2">
+                  {warning}
+                </p>
+              )}
+              {saved && !warning && (
                 <p className="text-sm text-emerald-600 rounded-lg bg-emerald-50 px-3 py-2">
                   Product updated successfully
                 </p>

@@ -79,6 +79,8 @@ export const PRODUCTION_ENV_CHECKLIST = [
   { key: "PAYSTACK_SECRET_KEY", required: false, service: "Paystack" },
   { key: "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY", required: false, service: "Paystack" },
   { key: "TWILIO_ACCOUNT_SID", required: false, service: "WhatsApp" },
-  { key: "SENTRY_DSN", required: false, service: "Sentry" },
+  { key: "NEXT_PUBLIC_SUPABASE_URL", required: false, service: "Supabase Storage" },
+  { key: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", required: false, service: "Supabase Storage" },
+  { key: "SUPABASE_SERVICE_ROLE_KEY", required: false, service: "Product image uploads" },
   { key: "NEXT_PUBLIC_POSTHOG_KEY", required: false, service: "PostHog" },
 ] as const;

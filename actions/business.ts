@@ -243,8 +243,9 @@ export async function updateProduct(productId: string, formData: FormData) {
       existing.imageUrl
     );
 
+    let imageWarning: string | undefined;
     if (imageResult.error) {
-      return { error: imageResult.error };
+      imageWarning = `Product saved, but image upload failed: ${imageResult.error}`;
     }
 
     await prisma.$transaction(async (tx) => {
@@ -275,13 +276,15 @@ export async function updateProduct(productId: string, formData: FormData) {
       }
     });
 
-    if (!imageResult.unchanged) {
+    if (!imageResult.error && !imageResult.unchanged) {
       await updateProductImageUrl(productId, imageResult.imageUrl);
     }
 
     revalidatePath("/inventory");
     revalidatePath(`/inventory/${productId}`);
-    return { success: true };
+    return imageWarning
+      ? { success: true, warning: imageWarning }
+      : { success: true };
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

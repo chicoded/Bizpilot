@@ -19,6 +19,14 @@ export function ProductImageField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(currentImageUrl ?? null);
   const [removed, setRemoved] = useState(false);
+  const [uploadsEnabled, setUploadsEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/config/product-images")
+      .then((res) => res.json())
+      .then((data: { enabled?: boolean }) => setUploadsEnabled(Boolean(data.enabled)))
+      .catch(() => setUploadsEnabled(false));
+  }, []);
 
   useEffect(() => {
     setPreview(currentImageUrl ?? null);
@@ -56,10 +64,20 @@ export function ProductImageField({
     }
   }
 
+  const uploadDisabled = disabled || uploadsEnabled === false;
+
   return (
     <div className="space-y-2">
       <Label htmlFor="image">Product photo (optional)</Label>
       <input type="hidden" name="removeImage" value={removed ? "true" : "false"} />
+
+      {uploadsEnabled === false && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          Photo uploads are not configured yet. Add{" "}
+          <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> in Vercel
+          environment variables, then redeploy.
+        </p>
+      )}
 
       {preview ? (
         <div className="relative overflow-hidden rounded-xl border bg-slate-50">
@@ -78,7 +96,7 @@ export function ProductImageField({
             size="sm"
             className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
             onClick={handleRemove}
-            disabled={disabled}
+            disabled={uploadDisabled}
             aria-label="Remove image"
           >
             <X className="h-4 w-4" />
@@ -87,12 +105,12 @@ export function ProductImageField({
       ) : (
         <button
           type="button"
-          disabled={disabled}
+          disabled={uploadDisabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
             "flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-slate-50/80 px-4 py-8 text-center transition-colors",
             "hover:border-biz-blue hover:bg-biz-blue/5 touch-manipulation",
-            disabled && "opacity-50 pointer-events-none"
+            uploadDisabled && "opacity-50 pointer-events-none"
           )}
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
@@ -113,7 +131,7 @@ export function ProductImageField({
           variant="outline"
           size="sm"
           className="w-full"
-          disabled={disabled}
+          disabled={uploadDisabled}
           onClick={() => inputRef.current?.click()}
         >
           Change photo
@@ -127,7 +145,7 @@ export function ProductImageField({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="sr-only"
-        disabled={disabled}
+        disabled={uploadDisabled}
         onChange={handleFileChange}
       />
     </div>

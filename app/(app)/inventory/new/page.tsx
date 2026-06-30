@@ -16,14 +16,19 @@ export default function NewProductPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setWarning(null);
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await createProduct(formData);
       if (result.success) {
+        if ("warning" in result && typeof result.warning === "string") {
+          setWarning(result.warning);
+        }
         router.push("/inventory");
         router.refresh();
         return;
@@ -122,6 +127,12 @@ export default function NewProductPage() {
                 </div>
               </div>
 
+
+              {warning && (
+                <p className="text-sm text-amber-700 rounded-lg bg-amber-50 px-3 py-2">
+                  {warning}
+                </p>
+              )}
 
               {error && (
                 <p className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2">

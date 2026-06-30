@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateServerEnv, getAppUrl } from "@/lib/env";
+import { isProductImageUploadEnabled } from "@/lib/product-images";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,6 +45,7 @@ export async function GET() {
         env: envCheck.valid ? "ok" : "error",
         database,
         schema,
+        productImages: isProductImageUploadEnabled() ? "ok" : "error",
       },
       ...(envCheck.missing.length > 0 && { missingEnv: envCheck.missing }),
       databaseLatencyMs,
