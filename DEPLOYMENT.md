@@ -45,11 +45,23 @@ npx prisma migrate deploy
    - Sign-up URL: `/sign-up`
    - After sign-in: `/dashboard`
    - After sign-up: `/onboarding`
-4. Add your production domain to **Allowed origins**
+4. Add your production domain to **Allowed origins** and **Redirect URLs**
+5. For Vercel preview deploys, also allow `https://*.vercel.app`
 
 ---
 
 ## Step 3: Deploy to Vercel
+
+### Quick start (GitHub → Vercel)
+
+1. **Push your latest code** to `https://github.com/chicoded/Bizpilot`
+2. Go to [vercel.com/new](https://vercel.com/new) → **Import** the `Bizpilot` repo
+3. Framework: **Next.js** (auto-detected)
+4. Build command: leave default — uses `vercel.json` → `prisma generate && prisma migrate deploy && next build`
+5. Copy env vars from [`vercel.env.example`](./vercel.env.example) into **Environment Variables**
+6. Click **Deploy**
+
+After the first deploy, set `NEXT_PUBLIC_APP_URL` to your real Vercel URL (e.g. `https://bizpilot-xxx.vercel.app`) and **redeploy**.
 
 ### Option A: Git integration (recommended)
 
@@ -84,6 +96,10 @@ Set these in **Project → Settings → Environment Variables** for Production, 
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk secret key |
 | `NEXT_PUBLIC_APP_URL` | `https://your-domain.com` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
 
 ### Recommended
 

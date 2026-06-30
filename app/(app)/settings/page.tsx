@@ -89,6 +89,36 @@ export default async function SettingsPage() {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">All sections</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2 sm:grid-cols-2">
+            {[
+              { href: "/inventory", label: "Inventory" },
+              { href: "/sales", label: "Sales" },
+              { href: "/expenses", label: "Expenses" },
+              { href: "/customers", label: "Customers" },
+              { href: "/debts", label: "Debts" },
+              { href: "/reports", label: "Reports" },
+              { href: "/suppliers", label: "Suppliers" },
+              { href: "/whatsapp", label: "WhatsApp AI" },
+              { href: "/ai", label: "AI Assistant" },
+              { href: "/menu", label: "Full menu" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch
+                className="flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium hover:bg-accent transition-colors touch-manipulation active:scale-[0.99]"
+              >
+                {link.label}
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
       </main>
     </>
   );

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { CreditCard, Phone } from "lucide-react";
 import { differenceInDays } from "date-fns";
+import { RecordPaymentButton } from "@/features/debts/record-payment-button";
 
 export default async function DebtsPage() {
   const ctx = await getBusinessContext();
@@ -72,26 +73,33 @@ export default async function DebtsPage() {
                       ⚠ Outstanding for {daysOverdue} days
                     </p>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 items-start">
+                    <RecordPaymentButton
+                      customerId={debtor.id}
+                      maxAmount={Number(debtor.debt)}
+                      currency={ctx.business.currency}
+                    />
                     {debtor.phone && (
-                      <a href={`tel:${debtor.phone}`}>
-                        <Button size="sm" variant="outline">
-                          <Phone className="h-4 w-4" />
-                          Call
+                      <>
+                        <a href={`tel:${debtor.phone}`}>
+                          <Button size="sm" variant="outline">
+                            <Phone className="h-4 w-4" />
+                            Call
+                          </Button>
+                        </a>
+                        <a
+                        href={`https://wa.me/${debtor.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          `Hi ${debtor.name}, this is a friendly reminder about your outstanding balance of ${formatCurrency(Number(debtor.debt), ctx.business.currency)}.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button size="sm" variant="success">
+                          WhatsApp Reminder
                         </Button>
-                      </a>
+                        </a>
+                      </>
                     )}
-                    <a
-                      href={`https://wa.me/${debtor.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(
-                        `Hi ${debtor.name}, this is a friendly reminder about your outstanding balance of ${formatCurrency(Number(debtor.debt), ctx.business.currency)}.`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button size="sm" variant="success">
-                        WhatsApp Reminder
-                      </Button>
-                    </a>
                   </div>
                 </CardContent>
               </Card>

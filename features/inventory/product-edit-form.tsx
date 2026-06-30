@@ -2,42 +2,58 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createProduct } from "@/actions/business";
+import Link from "next/link";
+import { updateProduct } from "@/actions/business";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 
-export default function NewProductPage() {
+interface ProductEditFormProps {
+  product: {
+    id: string;
+    name: string;
+    category: string | null;
+    barcode: string | null;
+    purchasePrice: number;
+    sellingPrice: number;
+    quantity: number;
+    reorderLevel: number;
+    expiryDate: string | null;
+  };
+}
+
+export function ProductEditForm({ product }: ProductEditFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSaved(false);
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
-      const result = await createProduct(formData);
+      const result = await updateProduct(product.id, formData);
       if (result.success) {
-        router.push("/inventory");
+        setSaved(true);
         router.refresh();
         return;
       }
       setError(
         typeof result.error === "string"
           ? result.error
-          : "Could not save product. Please try again."
+          : "Could not update product"
       );
     });
   }
 
   return (
     <>
-      <Header title="Add Product" />
+      <Header title={product.name} subtitle="Edit product" />
       <main className="p-4 md:p-6 max-w-lg mx-auto mobile-page">
         <Link
           href="/inventory"
@@ -51,7 +67,12 @@ export default function NewProductPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Product name *</Label>
-                <Input id="name" name="name" required placeholder="Paracetamol 500mg" />
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  defaultValue={product.name}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -62,8 +83,8 @@ export default function NewProductPage() {
                     type="number"
                     min="0"
                     step="0.01"
-                    defaultValue="0"
                     required
+                    defaultValue={product.purchasePrice}
                   />
                 </div>
                 <div className="space-y-2">
@@ -74,8 +95,8 @@ export default function NewProductPage() {
                     type="number"
                     min="0"
                     step="0.01"
-                    defaultValue="0"
                     required
+                    defaultValue={product.sellingPrice}
                   />
                 </div>
               </div>
@@ -88,8 +109,8 @@ export default function NewProductPage() {
                     type="number"
                     min="0"
                     step="1"
-                    defaultValue="0"
                     required
+                    defaultValue={product.quantity}
                   />
                 </div>
                 <div className="space-y-2">
@@ -100,23 +121,36 @@ export default function NewProductPage() {
                     type="number"
                     min="0"
                     step="1"
-                    defaultValue="5"
                     required
+                    defaultValue={product.reorderLevel}
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input id="category" name="category" placeholder="Medicine, Drinks, etc." />
+                <Input
+                  id="category"
+                  name="category"
+                  defaultValue={product.category ?? ""}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="barcode">Barcode</Label>
-                  <Input id="barcode" name="barcode" placeholder="Optional" />
+                  <Input
+                    id="barcode"
+                    name="barcode"
+                    defaultValue={product.barcode ?? ""}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry date</Label>
-                  <Input id="expiryDate" name="expiryDate" type="date" />
+                  <Input
+                    id="expiryDate"
+                    name="expiryDate"
+                    type="date"
+                    defaultValue={product.expiryDate ?? ""}
+                  />
                 </div>
               </div>
 
@@ -125,9 +159,18 @@ export default function NewProductPage() {
                   {error}
                 </p>
               )}
+              {saved && (
+                <p className="text-sm text-emerald-600 rounded-lg bg-emerald-50 px-3 py-2">
+                  Product updated successfully
+                </p>
+              )}
 
               <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Product"}
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </form>
           </CardContent>

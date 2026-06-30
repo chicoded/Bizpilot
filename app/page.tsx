@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import {
   Sparkles,
   BarChart3,
@@ -56,14 +56,14 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <SignedOut>
-            <SignInButton mode="modal">
+            <Link href="/sign-in">
               <Button variant="ghost" size="sm">
                 Sign in
               </Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
+            </Link>
+            <Link href="/sign-up">
               <Button size="sm">Get Started</Button>
-            </SignUpButton>
+            </Link>
           </SignedOut>
           <SignedIn>
             <Link href="/dashboard">
@@ -93,12 +93,12 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <SignedOut>
-            <SignUpButton mode="modal">
+            <Link href="/sign-up">
               <Button size="lg" className="w-full sm:w-auto min-w-[200px]">
                 Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
-            </SignUpButton>
+            </Link>
           </SignedOut>
           <SignedIn>
             <Link href="/dashboard">
@@ -165,7 +165,7 @@ export default function LandingPage() {
             BizPilot AI.
           </p>
           <SignedOut>
-            <SignUpButton mode="modal">
+            <Link href="/sign-up">
               <Button
                 size="lg"
                 variant="secondary"
@@ -173,7 +173,7 @@ export default function LandingPage() {
               >
                 Get Started Free
               </Button>
-            </SignUpButton>
+            </Link>
           </SignedOut>
         </div>
       </section>

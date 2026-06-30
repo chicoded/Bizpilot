@@ -9,6 +9,10 @@ import { createSale } from "@/actions/business";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 import {
+  CreditCustomerPicker,
+  type CustomerOption,
+} from "@/features/sales/credit-customer-picker";
+import {
   Search,
   Plus,
   Minus,
@@ -36,6 +40,9 @@ export default function SalesPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [saleError, setSaleError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [saleComplete, setSaleComplete] = useState(false);
 
@@ -43,6 +50,10 @@ export default function SalesPage() {
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => setProducts(data.products ?? []))
+      .catch(() => {});
+    fetch("/api/customers")
+      .then((r) => r.json())
+      .then((data) => setCustomers(data.customers ?? []))
       .catch(() => {});
   }, []);
 
@@ -86,6 +97,11 @@ export default function SalesPage() {
 
   function completeSale() {
     if (cart.length === 0) return;
+    if (paymentMethod === "CREDIT" && !customerId) {
+      setSaleError("Select a customer for credit sales");
+      return;
+    }
+    setSaleError(null);
     startTransition(async () => {
       const result = await createSale({
         items: cart.map((i) => ({
@@ -93,12 +109,22 @@ export default function SalesPage() {
           quantity: i.quantity,
         })),
         paymentMethod,
+        customerId: paymentMethod === "CREDIT" ? customerId : undefined,
         isCredit: paymentMethod === "CREDIT",
       });
       if (result.success) {
         setCart([]);
+        setCustomerId("");
         setSaleComplete(true);
         setTimeout(() => setSaleComplete(false), 3000);
+        fetch("/api/customers")
+          .then((r) => r.json())
+          .then((data) => setCustomers(data.customers ?? []))
+          .catch(() => {});
+      } else if (result.error) {
+        setSaleError(
+          typeof result.error === "string" ? result.error : "Sale failed"
+        );
       }
     });
   }
@@ -224,6 +250,25 @@ export default function SalesPage() {
                       </button>
                     ))}
                   </div>
+
+                  {paymentMethod === "CREDIT" && (
+                    <CreditCustomerPicker
+                      customers={customers}
+                      selectedId={customerId}
+                      onSelect={setCustomerId}
+                      onCustomerCreated={(customer) =>
+                        setCustomers((prev) =>
+                          [...prev, customer].sort((a, b) =>
+                            a.name.localeCompare(b.name)
+                          )
+                        )
+                      }
+                    />
+                  )}
+
+                  {saleError && (
+                    <p className="text-sm text-red-500 text-center">{saleError}</p>
+                  )}
 
                   <Button
                     size="lg"

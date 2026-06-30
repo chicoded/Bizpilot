@@ -2,41 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  ShoppingCart,
-  Package,
-  Sparkles,
-  Settings,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/inventory", label: "Stock", icon: Package },
-  { href: "/sales", label: "Sales", icon: ShoppingCart, primary: true },
-  { href: "/ai", label: "AI", icon: Sparkles },
-  { href: "/settings", label: "More", icon: Settings },
-];
+import { mobileNavItems } from "@/lib/app-navigation";
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden pointer-events-auto">
       <div className="border-t border-border/40 bg-white/95 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,58,95,0.06)] safe-area-pb">
         <div className="flex items-end justify-around px-1 pt-1 pb-1">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+              pathname === item.href ||
+              pathname.startsWith(`${item.href}/`) ||
+              (item.href === "/menu" &&
+                ["/settings", "/expenses", "/customers", "/debts", "/suppliers", "/reports", "/whatsapp"].some(
+                  (path) =>
+                    pathname === path || pathname.startsWith(`${path}/`)
+                ));
             const Icon = item.icon;
 
-            if (item.primary) {
+            if ("primary" in item && item.primary) {
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex flex-col items-center -mt-5 touch-manipulation"
+                  prefetch
+                  className="relative z-10 flex flex-col items-center -mt-5 touch-manipulation"
                 >
                   <div
                     className={cn(
@@ -64,8 +57,9 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 min-w-[56px] touch-manipulation active:scale-95 transition-transform",
+                  "relative z-10 flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 min-w-[56px] touch-manipulation active:scale-95 transition-transform",
                   isActive ? "text-biz-blue" : "text-muted-foreground"
                 )}
               >

@@ -14,21 +14,20 @@ export const businessSchema = z.object({
   ]),
   currency: z.string().default("NGN"),
   address: z.string().optional(),
-  phone: z.string().optional(),
 });
 
 export const productSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
-  sku: z.string().optional(),
-  barcode: z.string().optional(),
-  category: z.string().optional(),
-  supplierId: z.string().optional(),
+  name: z.string().trim().min(1, "Product name is required"),
+  sku: z.string().trim().optional(),
+  barcode: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+  supplierId: z.string().trim().optional(),
   purchasePrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
   quantity: z.coerce.number().int().min(0).default(0),
   reorderLevel: z.coerce.number().int().min(0).default(5),
-  batchNumber: z.string().optional(),
-  expiryDate: z.string().optional(),
+  batchNumber: z.string().trim().optional(),
+  expiryDate: z.string().trim().optional(),
 });
 
 export const saleItemSchema = z.object({
@@ -36,15 +35,30 @@ export const saleItemSchema = z.object({
   quantity: z.coerce.number().int().min(1),
 });
 
-export const saleSchema = z.object({
-  items: z.array(saleItemSchema).min(1, "Add at least one item"),
-  customerId: z.string().optional(),
-  paymentMethod: z.enum(["CASH", "TRANSFER", "POS", "CREDIT"]),
-  discount: z.coerce.number().min(0).default(0),
-  tax: z.coerce.number().min(0).default(0),
-  isCredit: z.boolean().default(false),
-  dueDate: z.string().optional(),
-  notes: z.string().optional(),
+export const saleSchema = z
+  .object({
+    items: z.array(saleItemSchema).min(1, "Add at least one item"),
+    customerId: z.string().optional(),
+    paymentMethod: z.enum(["CASH", "TRANSFER", "POS", "CREDIT"]),
+    discount: z.coerce.number().min(0).default(0),
+    tax: z.coerce.number().min(0).default(0),
+    isCredit: z.boolean().default(false),
+    dueDate: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMethod === "CREDIT" && !data.customerId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a customer for credit sales",
+        path: ["customerId"],
+      });
+    }
+  });
+
+export const debtPaymentSchema = z.object({
+  customerId: z.string().min(1),
+  amount: z.coerce.number().positive("Amount must be greater than zero"),
 });
 
 export const expenseSchema = z.object({

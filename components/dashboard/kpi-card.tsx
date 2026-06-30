@@ -1,15 +1,39 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
+import {
+  DollarSign,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+
+export type KPIIconName =
+  | "trendingUp"
+  | "trendingDown"
+  | "dollarSign"
+  | "users";
+
+function KpiIcon({ name, className }: { name: KPIIconName; className: string }) {
+  switch (name) {
+    case "trendingUp":
+      return <TrendingUp className={className} />;
+    case "trendingDown":
+      return <TrendingDown className={className} />;
+    case "dollarSign":
+      return <DollarSign className={className} />;
+    case "users":
+      return <Users className={className} />;
+  }
+}
 
 interface KPICardProps {
   title: string;
   value: number;
   currency?: string;
-  icon: LucideIcon;
+  iconName: KPIIconName;
   trend?: { value: number; label: string };
   variant?: "default" | "success" | "warning" | "danger";
   delay?: number;
@@ -26,7 +50,7 @@ export function KPICard({
   title,
   value,
   currency = "NGN",
-  icon: Icon,
+  iconName,
   trend,
   variant = "default",
   delay = 0,
@@ -65,7 +89,7 @@ export function KPICard({
                 variantStyles[variant]
               )}
             >
-              <Icon className="h-5 w-5" />
+              <KpiIcon name={iconName} className="h-5 w-5" />
             </div>
           </div>
         </CardContent>

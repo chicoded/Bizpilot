@@ -29,7 +29,7 @@ export function InstallPrompt() {
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 100 }}
-        className="fixed bottom-20 left-4 right-4 z-50 md:bottom-6 md:left-auto md:right-6 md:max-w-sm safe-area-pb"
+        className="fixed bottom-24 left-4 right-4 z-40 md:bottom-6 md:left-auto md:right-6 md:max-w-sm safe-area-pb"
       >
         <div className="rounded-2xl border border-biz-blue/20 bg-white/95 backdrop-blur-xl shadow-glass p-4">
           <div className="flex items-start gap-3">

@@ -10,14 +10,7 @@ import {
   generateAIInsights,
   saveHealthScore,
 } from "@/services/dashboard";
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Package,
-  AlertTriangle,
-  Users,
-} from "lucide-react";
+import { Package, AlertTriangle, Users } from "lucide-react";
 import { RevenueChart } from "@/features/dashboard/revenue-chart";
 
 export default async function DashboardPage() {
@@ -41,14 +34,14 @@ export default async function DashboardPage() {
         title="Dashboard"
         subtitle={`Good ${getGreeting()}, ${ctx.business.name}`}
       />
-      <main className="p-4 md:p-6 space-y-6 max-w-7xl">
+      <main className="p-4 md:p-6 space-y-6 max-w-7xl mobile-page">
         {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <KPICard
             title="Sales Today"
             value={kpis.revenueToday}
             currency={currency}
-            icon={TrendingUp}
+            iconName="trendingUp"
             variant="success"
             delay={0}
           />
@@ -56,7 +49,7 @@ export default async function DashboardPage() {
             title="Profit Today"
             value={kpis.profitToday}
             currency={currency}
-            icon={DollarSign}
+            iconName="dollarSign"
             variant="default"
             delay={0.1}
           />
@@ -64,7 +57,7 @@ export default async function DashboardPage() {
             title="Expenses Today"
             value={kpis.expensesToday}
             currency={currency}
-            icon={TrendingDown}
+            iconName="trendingDown"
             variant="warning"
             delay={0.2}
           />
@@ -72,7 +65,7 @@ export default async function DashboardPage() {
             title="Outstanding Debt"
             value={kpis.totalDebt}
             currency={currency}
-            icon={Users}
+            iconName="users"
             variant={kpis.totalDebt > 0 ? "danger" : "default"}
             delay={0.3}
           />

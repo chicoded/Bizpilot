@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
-import { businessSchema, productSchema, expenseSchema, saleSchema } from "@/lib/validations";
-import { syncClerkUser, requireBusinessContext } from "@/lib/auth";
-import { Role } from "@prisma/client";
+import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema } from "@/lib/validations";
+import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
+import { Role, Prisma } from "@prisma/client";
 
 export async function createBusiness(formData: FormData) {
   const user = await currentUser();
@@ -24,7 +24,6 @@ export async function createBusiness(formData: FormData) {
     industry: formData.get("industry"),
     currency: formData.get("currency") || "NGN",
     address: formData.get("address") || undefined,
-    phone: formData.get("phone") || undefined,
   });
 
   if (!parsed.success) {
@@ -64,37 +63,160 @@ export async function createBusiness(formData: FormData) {
   return { success: true, businessId: business.id };
 }
 
+function formValue(value: FormDataEntryValue | null): string | undefined {
+  if (value === null) return undefined;
+  const text = String(value).trim();
+  return text === "" ? undefined : text;
+}
+
+function formatFieldErrors(error: Record<string, string[] | undefined>): string {
+  const message = Object.values(error).flat().find(Boolean);
+  return message ?? "Please check your inputs";
+}
+
 export async function createProduct(formData: FormData) {
-  const ctx = await requireBusinessContext();
-  const parsed = productSchema.safeParse({
-    name: formData.get("name"),
-    sku: formData.get("sku") || undefined,
-    barcode: formData.get("barcode") || undefined,
-    category: formData.get("category") || undefined,
-    purchasePrice: formData.get("purchasePrice"),
-    sellingPrice: formData.get("sellingPrice"),
-    quantity: formData.get("quantity"),
-    reorderLevel: formData.get("reorderLevel"),
-    batchNumber: formData.get("batchNumber") || undefined,
-    expiryDate: formData.get("expiryDate") || undefined,
-  });
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return { error: "You must be signed in to add products" };
+    }
 
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    await syncClerkUser({
+      id: user.id,
+      emailAddresses: user.emailAddresses,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+    });
+
+    const ctx = await getBusinessContext();
+    if (!ctx) {
+      return { error: "Set up your business first at onboarding" };
+    }
+
+    const parsed = productSchema.safeParse({
+      name: formData.get("name"),
+      sku: formValue(formData.get("sku")),
+      barcode: formValue(formData.get("barcode")),
+      category: formValue(formData.get("category")),
+      purchasePrice: formData.get("purchasePrice"),
+      sellingPrice: formData.get("sellingPrice"),
+      quantity: formData.get("quantity"),
+      reorderLevel: formData.get("reorderLevel"),
+      batchNumber: formValue(formData.get("batchNumber")),
+      expiryDate: formValue(formData.get("expiryDate")),
+    });
+
+    if (!parsed.success) {
+      return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
+    }
+
+    const { expiryDate, sku, barcode, category, batchNumber, ...rest } =
+      parsed.data;
+
+    const product = await prisma.product.create({
+      data: {
+        ...rest,
+        sku: sku ?? null,
+        barcode: barcode ?? null,
+        category: category ?? null,
+        batchNumber: batchNumber ?? null,
+        businessId: ctx.businessId,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+      },
+    });
+
+    revalidatePath("/inventory");
+    return { success: true, product };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { error: "A product with this SKU already exists" };
+    }
+    console.error("createProduct failed:", error);
+    return { error: "Could not save product. Check your connection and try again." };
   }
+}
 
-  const { expiryDate, ...rest } = parsed.data;
+export async function updateProduct(productId: string, formData: FormData) {
+  try {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
+      return { error: "Set up your business first at onboarding" };
+    }
 
-  const product = await prisma.product.create({
-    data: {
-      ...rest,
-      businessId: ctx.businessId,
-      expiryDate: expiryDate ? new Date(expiryDate) : null,
-    },
-  });
+    const existing = await prisma.product.findFirst({
+      where: { id: productId, businessId: ctx.businessId, isActive: true },
+    });
+    if (!existing) {
+      return { error: "Product not found" };
+    }
 
-  revalidatePath("/inventory");
-  return { success: true, product };
+    const parsed = productSchema.safeParse({
+      name: formData.get("name"),
+      sku: formValue(formData.get("sku")),
+      barcode: formValue(formData.get("barcode")),
+      category: formValue(formData.get("category")),
+      purchasePrice: formData.get("purchasePrice"),
+      sellingPrice: formData.get("sellingPrice"),
+      quantity: formData.get("quantity"),
+      reorderLevel: formData.get("reorderLevel"),
+      batchNumber: formValue(formData.get("batchNumber")),
+      expiryDate: formValue(formData.get("expiryDate")),
+    });
+
+    if (!parsed.success) {
+      return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
+    }
+
+    const { expiryDate, sku, barcode, category, batchNumber, quantity, ...rest } =
+      parsed.data;
+
+    const quantityDelta = quantity - existing.quantity;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: productId },
+        data: {
+          ...rest,
+          quantity,
+          sku: sku ?? null,
+          barcode: barcode ?? null,
+          category: category ?? null,
+          batchNumber: batchNumber ?? null,
+          expiryDate: expiryDate ? new Date(expiryDate) : null,
+        },
+      });
+
+      if (quantityDelta !== 0) {
+        await tx.stockAdjustment.create({
+          data: {
+            productId,
+            businessId: ctx.businessId,
+            type: "MANUAL",
+            quantity: quantityDelta,
+            reason: "Inventory update",
+            createdBy: ctx.userId,
+          },
+        });
+      }
+    });
+
+    revalidatePath("/inventory");
+    revalidatePath(`/inventory/${productId}`);
+    return { success: true };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { error: "A product with this SKU already exists" };
+    }
+    console.error("updateProduct failed:", error);
+    return { error: "Could not update product" };
+  }
 }
 
 export async function createExpense(formData: FormData) {
@@ -138,7 +260,16 @@ export async function createSale(data: {
   const parsed = saleSchema.safeParse(data);
 
   if (!parsed.success) {
-    return { error: "Invalid sale data" };
+    return { error: parsed.error.flatten().fieldErrors.customerId?.[0] ?? "Invalid sale data" };
+  }
+
+  if (parsed.data.paymentMethod === "CREDIT") {
+    const customer = await prisma.customer.findFirst({
+      where: { id: parsed.data.customerId, businessId: ctx.businessId },
+    });
+    if (!customer) {
+      return { error: "Customer not found" };
+    }
   }
 
   const products = await prisma.product.findMany({
@@ -188,7 +319,7 @@ export async function createSale(data: {
         tax,
         total,
         profit,
-        isCredit: parsed.data.isCredit ?? false,
+        isCredit: parsed.data.paymentMethod === "CREDIT",
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
         createdBy: ctx.userId,
         items: { create: saleItems },
@@ -212,7 +343,7 @@ export async function createSale(data: {
       });
     }
 
-    if (parsed.data.isCredit && parsed.data.customerId) {
+    if (parsed.data.paymentMethod === "CREDIT" && parsed.data.customerId) {
       await tx.customer.update({
         where: { id: parsed.data.customerId },
         data: {
@@ -237,7 +368,70 @@ export async function createSale(data: {
   revalidatePath("/sales");
   revalidatePath("/dashboard");
   revalidatePath("/inventory");
+  revalidatePath("/customers");
+  revalidatePath("/debts");
   return { success: true, sale };
+}
+
+export async function createCustomer(data: {
+  name: string;
+  phone?: string;
+  email?: string;
+}) {
+  const ctx = await requireBusinessContext();
+  const parsed = customerSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors.name?.[0] ?? "Invalid customer data" };
+  }
+
+  const customer = await prisma.customer.create({
+    data: {
+      businessId: ctx.businessId,
+      name: parsed.data.name,
+      phone: parsed.data.phone || null,
+      email: parsed.data.email || null,
+    },
+  });
+
+  revalidatePath("/customers");
+  revalidatePath("/debts");
+  return { success: true, customer };
+}
+
+export async function recordDebtPayment(data: {
+  customerId: string;
+  amount: number;
+}) {
+  const ctx = await requireBusinessContext();
+  const parsed = debtPaymentSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: "Invalid payment amount" };
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: parsed.data.customerId, businessId: ctx.businessId },
+  });
+
+  if (!customer) {
+    return { error: "Customer not found" };
+  }
+
+  const currentDebt = Number(customer.debt);
+  if (parsed.data.amount > currentDebt) {
+    return { error: "Payment exceeds outstanding debt" };
+  }
+
+  await prisma.customer.update({
+    where: { id: customer.id },
+    data: { debt: { decrement: parsed.data.amount } },
+  });
+
+  revalidatePath("/debts");
+  revalidatePath("/customers");
+  revalidatePath("/dashboard");
+  return { success: true };
 }
 
 export async function sendAIMessage(message: string) {
