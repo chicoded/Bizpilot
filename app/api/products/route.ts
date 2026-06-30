@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireBusinessDataAccess } from "@/lib/api-access";
 import { listProductsForApi } from "@/lib/products";
 import { getProductSchemaStatus, repairProductSchema } from "@/lib/schema";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireBusinessDataAccess(["inventory", "sales"]);
 
     const schema = await getProductSchemaStatus();
     if (!schema.ok) {

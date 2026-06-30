@@ -1,11 +1,93 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Role } from "@prisma/client";
+import { Role, type Business, type Membership, type Prisma } from "@prisma/client";
 import {
   canAccessSection,
   type AppSectionId,
 } from "@/lib/permissions";
+import {
+  getActiveBusinessIdFromCookie,
+  pickActiveMembership,
+  setActiveBusinessId,
+  type MembershipWithBusiness,
+} from "@/lib/active-business";
+
+const BUSINESS_INCLUDE = { business: true } as const;
+
+const BUSINESS_SELECT_FALLBACK = {
+  id: true,
+  name: true,
+  industry: true,
+  currency: true,
+  logo: true,
+  address: true,
+  phone: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+function formatBusinessContext(
+  membership: MembershipWithBusiness,
+  userId: string
+) {
+  const business = membership.business as Business & {
+    rolePermissions?: Prisma.JsonValue | null;
+  };
+
+  return {
+    userId,
+    businessId: membership.businessId,
+    role: membership.role,
+    business: {
+      ...business,
+      rolePermissions: business.rolePermissions ?? null,
+    },
+  };
+}
+
+async function loadMembershipForUser(userId: string, businessId?: string) {
+  if (businessId) {
+    return prisma.membership.findUnique({
+      where: { userId_businessId: { userId, businessId } },
+      include: BUSINESS_INCLUDE,
+    });
+  }
+
+  const cookieBusinessId = await getActiveBusinessIdFromCookie();
+  const memberships = await prisma.membership.findMany({
+    where: { userId },
+    include: BUSINESS_INCLUDE,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const picked = pickActiveMembership(memberships, cookieBusinessId);
+  return picked;
+}
+
+async function loadMembershipForUserWithoutRolePermissions(
+  userId: string,
+  businessId?: string
+) {
+  if (businessId) {
+    return prisma.membership.findUnique({
+      where: { userId_businessId: { userId, businessId } },
+      include: { business: { select: BUSINESS_SELECT_FALLBACK } },
+    });
+  }
+
+  const cookieBusinessId = await getActiveBusinessIdFromCookie();
+  const memberships = await prisma.membership.findMany({
+    where: { userId },
+    include: { business: { select: BUSINESS_SELECT_FALLBACK } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return pickActiveMembership(
+    memberships as MembershipWithBusiness[],
+    cookieBusinessId
+  );
+}
 
 export async function getCurrentUser() {
   const { userId } = await auth();
@@ -28,25 +110,14 @@ export async function getBusinessContext(businessId?: string) {
   if (!userId) return null;
 
   try {
-    const membership = businessId
-      ? await prisma.membership.findUnique({
-          where: { userId_businessId: { userId, businessId } },
-          include: { business: true },
-        })
-      : await prisma.membership.findFirst({
-          where: { userId },
-          include: { business: true },
-          orderBy: { createdAt: "asc" },
-        });
-
+    const membership = await loadMembershipForUser(userId, businessId);
     if (!membership) return null;
 
-    return {
-      userId,
-      businessId: membership.businessId,
-      role: membership.role,
-      business: membership.business,
-    };
+    if (!businessId) {
+      await setActiveBusinessId(membership.businessId);
+    }
+
+    return formatBusinessContext(membership, userId);
   } catch (error) {
     const missingRolePermissions =
       error instanceof Error &&
@@ -56,53 +127,24 @@ export async function getBusinessContext(businessId?: string) {
       throw error;
     }
 
-    const membership = businessId
-      ? await prisma.membership.findUnique({
-          where: { userId_businessId: { userId, businessId } },
-          include: {
-            business: {
-              select: {
-                id: true,
-                name: true,
-                industry: true,
-                currency: true,
-                logo: true,
-                address: true,
-                phone: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
-          },
-        })
-      : await prisma.membership.findFirst({
-          where: { userId },
-          include: {
-            business: {
-              select: {
-                id: true,
-                name: true,
-                industry: true,
-                currency: true,
-                logo: true,
-                address: true,
-                phone: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        });
+    const membership = await loadMembershipForUserWithoutRolePermissions(
+      userId,
+      businessId
+    );
 
     if (!membership) return null;
 
-    return {
-      userId,
-      businessId: membership.businessId,
-      role: membership.role,
-      business: { ...membership.business, rolePermissions: null },
-    };
+    if (!businessId) {
+      await setActiveBusinessId(membership.businessId);
+    }
+
+    return formatBusinessContext(
+      {
+        ...membership,
+        business: { ...membership.business, rolePermissions: null },
+      } as MembershipWithBusiness,
+      userId
+    );
   }
 }
 

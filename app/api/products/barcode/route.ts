@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireBusinessDataAccess } from "@/lib/api-access";
 import { prisma } from "@/lib/db";
 import { barcodeLookupVariants, normalizeBarcode } from "@/lib/barcode";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireBusinessDataAccess(["inventory", "sales"]);
     const { searchParams } = new URL(request.url);
     const code = normalizeBarcode(searchParams.get("code") ?? "");
 

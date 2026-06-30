@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireBusinessDataAccess } from "@/lib/api-access";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireBusinessDataAccess(["customers", "sales", "debts"]);
     const customers = await prisma.customer.findMany({
       where: { businessId: ctx.businessId },
       select: {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireBusinessDataAccess } from "@/lib/api-access";
 import { prisma } from "@/lib/db";
 import { getFullReport } from "@/services/reports";
 import {
@@ -15,7 +15,7 @@ const VALID_PERIODS: ReportPeriod[] = ["today", "week", "month", "quarter", "yea
 
 export async function GET(request: Request) {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireBusinessDataAccess(["reports"]);
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get("period") as ReportPeriod) || "month";
     const formatType = searchParams.get("format") ?? "pdf";

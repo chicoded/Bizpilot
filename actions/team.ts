@@ -12,6 +12,7 @@ import {
   syncClerkUser,
 } from "@/lib/auth";
 import { getAppUrl } from "@/lib/env";
+import { setActiveBusinessId } from "@/lib/active-business";
 import { inviteableRolesFor } from "@/lib/team";
 import { teamInviteSchema, updateMemberRoleSchema } from "@/lib/validations";
 
@@ -273,6 +274,7 @@ export async function acceptTeamInvite(token: string) {
         where: { id: invite.id },
         data: { acceptedAt: new Date() },
       });
+      await setActiveBusinessId(invite.businessId);
       return { success: true, businessId: invite.businessId, alreadyMember: true };
     }
 
@@ -299,6 +301,8 @@ export async function acceptTeamInvite(token: string) {
         },
       }),
     ]);
+
+    await setActiveBusinessId(invite.businessId);
 
     revalidatePath("/settings");
     revalidatePath("/dashboard");

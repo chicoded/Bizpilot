@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale, updateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, requireSectionAccess } from "@/lib/auth";
+import { setActiveBusinessId } from "@/lib/active-business";
 import {
   deleteProductImage,
   uploadProductImage,
@@ -64,6 +65,8 @@ export async function createBusiness(formData: FormData) {
       entityId: business.id,
     },
   });
+
+  await setActiveBusinessId(business.id);
 
   revalidatePath("/dashboard");
   return { success: true, businessId: business.id };
