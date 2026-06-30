@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateServerEnv, getAppUrl } from "@/lib/env";
 import { isProductImageUploadEnabled } from "@/lib/product-images";
+import { ensureProductImageColumn } from "@/lib/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,7 +26,17 @@ export async function GET() {
         await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
         schema = "ok";
       } catch {
-        schema = "error";
+        const repaired = await ensureProductImageColumn();
+        if (repaired) {
+          try {
+            await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
+            schema = "ok";
+          } catch {
+            schema = "error";
+          }
+        } else {
+          schema = "error";
+        }
       }
     } catch {
       database = "error";

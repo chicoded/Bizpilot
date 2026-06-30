@@ -66,6 +66,9 @@ execSync("npx prisma generate", { cwd: root, stdio: "inherit" });
 console.log("\n→ Pushing schema to Supabase...");
 execSync("npx prisma db push", { cwd: root, stdio: "inherit" });
 
+console.log("\n→ Ensuring optional product columns...");
+execSync("node scripts/ensure-product-schema.mjs", { cwd: root, stdio: "inherit" });
+
 console.log("\n✅ Database schema is on Supabase.");
 console.log("\nNext steps:");
 console.log("  1. Supabase Dashboard → SQL Editor → run database/rls-policies.sql");

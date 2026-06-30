@@ -2,7 +2,12 @@ import OpenAI from "openai";
 import { prisma } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { sendWhatsAppMessage, toWhatsAppAddress } from "@/services/twilio";
-import type { Product } from "@prisma/client";
+
+type WhatsAppProduct = {
+  name: string;
+  sellingPrice: { toString(): string };
+  quantity: number;
+};
 
 const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -118,7 +123,7 @@ export async function resolveBusinessFromInbound(
   return null;
 }
 
-function searchProducts(products: Product[], query: string): Product[] {
+function searchProducts(products: WhatsAppProduct[], query: string): WhatsAppProduct[] {
   const terms = query
     .toLowerCase()
     .replace(/do you have|is there|any|available|in stock|price of|how much/gi, "")
@@ -137,7 +142,7 @@ function searchProducts(products: Product[], query: string): Product[] {
 }
 
 function formatProductReply(
-  products: Product[],
+  products: WhatsAppProduct[],
   currency: string,
   businessName: string
 ): string {
@@ -175,7 +180,7 @@ function formatDebtReply(
 async function generateAIReply(
   message: string,
   businessName: string,
-  products: Product[],
+  products: WhatsAppProduct[],
   currency: string
 ): Promise<string | null> {
   if (!openai) return null;
@@ -223,6 +228,12 @@ export async function generateCustomerReply(
     prisma.product.findMany({
       where: { businessId, isActive: true },
       orderBy: { name: "asc" },
+      select: {
+        name: true,
+        sellingPrice: true,
+        quantity: true,
+        category: true,
+      },
     }),
     prisma.whatsAppConfig.findUnique({ where: { businessId } }),
   ]);

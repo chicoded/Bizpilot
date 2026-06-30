@@ -1,5 +1,12 @@
-import { cache } from "react";
 import { prisma } from "@/lib/db";
+import { hasProductImageColumn, ensureProductImageColumn } from "@/lib/schema";
+import type {
+  InventoryDetailProduct,
+  InventoryListProduct,
+  ProductApiItem,
+} from "@/types";
+
+export type { InventoryDetailProduct, InventoryListProduct, ProductApiItem };
 
 const inventoryListSelect = {
   id: true,
@@ -17,96 +24,190 @@ const inventoryDetailSelect = {
   purchasePrice: true,
 } as const;
 
-export type InventoryListProduct = {
-  id: string;
-  name: string;
-  category: string | null;
-  sellingPrice: number;
-  quantity: number;
-  reorderLevel: number;
-  expiryDate: Date | null;
-  imageUrl: string | null;
-};
+const productApiSelect = {
+  id: true,
+  name: true,
+  sellingPrice: true,
+  quantity: true,
+  barcode: true,
+} as const;
 
-export type InventoryDetailProduct = InventoryListProduct & {
-  barcode: string | null;
-  purchasePrice: number;
-};
+function normalizeListProduct(
+  product: {
+    id: string;
+    name: string;
+    category: string | null;
+    sellingPrice: { toString(): string } | number;
+    quantity: number;
+    reorderLevel: number;
+    expiryDate: Date | null;
+    imageUrl?: string | null;
+  },
+  withImages: boolean
+): InventoryListProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    category: product.category ?? null,
+    sellingPrice: Number(product.sellingPrice),
+    quantity: product.quantity,
+    reorderLevel: product.reorderLevel,
+    expiryDate: product.expiryDate ?? null,
+    imageUrl: withImages ? (product.imageUrl ?? null) : null,
+  };
+}
 
-const supportsProductImages = cache(async (): Promise<boolean> => {
-  try {
-    await prisma.$queryRaw`SELECT "imageUrl" FROM "products" LIMIT 0`;
-    return true;
-  } catch {
-    return false;
-  }
-});
+function normalizeDetailProduct(
+  product: {
+    id: string;
+    name: string;
+    category: string | null;
+    barcode: string | null;
+    purchasePrice: { toString(): string } | number;
+    sellingPrice: { toString(): string } | number;
+    quantity: number;
+    reorderLevel: number;
+    expiryDate: Date | null;
+    imageUrl?: string | null;
+  },
+  withImages: boolean
+): InventoryDetailProduct {
+  return {
+    ...normalizeListProduct(product, withImages),
+    barcode: product.barcode ?? null,
+    purchasePrice: Number(product.purchasePrice),
+  };
+}
 
-export async function listInventoryProducts(
-  businessId: string
-): Promise<InventoryListProduct[]> {
-  const withImages = await supportsProductImages();
-
-  const products = await prisma.product.findMany({
+async function fetchInventoryList(
+  businessId: string,
+  withImages: boolean
+) {
+  return prisma.product.findMany({
     where: { businessId, isActive: true },
     orderBy: { name: "asc" },
     select: withImages
       ? { ...inventoryListSelect, imageUrl: true }
       : inventoryListSelect,
   });
+}
 
-  return products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    category: product.category,
-    sellingPrice: Number(product.sellingPrice),
-    quantity: product.quantity,
-    reorderLevel: product.reorderLevel,
-    expiryDate: product.expiryDate,
-    imageUrl:
-      withImages && "imageUrl" in product
-        ? (product.imageUrl as string | null)
-        : null,
-  }));
+export async function listInventoryProducts(
+  businessId: string
+): Promise<InventoryListProduct[]> {
+  if (!(await hasProductImageColumn())) {
+    await ensureProductImageColumn();
+  }
+
+  const withImages = await hasProductImageColumn();
+
+  try {
+    const products = await fetchInventoryList(businessId, withImages);
+    return products.map((product) => normalizeListProduct(product, withImages));
+  } catch (error) {
+    console.error("listInventoryProducts failed:", error);
+
+    if (withImages) {
+      try {
+        const products = await fetchInventoryList(businessId, false);
+        return products.map((product) => normalizeListProduct(product, false));
+      } catch (retryError) {
+        console.error("listInventoryProducts retry failed:", retryError);
+      }
+    }
+
+    return [];
+  }
 }
 
 export async function getInventoryProduct(
   businessId: string,
   productId: string
 ): Promise<InventoryDetailProduct | null> {
-  const withImages = await supportsProductImages();
+  const withImages = await hasProductImageColumn();
 
-  const product = await prisma.product.findFirst({
-    where: { id: productId, businessId, isActive: true },
-    select: withImages
-      ? { ...inventoryDetailSelect, imageUrl: true }
-      : inventoryDetailSelect,
-  });
+  try {
+    const product = await prisma.product.findFirst({
+      where: { id: productId, businessId, isActive: true },
+      select: withImages
+        ? { ...inventoryDetailSelect, imageUrl: true }
+        : inventoryDetailSelect,
+    });
 
-  if (!product) return null;
+    if (!product) return null;
+    return normalizeDetailProduct(product, withImages);
+  } catch (error) {
+    console.error("getInventoryProduct failed:", error);
 
-  return {
-    id: product.id,
-    name: product.name,
-    category: product.category,
-    barcode: product.barcode,
-    purchasePrice: Number(product.purchasePrice),
-    sellingPrice: Number(product.sellingPrice),
-    quantity: product.quantity,
-    reorderLevel: product.reorderLevel,
-    expiryDate: product.expiryDate,
-    imageUrl:
-      withImages && "imageUrl" in product
-        ? (product.imageUrl as string | null)
-        : null,
-  };
+    if (!withImages) return null;
+
+    try {
+      const product = await prisma.product.findFirst({
+        where: { id: productId, businessId, isActive: true },
+        select: inventoryDetailSelect,
+      });
+
+      if (!product) return null;
+      return normalizeDetailProduct(product, false);
+    } catch (retryError) {
+      console.error("getInventoryProduct retry failed:", retryError);
+      return null;
+    }
+  }
+}
+
+export async function listProductsForApi(
+  businessId: string
+): Promise<ProductApiItem[]> {
+  const withImages = await hasProductImageColumn();
+
+  try {
+    const products = await prisma.product.findMany({
+      where: { businessId, isActive: true },
+      orderBy: { name: "asc" },
+      select: withImages
+        ? { ...productApiSelect, imageUrl: true }
+        : productApiSelect,
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sellingPrice: Number(product.sellingPrice),
+      quantity: product.quantity,
+      barcode: product.barcode ?? null,
+      imageUrl:
+        withImages && "imageUrl" in product
+          ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
+          : null,
+    }));
+  } catch (error) {
+    console.error("listProductsForApi failed:", error);
+
+    if (!withImages) return [];
+
+    const products = await prisma.product.findMany({
+      where: { businessId, isActive: true },
+      orderBy: { name: "asc" },
+      select: productApiSelect,
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sellingPrice: Number(product.sellingPrice),
+      quantity: product.quantity,
+      barcode: product.barcode ?? null,
+      imageUrl: null,
+    }));
+  }
 }
 
 export async function updateProductImageUrl(
   productId: string,
   imageUrl: string | null
 ): Promise<boolean> {
-  if (!(await supportsProductImages())) {
+  if (!(await hasProductImageColumn())) {
     return false;
   }
 
@@ -114,6 +215,7 @@ export async function updateProductImageUrl(
     await prisma.product.update({
       where: { id: productId },
       data: { imageUrl },
+      select: { id: true },
     });
     return true;
   } catch {
@@ -178,4 +280,3 @@ export async function createInventoryProduct(
     select: productCreateSelect,
   });
 }
-

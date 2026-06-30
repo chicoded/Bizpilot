@@ -1,20 +1,22 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductImage } from "@/components/product/product-image";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { AlertTriangle, Package } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import type { InventoryListProduct } from "@/lib/products";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    category: string | null;
-    sellingPrice: number;
-    quantity: number;
-    reorderLevel: number;
-    expiryDate: Date | null;
-    imageUrl: string | null;
-  };
+  product: Pick<
+    InventoryListProduct,
+    | "id"
+    | "name"
+    | "category"
+    | "sellingPrice"
+    | "quantity"
+    | "reorderLevel"
+    | "expiryDate"
+    | "imageUrl"
+  >;
   currency: string;
   isLowStock: boolean;
   isExpiring: boolean;
@@ -33,19 +35,11 @@ export function ProductCard({
     >
       <Card className="hover:shadow-glass transition-shadow cursor-pointer h-full active:scale-[0.99] overflow-hidden">
         <div className="relative aspect-[4/3] w-full bg-slate-100">
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-              <Package className="h-10 w-10 opacity-40" />
-            </div>
-          )}
+          <ProductImage
+            imageUrl={product.imageUrl}
+            alt={product.name}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
           {isLowStock && (
             <div className="absolute top-2 right-2 rounded-full bg-amber-100 p-1.5 shadow-sm">
               <AlertTriangle className="h-4 w-4 text-amber-600" />

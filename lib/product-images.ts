@@ -1,5 +1,7 @@
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
+export const PRODUCT_PLACEHOLDER_SRC = "/product-placeholder.svg";
+
 const BUCKET = "product-images";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -8,6 +10,18 @@ const ALLOWED_TYPES = new Set([
   "image/webp",
   "image/gif",
 ]);
+
+export function getProductDisplayImageUrl(
+  imageUrl: string | null | undefined
+): string {
+  const trimmed = imageUrl?.trim();
+  if (!trimmed) return PRODUCT_PLACEHOLDER_SRC;
+  return trimmed;
+}
+
+export function isProductPlaceholderImage(src: string): boolean {
+  return src === PRODUCT_PLACEHOLDER_SRC;
+}
 
 export function isProductImageUploadEnabled(): boolean {
   if (!isSupabaseConfigured()) return false;

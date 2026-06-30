@@ -14,7 +14,12 @@ export default async function InventoryPage() {
   const ctx = await getBusinessContext();
   if (!ctx) redirect("/onboarding");
 
-  const products = await listInventoryProducts(ctx.businessId);
+  let products: Awaited<ReturnType<typeof listInventoryProducts>> = [];
+  try {
+    products = await listInventoryProducts(ctx.businessId);
+  } catch (error) {
+    console.error("Inventory page load failed:", error);
+  }
 
   const lowStockCount = products.filter(
     (p) => p.quantity <= p.reorderLevel

@@ -1,3 +1,28 @@
+export interface InventoryListProduct {
+  id: string;
+  name: string;
+  category: string | null;
+  sellingPrice: number;
+  quantity: number;
+  reorderLevel: number;
+  expiryDate: Date | null;
+  imageUrl: string | null;
+}
+
+export interface InventoryDetailProduct extends InventoryListProduct {
+  barcode: string | null;
+  purchasePrice: number;
+}
+
+export interface ProductApiItem {
+  id: string;
+  name: string;
+  sellingPrice: number;
+  quantity: number;
+  barcode: string | null;
+  imageUrl: string | null;
+}
+
 export interface ReportSummary {
   revenue: number;
   profit: number;

@@ -1,28 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireBusinessContext } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { listProductsForApi } from "@/lib/products";
 
 export async function GET() {
   try {
     const ctx = await requireBusinessContext();
-    const products = await prisma.product.findMany({
-      where: { businessId: ctx.businessId, isActive: true },
-      select: {
-        id: true,
-        name: true,
-        sellingPrice: true,
-        quantity: true,
-        barcode: true,
-      },
-      orderBy: { name: "asc" },
-    });
+    const products = await listProductsForApi(ctx.businessId);
 
-    return NextResponse.json({
-      products: products.map((p) => ({
-        ...p,
-        sellingPrice: Number(p.sellingPrice),
-      })),
-    });
+    return NextResponse.json({ products });
   } catch {
     return NextResponse.json({ products: [] }, { status: 401 });
   }

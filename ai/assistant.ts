@@ -46,7 +46,13 @@ export async function getBusinessContextForAI(businessId: string) {
         where: { businessId },
         orderBy: { createdAt: "desc" },
         take: 5,
-        include: { items: { include: { product: true } } },
+        include: {
+          items: {
+            include: {
+              product: { select: { name: true } },
+            },
+          },
+        },
       }),
     ]);
 
