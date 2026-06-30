@@ -11,6 +11,7 @@ import {
 } from "@/lib/subscription";
 import { getPlanDetails } from "@/lib/subscription";
 import { Building2, CreditCard, Users, ChevronRight } from "lucide-react";
+import { BusinessProfileForm } from "@/features/settings/business-profile-form";
 
 export default async function SettingsPage() {
   const ctx = await getBusinessContext();
@@ -37,19 +38,16 @@ export default async function SettingsPage() {
               Business
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Name</span>
-              <span className="font-medium">{ctx.business.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Industry</span>
-              <span className="font-medium">{ctx.business.industry}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Currency</span>
-              <span className="font-medium">{ctx.business.currency}</span>
-            </div>
+          <CardContent className="space-y-4">
+            <BusinessProfileForm
+              business={{
+                name: ctx.business.name,
+                industry: ctx.business.industry,
+                currency: ctx.business.currency,
+                address: ctx.business.address,
+                phone: ctx.business.phone,
+              }}
+            />
           </CardContent>
         </Card>
 

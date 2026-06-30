@@ -14,6 +14,15 @@ export const businessSchema = z.object({
   ]),
   currency: z.string().default("NGN"),
   address: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+export const updateBusinessSchema = businessSchema.pick({
+  name: true,
+  industry: true,
+  currency: true,
+  address: true,
+  phone: true,
 });
 
 export const productSchema = z.object({

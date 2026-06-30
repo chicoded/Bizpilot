@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale, updateInventoryProduct } from "@/lib/products";
-import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema } from "@/lib/validations";
+import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
 import {
   deleteProductImage,
@@ -322,7 +322,7 @@ export async function createExpense(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
   }
 
   const expense = await prisma.expense.create({
@@ -334,11 +334,111 @@ export async function createExpense(formData: FormData) {
       date: parsed.data.date ? new Date(parsed.data.date) : new Date(),
       createdBy: ctx.userId,
     },
+    select: { id: true },
   });
 
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
+  revalidatePath("/reports");
   return { success: true, expense };
+}
+
+export async function deleteExpense(expenseId: string) {
+  try {
+    const ctx = await requireBusinessContext();
+
+    const expense = await prisma.expense.findFirst({
+      where: { id: expenseId, businessId: ctx.businessId },
+      select: { id: true },
+    });
+
+    if (!expense) {
+      return { error: "Expense not found" };
+    }
+
+    await prisma.expense.delete({ where: { id: expenseId } });
+
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    revalidatePath("/reports");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteExpense failed:", error);
+    return { error: "Could not delete expense" };
+  }
+}
+
+export async function updateBusiness(formData: FormData) {
+  try {
+    const ctx = await requireBusinessContext();
+
+    const parsed = updateBusinessSchema.safeParse({
+      name: formData.get("name"),
+      industry: formData.get("industry"),
+      currency: formData.get("currency") || "NGN",
+      address: formValue(formData.get("address")),
+      phone: formValue(formData.get("phone")),
+    });
+
+    if (!parsed.success) {
+      return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
+    }
+
+    await prisma.business.update({
+      where: { id: ctx.businessId },
+      data: {
+        name: parsed.data.name,
+        industry: parsed.data.industry,
+        currency: parsed.data.currency,
+        address: parsed.data.address ?? null,
+        phone: parsed.data.phone ?? null,
+      },
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("updateBusiness failed:", error);
+    return { error: "Could not update business profile" };
+  }
+}
+
+export async function updateCustomer(
+  customerId: string,
+  data: { name: string; phone?: string; email?: string }
+) {
+  const ctx = await requireBusinessContext();
+  const parsed = customerSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      error:
+        parsed.error.flatten().fieldErrors.name?.[0] ?? "Invalid customer data",
+    };
+  }
+
+  const existing = await prisma.customer.findFirst({
+    where: { id: customerId, businessId: ctx.businessId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    return { error: "Customer not found" };
+  }
+
+  const customer = await prisma.customer.update({
+    where: { id: customerId },
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone || null,
+      email: parsed.data.email || null,
+    },
+  });
+
+  revalidatePath("/customers");
+  revalidatePath("/debts");
+  return { success: true, customer };
 }
 
 export async function createSale(data: {
