@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ProductImageField } from "@/features/inventory/product-image-field";
+import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 
 interface NewProductFormProps {
   initialBarcode?: string;
@@ -121,17 +122,12 @@ export function NewProductForm({ initialBarcode = "" }: NewProductFormProps) {
                 <Label htmlFor="category">Category</Label>
                 <Input id="category" name="category" placeholder="Medicine, Drinks, etc." />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="barcode">Barcode</Label>
-                  <Input
-                    id="barcode"
-                    name="barcode"
-                    value={barcode}
-                    onChange={(e) => setBarcode(e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <BarcodeScanField
+                  value={barcode}
+                  onChange={setBarcode}
+                  disabled={isPending}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry date</Label>
                   <Input id="expiryDate" name="expiryDate" type="date" />

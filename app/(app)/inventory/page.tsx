@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Package } from "lucide-react";
 import { addDays } from "date-fns";
 import { ProductCard } from "@/features/inventory/product-card";
+import { ScanToAddProductButton } from "@/features/inventory/scan-to-add-button";
 
 export default async function InventoryPage() {
   const ctx = await getBusinessContext();
@@ -29,6 +30,7 @@ export default async function InventoryPage() {
     <>
       <Header title="Inventory" subtitle={`${products.length} products`} />
       <main className="p-4 md:p-6 space-y-4 max-w-7xl mobile-page">
+        {products.length > 0 && <ScanToAddProductButton />}
         <div className="flex items-center justify-between gap-4">
           <div className="flex gap-2 flex-wrap">
             {lowStockCount > 0 && (
@@ -56,14 +58,17 @@ export default async function InventoryPage() {
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="font-semibold text-lg mb-2">No products yet</h3>
               <p className="text-muted-foreground text-sm mb-6 max-w-sm">
-                Add your first product to start tracking inventory and making sales.
+                Scan a barcode or add your first product manually to start selling.
               </p>
-              <Button asChild>
-                <Link href="/inventory/new">
-                  <Plus className="h-4 w-4" />
-                  Add First Product
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-3 w-full max-w-xs">
+                <ScanToAddProductButton />
+                <Button asChild variant="outline">
+                  <Link href="/inventory/new">
+                    <Plus className="h-4 w-4" />
+                    Add Manually
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (

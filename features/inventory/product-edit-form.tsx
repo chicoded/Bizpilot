@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { ProductImageField } from "@/features/inventory/product-image-field";
+import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 
 interface ProductEditFormProps {
   product: {
@@ -33,6 +34,7 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [barcode, setBarcode] = useState(product.barcode ?? "");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -145,15 +147,13 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                   defaultValue={product.category ?? ""}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="barcode">Barcode</Label>
-                  <Input
-                    id="barcode"
-                    name="barcode"
-                    defaultValue={product.barcode ?? ""}
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <BarcodeScanField
+                  value={barcode}
+                  onChange={setBarcode}
+                  disabled={isPending}
+                  productId={product.id}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry date</Label>
                   <Input
