@@ -28,6 +28,44 @@ function vibrateOnSuccess() {
   }
 }
 
+function resolveFormatName(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string") return value;
+  if (typeof value === "number") {
+    const enumNames = [
+      "QR_CODE",
+      "AZTEC",
+      "CODABAR",
+      "CODE_39",
+      "CODE_93",
+      "CODE_128",
+      "DATA_MATRIX",
+      "MAXICODE",
+      "ITF",
+      "EAN_13",
+      "EAN_8",
+      "PDF_417",
+      "RSS_14",
+      "RSS_EXPANDED",
+      "UPC_A",
+      "UPC_E",
+      "UPC_EAN_EXTENSION",
+    ];
+    return enumNames[value];
+  }
+  return undefined;
+}
+
+function getDecodedFormatName(decodedResult: {
+  result?: { format?: { formatName?: unknown; format?: unknown } };
+}): string | undefined {
+  const format = decodedResult?.result?.format;
+  if (!format) return undefined;
+  return (
+    resolveFormatName(format.formatName) ?? resolveFormatName(format.format)
+  );
+}
+
 function isAllowedBarcode(code: string, formatName?: string): boolean {
   const trimmed = code.trim();
   if (!trimmed || trimmed.length < 4) return false;
@@ -154,10 +192,10 @@ export function MobileBarcodeScanner({
             disableFlip: true,
           },
           (decodedText, decodedResult) => {
-            const formatName =
-              decodedResult?.result?.format?.formatName ??
-              decodedResult?.result?.format?.format;
-            void handleScanSuccess(decodedText, formatName);
+            void handleScanSuccess(
+              decodedText,
+              getDecodedFormatName(decodedResult)
+            );
           },
           () => {
             // Scan attempt failed — keep scanning.
@@ -211,10 +249,10 @@ export function MobileBarcodeScanner({
               disableFlip: true,
             },
             (decodedText, decodedResult) => {
-              const formatName =
-                decodedResult?.result?.format?.formatName ??
-                decodedResult?.result?.format?.format;
-              void handleScanSuccess(decodedText, formatName);
+              void handleScanSuccess(
+                decodedText,
+                getDecodedFormatName(decodedResult)
+              );
             },
             () => undefined
           );
