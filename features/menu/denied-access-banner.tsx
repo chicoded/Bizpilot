@@ -1,0 +1,11 @@
+export function DeniedAccessBanner() {
+  return (
+    <div
+      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      role="status"
+    >
+      You don&apos;t have access to that section. Ask your business owner to
+      grant access in Settings.
+    </div>
+  );
+}

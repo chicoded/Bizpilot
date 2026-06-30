@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { AIChat } from "@/features/ai/ai-chat";
@@ -8,8 +8,7 @@ import { canAccessFeature } from "@/lib/subscription";
 import { getRequiredPlanForFeature } from "@/lib/subscription";
 
 export default async function AIPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("ai");
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId: ctx.businessId },

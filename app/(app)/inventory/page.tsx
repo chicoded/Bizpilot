@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { listInventoryProducts } from "@/lib/products";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -56,8 +56,7 @@ function isNextRedirect(error: unknown): boolean {
 
 export default async function InventoryPage() {
   try {
-    const ctx = await getBusinessContext();
-    if (!ctx) redirect("/onboarding");
+    const ctx = await requirePageAccess("inventory");
 
     const products = await listInventoryProducts(ctx.businessId);
 

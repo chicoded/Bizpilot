@@ -2,17 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Role } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { mobileNavItems } from "@/lib/app-navigation";
+import { filterNavItemsByAccess } from "@/lib/permissions";
 
-export function MobileNav() {
+interface MobileNavProps {
+  role: Role;
+  rolePermissions: Prisma.JsonValue | null;
+}
+
+export function MobileNav({ role, rolePermissions }: MobileNavProps) {
   const pathname = usePathname();
+  const items = filterNavItemsByAccess(
+    [...mobileNavItems],
+    role,
+    rolePermissions
+  );
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden pointer-events-auto">
       <div className="border-t border-border/40 bg-white/95 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,58,95,0.06)] safe-area-pb">
         <div className="flex items-end justify-around px-1 pt-1 pb-1">
-          {mobileNavItems.map((item) => {
+          {items.map((item) => {
             const isActive =
               pathname === item.href ||
               pathname.startsWith(`${item.href}/`) ||

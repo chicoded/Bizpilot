@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { listExpenses, type ExpensePeriod } from "@/lib/expenses";
 import { Header } from "@/components/layout/header";
 import { ExpensesPanel } from "@/features/expenses/expenses-panel";
@@ -16,8 +16,7 @@ export default async function ExpensesPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("expenses");
 
   const { period: periodParam } = await searchParams;
   const period = parsePeriod(periodParam);

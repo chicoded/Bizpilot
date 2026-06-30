@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,7 @@ import { differenceInDays } from "date-fns";
 import { RecordPaymentButton } from "@/features/debts/record-payment-button";
 
 export default async function DebtsPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("debts");
 
   const debtors = await prisma.customer.findMany({
     where: { businessId: ctx.businessId, debt: { gt: 0 } },

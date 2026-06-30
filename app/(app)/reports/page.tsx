@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { Header } from "@/components/layout/header";
 import {
   getFullReport,
@@ -22,8 +22,7 @@ interface ReportsPageProps {
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("reports");
 
   const params = await searchParams;
   const period = (params.period as ReportPeriod) || "month";

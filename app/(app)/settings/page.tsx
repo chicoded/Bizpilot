@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getBusinessContext } from "@/lib/auth";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,19 +9,21 @@ import {
   isSubscriptionActive,
 } from "@/lib/subscription";
 import { getPlanDetails } from "@/lib/subscription";
-import { Building2, CreditCard, Users, ChevronRight } from "lucide-react";
+import { Building2, CreditCard, Users, ChevronRight, Shield } from "lucide-react";
 import { BusinessProfileForm } from "@/features/settings/business-profile-form";
 import { TeamPanel } from "@/features/settings/team-panel";
-import { canChangeRoles, canManageTeam } from "@/lib/auth";
+import { AccessControlPanel } from "@/features/settings/access-control-panel";
+import { canChangeRoles, canManageTeam, requirePageAccess } from "@/lib/auth";
 import {
   getTeamMembers,
   getPendingInvites,
   inviteableRolesFor,
 } from "@/lib/team";
+import { parseRolePermissions, filterNavItemsByAccess, canAccessSection } from "@/lib/permissions";
+import { mainNavItems } from "@/lib/app-navigation";
 
 export default async function SettingsPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("settings");
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId: ctx.businessId },
@@ -38,6 +39,13 @@ export default async function SettingsPage() {
     getTeamMembers(ctx.businessId),
     getPendingInvites(ctx.businessId),
   ]);
+
+  const rolePermissions = parseRolePermissions(ctx.business.rolePermissions);
+  const sectionLinks = filterNavItemsByAccess(
+    mainNavItems,
+    ctx.role,
+    ctx.business.rolePermissions
+  ).filter((item) => item.href !== "/settings");
 
   return (
     <>
@@ -63,6 +71,7 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
+        {canAccessSection(ctx.role, ctx.business.rolePermissions, "billing") && (
         <Link href="/settings/billing">
           <Card className="hover:shadow-glass transition-shadow cursor-pointer">
             <CardContent className="p-5 flex items-center justify-between">
@@ -85,6 +94,7 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+        )}
 
         <Card>
           <CardHeader>
@@ -105,23 +115,26 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
+        {ctx.role === Role.OWNER && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="h-5 w-5" />
+                Page access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AccessControlPanel permissions={rolePermissions} />
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">All sections</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2 sm:grid-cols-2">
-            {[
-              { href: "/inventory", label: "Inventory" },
-              { href: "/sales", label: "Sales" },
-              { href: "/expenses", label: "Expenses" },
-              { href: "/customers", label: "Customers" },
-              { href: "/debts", label: "Debts" },
-              { href: "/reports", label: "Reports" },
-              { href: "/suppliers", label: "Suppliers" },
-              { href: "/whatsapp", label: "WhatsApp AI" },
-              { href: "/ai", label: "AI Assistant" },
-              { href: "/menu", label: "Full menu" },
-            ].map((link) => (
+            {sectionLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -132,6 +145,14 @@ export default async function SettingsPage() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
             ))}
+            <Link
+              href="/menu"
+              prefetch
+              className="flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium hover:bg-accent transition-colors touch-manipulation active:scale-[0.99]"
+            >
+              Full menu
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
           </CardContent>
         </Card>
       </main>

@@ -8,8 +8,7 @@ import { prisma } from "@/lib/db";
 import {
   canChangeRoles,
   canManageTeam,
-  getBusinessContext,
-  requireTeamManager,
+  requireSectionAccess,
   syncClerkUser,
 } from "@/lib/auth";
 import { getAppUrl } from "@/lib/env";
@@ -24,7 +23,10 @@ function createInviteToken() {
 
 export async function inviteTeamMember(formData: FormData) {
   try {
-    const ctx = await requireTeamManager();
+    const ctx = await requireSectionAccess("settings");
+    if (!canManageTeam(ctx.role)) {
+      return { error: "Only owners and managers can manage the team" };
+    }
 
     const parsed = teamInviteSchema.safeParse({
       email: formData.get("email"),
@@ -100,7 +102,10 @@ export async function inviteTeamMember(formData: FormData) {
 
 export async function cancelTeamInvite(inviteId: string) {
   try {
-    const ctx = await requireTeamManager();
+    const ctx = await requireSectionAccess("settings");
+    if (!canManageTeam(ctx.role)) {
+      return { error: "Only owners and managers can manage the team" };
+    }
 
     await prisma.teamInvite.deleteMany({
       where: { id: inviteId, businessId: ctx.businessId, acceptedAt: null },
@@ -116,8 +121,8 @@ export async function cancelTeamInvite(inviteId: string) {
 
 export async function updateMemberRole(formData: FormData) {
   try {
-    const ctx = await getBusinessContext();
-    if (!ctx || !canChangeRoles(ctx.role)) {
+    const ctx = await requireSectionAccess("settings");
+    if (!canChangeRoles(ctx.role)) {
       return { error: "Only the owner can change roles" };
     }
 
@@ -166,8 +171,8 @@ export async function updateMemberRole(formData: FormData) {
 
 export async function removeTeamMember(userId: string) {
   try {
-    const ctx = await getBusinessContext();
-    if (!ctx || !canChangeRoles(ctx.role)) {
+    const ctx = await requireSectionAccess("settings");
+    if (!canChangeRoles(ctx.role)) {
       return { error: "Only the owner can remove team members" };
     }
 

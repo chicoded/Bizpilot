@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { listSales, type SalePeriod } from "@/lib/sales";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,7 @@ export default async function SalesHistoryPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("sales_history");
 
   const { period: periodParam } = await searchParams;
   const period = parsePeriod(periodParam);

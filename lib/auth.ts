@@ -1,6 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Role } from "@prisma/client";
+import {
+  canAccessSection,
+  type AppSectionId,
+} from "@/lib/permissions";
 
 export async function getCurrentUser() {
   const { userId } = await auth();
@@ -74,6 +79,22 @@ export async function requireTeamManager() {
   const ctx = await requireBusinessContext();
   if (!canManageTeam(ctx.role)) {
     throw new Error("Only owners and managers can manage the team");
+  }
+  return ctx;
+}
+
+export async function requireSectionAccess(section: AppSectionId) {
+  const ctx = await requireBusinessContext();
+  if (!canAccessSection(ctx.role, ctx.business.rolePermissions, section)) {
+    throw new Error("You do not have access to this section");
+  }
+  return ctx;
+}
+
+export async function requirePageAccess(section: AppSectionId) {
+  const ctx = await requireBusinessContext();
+  if (!canAccessSection(ctx.role, ctx.business.rolePermissions, section)) {
+    redirect("/menu?denied=1");
   }
   return ctx;
 }

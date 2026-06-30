@@ -88,6 +88,7 @@ model Business {
   logo      String?
   address   String?
   phone     String?
+  rolePermissions Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

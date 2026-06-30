@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireSectionAccess } from "@/lib/auth";
 import {
   getBusinessSubscription,
   initializePlanCheckout,
@@ -17,7 +17,7 @@ import { z } from "zod";
 const planSchema = z.enum(["STARTER", "BUSINESS", "AI_PRO"]);
 
 export async function getBillingData() {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("billing");
   const user = await currentUser();
   const subscription = await getBusinessSubscription(ctx.businessId);
 
@@ -43,7 +43,7 @@ export async function startCheckout(planId: string) {
     };
   }
 
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("billing");
   const user = await currentUser();
   const email = user?.emailAddresses[0]?.emailAddress;
 

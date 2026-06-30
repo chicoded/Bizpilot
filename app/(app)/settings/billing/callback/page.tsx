@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { requirePageAccess } from "@/lib/auth";
 import { verifyCheckout } from "@/actions/billing";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,8 @@ interface CallbackPageProps {
 export default async function BillingCallbackPage({
   searchParams,
 }: CallbackPageProps) {
+  await requirePageAccess("billing");
+
   const params = await searchParams;
   const reference = params.reference ?? params.trxref;
 

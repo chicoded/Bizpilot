@@ -5,7 +5,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale, updateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
-import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
+import { syncClerkUser, requireBusinessContext, requireSectionAccess } from "@/lib/auth";
 import {
   deleteProductImage,
   uploadProductImage,
@@ -151,10 +151,7 @@ export async function createProduct(formData: FormData) {
       imageUrl: user.imageUrl,
     });
 
-    const ctx = await getBusinessContext();
-    if (!ctx) {
-      return { error: "Set up your business first at onboarding" };
-    }
+    const ctx = await requireSectionAccess("inventory");
 
     const parsed = productSchema.safeParse({
       name: formData.get("name"),
@@ -211,6 +208,9 @@ export async function createProduct(formData: FormData) {
     revalidatePath("/inventory");
     return { success: true, product };
   } catch (error) {
+    if (error instanceof Error && error.message.includes("access")) {
+      return { error: error.message };
+    }
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
@@ -224,10 +224,7 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProduct(productId: string, formData: FormData) {
   try {
-    const ctx = await getBusinessContext();
-    if (!ctx) {
-      return { error: "Set up your business first at onboarding" };
-    }
+    const ctx = await requireSectionAccess("inventory");
 
     const existing = await getInventoryProduct(ctx.businessId, productId);
     if (!existing) {
@@ -313,7 +310,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 }
 
 export async function createExpense(formData: FormData) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("expenses");
   const parsed = expenseSchema.safeParse({
     category: formData.get("category"),
     amount: formData.get("amount"),
@@ -345,7 +342,7 @@ export async function createExpense(formData: FormData) {
 
 export async function deleteExpense(expenseId: string) {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireSectionAccess("expenses");
 
     const expense = await prisma.expense.findFirst({
       where: { id: expenseId, businessId: ctx.businessId },
@@ -370,7 +367,7 @@ export async function deleteExpense(expenseId: string) {
 
 export async function updateBusiness(formData: FormData) {
   try {
-    const ctx = await requireBusinessContext();
+    const ctx = await requireSectionAccess("settings");
 
     const parsed = updateBusinessSchema.safeParse({
       name: formData.get("name"),
@@ -408,7 +405,7 @@ export async function updateCustomer(
   customerId: string,
   data: { name: string; phone?: string; email?: string }
 ) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("customers");
   const parsed = customerSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -449,7 +446,7 @@ export async function createSale(data: {
   tax?: number;
   isCredit?: boolean;
 }) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("sales");
   const parsed = saleSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -571,7 +568,7 @@ export async function createCustomer(data: {
   phone?: string;
   email?: string;
 }) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("customers");
   const parsed = customerSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -596,7 +593,7 @@ export async function recordDebtPayment(data: {
   customerId: string;
   amount: number;
 }) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("debts");
   const parsed = debtPaymentSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -628,7 +625,7 @@ export async function recordDebtPayment(data: {
 }
 
 export async function sendAIMessage(message: string) {
-  const ctx = await requireBusinessContext();
+  const ctx = await requireSectionAccess("ai");
   const subscription = await prisma.subscription.findUnique({
     where: { businessId: ctx.businessId },
   });

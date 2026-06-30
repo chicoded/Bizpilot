@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { getSaleReceipt } from "@/lib/sales";
 import { Header } from "@/components/layout/header";
 import { SaleReceiptView } from "@/features/sales/sale-receipt-view";
@@ -9,8 +9,7 @@ export default async function SaleReceiptPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("sales");
 
   const { id } = await params;
   const sale = await getSaleReceipt(ctx.businessId, id);

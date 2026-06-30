@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { getInventoryProduct } from "@/lib/products";
 import { ProductEditForm } from "@/features/inventory/product-edit-form";
 import { format } from "date-fns";
@@ -9,8 +9,7 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("inventory");
 
   const { id } = await params;
 

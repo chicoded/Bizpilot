@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { Header } from "@/components/layout/header";
 import { getBillingData } from "@/actions/billing";
 import { getAppUrl } from "@/lib/env";
@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export default async function BillingPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("billing");
 
   const { subscription, paystackConfigured } = await getBillingData();
   const appUrl = getAppUrl();

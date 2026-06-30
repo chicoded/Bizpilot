@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { Header } from "@/components/layout/header";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { BusinessHealthScore } from "@/components/dashboard/business-health-score";
@@ -39,8 +38,7 @@ const emptyHealth: BusinessHealthResult = {
 };
 
 export default async function DashboardPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("dashboard");
 
   let kpis = emptyKPIs;
   let health = emptyHealth;

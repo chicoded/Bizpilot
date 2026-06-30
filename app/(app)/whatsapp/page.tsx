@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { getWhatsAppSettings } from "@/actions/whatsapp";
@@ -13,8 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Zap, Package, Clock } from "lucide-react";
 
 export default async function WhatsAppPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("whatsapp");
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId: ctx.businessId },

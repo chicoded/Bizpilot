@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,7 @@ import { formatCurrency, formatRelativeDate } from "@/lib/utils";
 import { Users, Phone, Plus, ChevronRight } from "lucide-react";
 
 export default async function CustomersPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("customers");
 
   const customers = await prisma.customer.findMany({
     where: { businessId: ctx.businessId },

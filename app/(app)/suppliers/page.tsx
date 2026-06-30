@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Truck } from "lucide-react";
 
 export default async function SuppliersPage() {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("suppliers");
 
   const suppliers = await prisma.supplier.findMany({
     where: { businessId: ctx.businessId },

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getBusinessContext } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CustomerForm } from "@/features/customers/customer-form";
 
@@ -8,8 +8,7 @@ export default async function EditCustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const ctx = await getBusinessContext();
-  if (!ctx) redirect("/onboarding");
+  const ctx = await requirePageAccess("customers");
 
   const { id } = await params;
 
