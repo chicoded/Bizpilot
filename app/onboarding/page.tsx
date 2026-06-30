@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { getBusinessContext, syncClerkUser } from "@/lib/auth";
+import { getPendingInviteForEmail } from "@/lib/team";
 import { OnboardingForm } from "@/features/onboarding/onboarding-form";
 
 export default async function OnboardingPage() {
@@ -17,6 +18,14 @@ export default async function OnboardingPage() {
 
   const ctx = await getBusinessContext();
   if (ctx) redirect("/dashboard");
+
+  const email = user.emailAddresses[0]?.emailAddress;
+  if (email) {
+    const pendingInvite = await getPendingInviteForEmail(email);
+    if (pendingInvite) {
+      redirect(`/invite/${pendingInvite.token}`);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 flex items-center justify-center p-4">

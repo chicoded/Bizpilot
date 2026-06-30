@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
-import { getInviteDetails } from "@/actions/team";
+import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { acceptTeamInvite, getInviteDetails } from "@/actions/team";
 import { AcceptInviteCard } from "@/features/settings/accept-invite-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,16 @@ export default async function InvitePage({
     );
   }
 
+  const user = userId ? await currentUser() : null;
+  const signedInEmail = user?.emailAddresses[0]?.emailAddress ?? null;
+
+  if (userId && signedInEmail?.toLowerCase() === invite.email.toLowerCase()) {
+    const result = await acceptTeamInvite(token);
+    if (result.success) {
+      redirect("/dashboard");
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-slate-50 to-white">
       <AcceptInviteCard
@@ -43,6 +54,7 @@ export default async function InvitePage({
         email={invite.email}
         role={invite.role}
         isSignedIn={!!userId}
+        signedInEmail={signedInEmail}
       />
     </div>
   );

@@ -16,6 +16,7 @@ interface AcceptInviteCardProps {
   email: string;
   role: Role;
   isSignedIn: boolean;
+  signedInEmail?: string | null;
 }
 
 export function AcceptInviteCard({
@@ -24,12 +25,20 @@ export function AcceptInviteCard({
   email,
   role,
   isSignedIn,
+  signedInEmail,
 }: AcceptInviteCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const signInUrl = `/sign-in?redirect_url=${encodeURIComponent(`/invite/${token}`)}`;
+  const inviteReturnUrl = `/invite/${token}`;
+  const signInUrl = `/sign-in?redirect_url=${encodeURIComponent(inviteReturnUrl)}`;
+  const signUpUrl = `/sign-up?redirect_url=${encodeURIComponent(inviteReturnUrl)}`;
+
+  const wrongAccount =
+    isSignedIn &&
+    signedInEmail &&
+    signedInEmail.toLowerCase() !== email.toLowerCase();
 
   function handleAccept() {
     setError(null);
@@ -58,7 +67,18 @@ export function AcceptInviteCard({
           <p className="text-xs text-muted-foreground mt-1">{email}</p>
         </div>
 
-        {isSignedIn ? (
+        {wrongAccount ? (
+          <div className="space-y-3 text-left">
+            <p className="text-sm text-amber-800 bg-amber-50 rounded-lg px-3 py-2">
+              You&apos;re signed in as <strong>{signedInEmail}</strong>, but this
+              invite was sent to <strong>{email}</strong>. Sign in with the invited
+              email to join.
+            </p>
+            <Button size="lg" className="w-full" asChild>
+              <Link href={signInUrl}>Switch account</Link>
+            </Button>
+          </div>
+        ) : isSignedIn ? (
           <Button
             size="lg"
             className="w-full"
@@ -72,9 +92,14 @@ export function AcceptInviteCard({
             )}
           </Button>
         ) : (
-          <Button size="lg" className="w-full" asChild>
-            <Link href={signInUrl}>Sign in to accept</Link>
-          </Button>
+          <div className="space-y-2">
+            <Button size="lg" className="w-full" asChild>
+              <Link href={signUpUrl}>Create account & join</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="w-full" asChild>
+              <Link href={signInUrl}>Sign in to accept</Link>
+            </Button>
+          </div>
         )}
 
         {error && (

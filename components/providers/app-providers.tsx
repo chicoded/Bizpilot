@@ -11,8 +11,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       appearance={clerkAppearance}
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/onboarding"
-      signInForceRedirectUrl="/dashboard"
-      signUpForceRedirectUrl="/onboarding"
     >
       <MonitoringProvider>
         <PWAProvider>{children}</PWAProvider>

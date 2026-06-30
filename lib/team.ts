@@ -24,6 +24,18 @@ export function inviteableRolesFor(actorRole: Role): Role[] {
   return [];
 }
 
+export async function getPendingInviteForEmail(email: string) {
+  return prisma.teamInvite.findFirst({
+    where: {
+      email: email.toLowerCase(),
+      acceptedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { token: true },
+  });
+}
+
 export async function getTeamMembers(businessId: string) {
   return prisma.membership.findMany({
     where: { businessId },
