@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Package } from "lucide-react";
 import {
   getProductDisplayImageUrl,
@@ -12,21 +11,15 @@ interface ProductImageProps {
   imageUrl: string | null | undefined;
   alt: string;
   className?: string;
-  sizes?: string;
-  fill?: boolean;
 }
 
 export function ProductImage({
   imageUrl,
   alt,
   className = "object-cover",
-  sizes = "(max-width: 640px) 50vw, 33vw",
-  fill = true,
 }: ProductImageProps) {
   const [failed, setFailed] = useState(false);
-  const displayUrl = getProductDisplayImageUrl(
-    failed ? null : imageUrl
-  );
+  const displayUrl = getProductDisplayImageUrl(failed ? null : imageUrl);
   const showPlaceholder = isProductPlaceholderImage(displayUrl);
 
   if (showPlaceholder) {
@@ -38,12 +31,12 @@ export function ProductImage({
   }
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={displayUrl}
       alt={alt}
-      fill={fill}
-      className={className}
-      sizes={sizes}
+      className={`absolute inset-0 h-full w-full ${className}`}
+      loading="lazy"
       onError={() => setFailed(true)}
     />
   );

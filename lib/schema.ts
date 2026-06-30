@@ -1,6 +1,6 @@
-import { cache } from "react";
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/db";
+
 function directPrisma(): PrismaClient {
   const directUrl = process.env.DIRECT_URL;
   if (!directUrl || directUrl.includes("[")) {
@@ -12,10 +12,6 @@ function directPrisma(): PrismaClient {
   });
 }
 
-/**
- * Idempotent schema repair for production databases created before imageUrl
- * was added. Uses DIRECT_URL when available (DDL via pooler can fail).
- */
 export async function ensureProductImageColumn(): Promise<boolean> {
   const client = directPrisma();
   const shouldDisconnect = client !== prisma;
@@ -44,5 +40,6 @@ export async function checkProductImageColumn(): Promise<boolean> {
   }
 }
 
-/** Cached per request — inventory pages do not probe the schema repeatedly. */
-export const hasProductImageColumn = cache(checkProductImageColumn);
+export async function hasProductImageColumn(): Promise<boolean> {
+  return checkProductImageColumn();
+}
