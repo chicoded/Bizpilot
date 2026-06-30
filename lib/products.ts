@@ -154,6 +154,22 @@ const productCreateSelect = {
   businessId: true,
 } as const;
 
+const productMutationSelect = {
+  id: true,
+} as const;
+
+export async function updateInventoryProduct(
+  productId: string,
+  data: Parameters<typeof prisma.product.update>[0]["data"],
+  tx: Pick<typeof prisma, "product"> = prisma
+) {
+  return tx.product.update({
+    where: { id: productId },
+    data,
+    select: productMutationSelect,
+  });
+}
+
 export async function createInventoryProduct(
   data: Parameters<typeof prisma.product.create>[0]["data"]
 ) {
@@ -162,3 +178,4 @@ export async function createInventoryProduct(
     select: productCreateSelect,
   });
 }
+

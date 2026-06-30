@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
-import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale } from "@/lib/products";
+import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale, updateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, getBusinessContext } from "@/lib/auth";
 import {
@@ -73,6 +73,26 @@ function formValue(value: FormDataEntryValue | null): string | undefined {
   if (value === null) return undefined;
   const text = String(value).trim();
   return text === "" ? undefined : text;
+}
+
+function formatActionError(error: unknown, fallback: string): string {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      return "A product with this SKU already exists";
+    }
+    if (error.code === "P2022") {
+      return "Database schema is out of date. In Supabase SQL Editor run: ALTER TABLE \"products\" ADD COLUMN IF NOT EXISTS \"imageUrl\" TEXT;";
+    }
+  }
+  if (error instanceof Error) {
+    if (error.message.includes("Body exceeded") || error.message.includes("413")) {
+      return "Image is too large. Use a file under 5 MB.";
+    }
+    if (process.env.NODE_ENV === "development") {
+      return error.message;
+    }
+  }
+  return fallback;
 }
 
 function formatFieldErrors(error: Record<string, string[] | undefined>): string {
@@ -249,9 +269,9 @@ export async function updateProduct(productId: string, formData: FormData) {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.product.update({
-        where: { id: productId },
-        data: {
+      await updateInventoryProduct(
+        productId,
+        {
           ...rest,
           quantity,
           sku: sku ?? null,
@@ -260,7 +280,8 @@ export async function updateProduct(productId: string, formData: FormData) {
           batchNumber: batchNumber ?? null,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
         },
-      });
+        tx
+      );
 
       if (quantityDelta !== 0) {
         await tx.stockAdjustment.create({
@@ -286,14 +307,8 @@ export async function updateProduct(productId: string, formData: FormData) {
       ? { success: true, warning: imageWarning }
       : { success: true };
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return { error: "A product with this SKU already exists" };
-    }
     console.error("updateProduct failed:", error);
-    return { error: "Could not update product" };
+    return { error: formatActionError(error, "Could not update product") };
   }
 }
 
@@ -404,10 +419,11 @@ export async function createSale(data: {
     });
 
     for (const item of parsed.data.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { quantity: { decrement: item.quantity } },
-      });
+      await updateInventoryProduct(
+        item.productId,
+        { quantity: { decrement: item.quantity } },
+        tx
+      );
       await tx.stockAdjustment.create({
         data: {
           productId: item.productId,
