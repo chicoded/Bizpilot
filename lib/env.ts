@@ -41,12 +41,31 @@ export function getPublicEnv() {
 }
 
 export function getAppUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const deploymentHost = process.env.VERCEL_URL;
+
+  const isLocalConfigured =
+    configured?.includes("localhost") || configured?.includes("127.0.0.1");
+
+  // Prefer explicit production URL when it is not a local dev value.
+  if (configured && !isLocalConfigured) {
+    return configured;
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+
+  // On Vercel, fall back to the live deployment domain (fixes localhost in prod).
+  if (productionHost) {
+    return `https://${productionHost}`;
   }
+
+  if (deploymentHost) {
+    return `https://${deploymentHost}`;
+  }
+
+  if (configured) {
+    return configured;
+  }
+
   return "http://localhost:3000";
 }
 
