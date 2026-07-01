@@ -67,17 +67,11 @@ export async function generateAIInsights(
   const thirtyDaysAgo = subDays(new Date(), 30);
   const expiryThreshold = addDays(new Date(), 30);
 
-  const [lowStockProducts, expiringProducts, debtors, recentFuelExpenses] =
+  const [allProducts, expiringProducts, debtors, recentFuelExpenses] =
     await Promise.all([
       prisma.product.findMany({
-        where: {
-          businessId,
-          isActive: true,
-          quantity: { lte: 10 },
-        },
-        select: { id: true, name: true, quantity: true },
-        take: 5,
-        orderBy: { quantity: "asc" },
+        where: { businessId, isActive: true },
+        select: { id: true, name: true, quantity: true, reorderLevel: true },
       }),
       prisma.product.findMany({
         where: {
@@ -102,14 +96,19 @@ export async function generateAIInsights(
       }),
     ]);
 
+  const lowStockProducts = allProducts
+    .filter((product) => product.quantity <= product.reorderLevel)
+    .sort((a, b) => a.quantity - b.quantity)
+    .slice(0, 5);
+
   if (lowStockProducts.length > 0) {
     insights.push({
       id: "low-stock",
       type: "warning",
       title: `${lowStockProducts.length} products need restocking`,
       message: `${lowStockProducts.map((p) => p.name).join(", ")} running low.`,
-      action: "View inventory",
-      actionHref: "/inventory",
+      action: "Review low stock",
+      actionHref: "/inventory/low-stock",
     });
   }
 

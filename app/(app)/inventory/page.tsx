@@ -78,9 +78,12 @@ export default async function InventoryPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex gap-2 flex-wrap">
               {lowStockCount > 0 && (
-                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full">
+                <Link
+                  href="/inventory/low-stock"
+                  className="text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors"
+                >
                   {lowStockCount} need restocking
-                </span>
+                </Link>
               )}
               {expiringCount > 0 && (
                 <span className="text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">

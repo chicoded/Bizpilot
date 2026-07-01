@@ -1,4 +1,5 @@
 import { requirePageAccess } from "@/lib/auth";
+import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { BusinessHealthScore } from "@/components/dashboard/business-health-score";
@@ -11,6 +12,7 @@ import {
 } from "@/services/dashboard";
 import { Package, AlertTriangle, Users } from "lucide-react";
 import { RevenueChart } from "@/features/dashboard/revenue-chart";
+import { LowStockAlertsCard } from "@/features/dashboard/low-stock-alerts-card";
 import type { DashboardKPIs, AIInsight, BusinessHealthResult } from "@/types";
 
 const emptyKPIs: DashboardKPIs = {
@@ -110,10 +112,13 @@ export default async function DashboardPage() {
 
         <div className="flex flex-wrap gap-2">
           {kpis.lowStockCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700">
+            <Link
+              href="/inventory/low-stock"
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200 transition-colors"
+            >
               <Package className="h-3.5 w-3.5" />
               {kpis.lowStockCount} low stock
-            </span>
+            </Link>
           )}
           {kpis.expiringCount > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700">
@@ -130,7 +135,10 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <BusinessHealthScore health={health} />
+          <div className="space-y-6">
+            <BusinessHealthScore health={health} />
+            <LowStockAlertsCard businessId={ctx.businessId} />
+          </div>
           <div className="space-y-6">
             <AIInsightsWidget insights={insights} />
             <RevenueChart businessId={ctx.businessId} />
