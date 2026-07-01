@@ -20,12 +20,13 @@ const SUGGESTIONS = [
   "How is my business health?",
 ];
 
-export function AIChat() {
+export function AIChat({ providerConfigured }: { providerConfigured: boolean }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hi! I'm your BizPilot AI assistant. Ask me anything about your business — sales, inventory, debts, expenses, or get recommendations.",
+      content: providerConfigured
+        ? "Hi! I'm your BizPilot AI assistant powered by Google Gemini. Ask me about sales, inventory, debts, expenses, or business recommendations."
+        : "Hi! I'm your BizPilot assistant. I'm in offline mode — add a free GEMINI_API_KEY for smarter answers. I can still answer basic questions from your business data.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -40,11 +41,18 @@ export function AIChat() {
     if (!text.trim() || loading) return;
     const userMsg = text.trim();
     setInput("");
+    const priorMessages = messages.slice(1);
     setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
 
     try {
-      const result = await sendAIMessage(userMsg);
+      const result = await sendAIMessage(
+        userMsg,
+        priorMessages.slice(-6).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+      );
       if (result.error) {
         setMessages((prev) => [
           ...prev,
@@ -71,6 +79,25 @@ export function AIChat() {
 
   return (
     <main className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] max-w-3xl mx-auto">
+      {!providerConfigured && (
+        <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium">Free AI setup</p>
+          <p className="mt-1 text-amber-900/90">
+            Get a free API key from{" "}
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+            >
+              Google AI Studio
+            </a>{" "}
+            and add <code className="text-xs">GEMINI_API_KEY</code> to your
+            environment variables.
+          </p>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, i) => (
           <div

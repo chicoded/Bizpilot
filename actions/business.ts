@@ -13,9 +13,6 @@ import {
   validateProductImageFile,
 } from "@/lib/product-images";
 import { Role, Prisma } from "@prisma/client";
-import { calculateSaleVat } from "@/lib/tax/vat";
-import { getActiveTaxRules } from "@/lib/tax/rules";
-import { triggerTaxRecalculation } from "@/lib/tax/engine";
 
 export async function createBusiness(formData: FormData) {
   const user = await currentUser();
@@ -371,8 +368,6 @@ export async function createExpense(formData: FormData) {
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   revalidatePath("/reports");
-  revalidatePath("/tax");
-  await triggerTaxRecalculation(ctx.businessId);
   return { success: true, expense };
 }
 
@@ -394,8 +389,6 @@ export async function deleteExpense(expenseId: string) {
     revalidatePath("/expenses");
     revalidatePath("/dashboard");
     revalidatePath("/reports");
-    revalidatePath("/tax");
-    await triggerTaxRecalculation(ctx.businessId);
     return { success: true };
   } catch (error) {
     console.error("deleteExpense failed:", error);
@@ -530,35 +523,9 @@ export async function createSale(data: {
   });
 
   const discount = parsed.data.discount ?? 0;
-
-  const [taxProfile, taxRules] = await Promise.all([
-    prisma.businessTaxProfile.findUnique({
-      where: { businessId: ctx.businessId },
-    }),
-    getActiveTaxRules("NG"),
-  ]);
-
-  let tax = parsed.data.tax ?? 0;
-  let total: number;
-
-  if (
-    taxProfile?.vatEnabled &&
-    taxProfile.vatRegistered &&
-    !parsed.data.tax
-  ) {
-    const vat = calculateSaleVat({
-      subtotal,
-      discount,
-      rate: taxRules.vat_rate,
-      mode: taxProfile.vatPricingMode,
-    });
-    tax = vat.tax;
-    total = vat.total;
-  } else {
-    total = subtotal - discount + tax;
-  }
-
-  const profit = subtotal - discount - totalCost;
+  const tax = parsed.data.tax ?? 0;
+  const total = subtotal - discount + tax;
+  const profit = total - totalCost - discount;
 
   const sale = await prisma.$transaction(async (tx) => {
     const newSale = await tx.sale.create({
@@ -624,8 +591,6 @@ export async function createSale(data: {
   revalidatePath("/inventory");
   revalidatePath("/customers");
   revalidatePath("/debts");
-  revalidatePath("/tax");
-  await triggerTaxRecalculation(ctx.businessId);
   return { success: true, sale };
 }
 
@@ -720,7 +685,10 @@ export async function addCustomerDebt(data: {
   return { success: true };
 }
 
-export async function sendAIMessage(message: string) {
+export async function sendAIMessage(
+  message: string,
+  history: { role: "user" | "assistant"; content: string }[] = []
+) {
   const ctx = await requireSectionAccess("ai");
   const subscription = await prisma.subscription.findUnique({
     where: { businessId: ctx.businessId },
@@ -729,10 +697,19 @@ export async function sendAIMessage(message: string) {
   if (!canAccessFeature(subscription, "ai")) {
     return {
       error:
-        "AI Assistant requires the AI Pro plan. Upgrade at Settings → Billing.",
+        "AI Assistant requires an active subscription. Upgrade at Settings → Billing.",
     };
   }
-  const { chatWithAI } = await import("@/ai/assistant");
-  const response = await chatWithAI(ctx.businessId, message);
+
+  const { chatWithAI, isAIProviderConfigured } = await import("@/ai/assistant");
+  if (!isAIProviderConfigured()) {
+    const response = await chatWithAI(ctx.businessId, message, history);
+    return {
+      response,
+      offline: true as const,
+    };
+  }
+
+  const response = await chatWithAI(ctx.businessId, message, history);
   return { response };
 }

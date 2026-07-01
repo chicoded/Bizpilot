@@ -181,7 +181,7 @@ export const SUBSCRIPTION_PLANS: readonly SubscriptionPlanDefinition[] = [
     price: 5000,
     priceKobo: 500000,
     features: ["Inventory", "POS", "Basic Reports", "1 User"],
-    highlights: ["inventory", "pos", "reports"],
+    highlights: ["inventory", "pos", "reports", "ai"],
   },
   {
     id: "BUSINESS",
@@ -193,8 +193,9 @@ export const SUBSCRIPTION_PLANS: readonly SubscriptionPlanDefinition[] = [
       "Debt Management",
       "5 Users",
       "Export Reports",
+      "AI Assistant",
     ],
-    highlights: ["inventory", "pos", "reports", "debts", "export"],
+    highlights: ["inventory", "pos", "reports", "debts", "export", "ai"],
   },
   {
     id: "AI_PRO",
@@ -203,8 +204,8 @@ export const SUBSCRIPTION_PLANS: readonly SubscriptionPlanDefinition[] = [
     priceKobo: 3000000,
     features: [
       "Everything in Business",
-      "AI Assistant",
-      "Health Score",
+      "Priority support",
+      "Health Score insights",
       "Unlimited Users",
     ],
     highlights: ["inventory", "pos", "reports", "debts", "export", "ai"],

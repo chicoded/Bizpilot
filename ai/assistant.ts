@@ -1,16 +1,15 @@
-import OpenAI from "openai";
 import { prisma } from "@/lib/db";
 import {
   calculateBusinessHealth,
   getDashboardKPIs,
   generateAIInsights,
 } from "@/services/dashboard";
-import { getTaxDashboard } from "@/services/tax";
-import { TAX_DISCLAIMER_SHORT } from "@/lib/tax/constants";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import {
+  completeBusinessChat,
+  completeJsonChat,
+  getActiveChatProvider,
+  type ChatMessage,
+} from "@/lib/ai/chat";
 
 const SYSTEM_PROMPT = `You are BizPilot AI, an expert business advisor for African small and medium enterprises (SMEs) in Nigeria.
 
@@ -20,11 +19,8 @@ You help business owners with:
 - Expense tracking and cost reduction
 - Customer debt follow-up
 - Cashflow forecasting
-- Tax estimate questions (estimates only — not legal or tax advice)
 - Fraud and anomaly detection
 - Business health recommendations
-
-When discussing tax, always remind users that figures are estimates from their records, not official filings or legal advice. ${TAX_DISCLAIMER_SHORT}
 
 Always respond in clear, simple English. Use Nigerian Naira (₦) for currency.
 Be concise, actionable, and empathetic. African SME owners are busy — give them direct answers.
@@ -34,7 +30,7 @@ Format responses with short paragraphs. Use bullet points for lists.
 Never make up specific numbers — only use data provided in context.`;
 
 export async function getBusinessContextForAI(businessId: string) {
-  const [business, kpis, health, insights, topProducts, recentSales, taxData] =
+  const [business, kpis, health, insights, topProducts, recentSales] =
     await Promise.all([
       prisma.business.findUnique({ where: { id: businessId } }),
       getDashboardKPIs(businessId),
@@ -59,7 +55,6 @@ export async function getBusinessContextForAI(businessId: string) {
           },
         },
       }),
-      getTaxDashboard(businessId).catch(() => null),
     ]);
 
   const productIds = topProducts.map((p) => p.productId);
@@ -82,31 +77,21 @@ export async function getBusinessContextForAI(businessId: string) {
     recentSales: recentSales.map((s) => ({
       total: Number(s.total),
       profit: Number(s.profit),
-      tax: Number(s.tax),
       date: s.createdAt,
       items: s.items.map((i) => `${i.quantity}x ${i.product.name}`),
     })),
-    tax: taxData
-      ? {
-          monthlyTax: taxData.monthly?.estimatedTax ?? 0,
-          monthlyVat: taxData.monthly?.estimatedVATCollected ?? 0,
-          monthlyProfit: taxData.monthly?.estimatedProfit ?? 0,
-          complianceScore: taxData.compliance.score,
-          forecastAnnualTax: taxData.forecast.projectedAnnualTax,
-          vatEnabled: taxData.today.vatEnabled,
-        }
-      : null,
   };
 }
 
-export async function chatWithAI(
-  businessId: string,
-  message: string,
-  history: { role: "user" | "assistant"; content: string }[] = []
+function buildContextMessage(
+  context: Awaited<ReturnType<typeof getBusinessContextForAI>>
 ) {
-  const context = await getBusinessContextForAI(businessId);
+  const insightLines = context.insights
+    .slice(0, 3)
+    .map((i) => `- ${i.title}: ${i.message}`)
+    .join("\n");
 
-  const contextMessage = `
+  return `
 Business: ${context.business?.name} (${context.business?.industry})
 Currency: ${context.business?.currency ?? "NGN"}
 
@@ -126,45 +111,35 @@ Top selling products: ${context.topProducts.map((p) => `${p.name} (${p.quantity}
 
 Recent sales: ${context.recentSales.map((s) => `₦${s.total} - ${s.items.join(", ")}`).join("; ") || "No recent sales"}
 
-Tax estimates (${TAX_DISCLAIMER_SHORT}):
-${
-  context.tax
-    ? `- Monthly tax estimate: ₦${context.tax.monthlyTax.toLocaleString()}
-- Monthly VAT collected (estimate): ₦${context.tax.monthlyVat.toLocaleString()}
-- Monthly profit estimate: ₦${context.tax.monthlyProfit.toLocaleString()}
-- Compliance score: ${context.tax.complianceScore}%
-- Projected annual tax: ₦${context.tax.forecastAnnualTax.toLocaleString()}
-- VAT on sales: ${context.tax.vatEnabled ? "enabled" : "not enabled"}`
-    : "Tax module not configured yet — user can set up at /tax/settings"
+Active alerts:
+${insightLines || "None"}
+`.trim();
 }
-`;
 
-  if (!process.env.OPENAI_API_KEY) {
-    return getFallbackResponse(message, context);
+export function isAIProviderConfigured(): boolean {
+  return getActiveChatProvider() !== "none";
+}
+
+export async function chatWithAI(
+  businessId: string,
+  message: string,
+  history: ChatMessage[] = []
+) {
+  const context = await getBusinessContextForAI(businessId);
+  const contextMessage = buildContextMessage(context);
+
+  const result = await completeBusinessChat({
+    systemPrompt: SYSTEM_PROMPT,
+    contextBlock: contextMessage,
+    message,
+    history,
+  });
+
+  if (result?.text) {
+    return result.text;
   }
 
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Business context:\n${contextMessage}\n\nUser question: ${message}`,
-        },
-        ...history.slice(-6),
-      ],
-      max_tokens: 800,
-      temperature: 0.7,
-    });
-
-    return (
-      response.choices[0]?.message?.content ??
-      "I couldn't generate a response. Please try again."
-    );
-  } catch {
-    return getFallbackResponse(message, context);
-  }
+  return getFallbackResponse(message, context);
 }
 
 function getFallbackResponse(
@@ -191,24 +166,6 @@ function getFallbackResponse(
     return `${context.kpis.lowStockCount} products need restocking. Head to Inventory to review and place orders.`;
   }
 
-  if (lower.includes("vat")) {
-    if (!context.tax) {
-      return "Set up your tax profile under Tax & Compliance to see VAT estimates.";
-    }
-    return `Estimated VAT collected this month: ₦${context.tax.monthlyVat.toLocaleString()}. VAT on new sales is ${context.tax.vatEnabled ? "enabled" : "disabled"} in settings. ${TAX_DISCLAIMER_SHORT}`;
-  }
-
-  if (
-    lower.includes("tax") ||
-    lower.includes("firs") ||
-    lower.includes("compliance")
-  ) {
-    if (!context.tax) {
-      return "Open Tax & Compliance in the menu to configure your profile and see estimates.";
-    }
-    return `Tax estimates this month: ₦${context.tax.monthlyTax.toLocaleString()} (profit estimate ₦${context.tax.monthlyProfit.toLocaleString()}). Compliance score: ${context.tax.complianceScore}%. Projected annual tax: ₦${context.tax.forecastAnnualTax.toLocaleString()}. ${TAX_DISCLAIMER_SHORT}`;
-  }
-
   if (lower.includes("health") || lower.includes("score")) {
     return `Your Business Health Score is ${context.health.score}/100.\n\nStrengths: ${context.health.strengths.join(", ") || "Building up"}\nWarnings: ${context.health.warnings.join(", ") || "None"}\n\nRecommendations:\n${context.health.recommendations.map((r) => `• ${r}`).join("\n")}`;
   }
@@ -218,6 +175,10 @@ function getFallbackResponse(
       return "No products expiring in the next 30 days.";
     }
     return `${context.kpis.expiringCount} products are expiring within 30 days. Check Inventory to sell or discount them before they expire.`;
+  }
+
+  if (!isAIProviderConfigured()) {
+    return `I'm running in offline mode. Add a free GEMINI_API_KEY from Google AI Studio for smarter answers.\n\nQuick snapshot: health ${context.health.score}/100, today ₦${context.kpis.revenueToday.toLocaleString()} revenue, ₦${context.kpis.expensesToday.toLocaleString()} expenses.`;
   }
 
   return `Your business health is ${context.health.score}/100. Today: ₦${context.kpis.revenueToday.toLocaleString()} revenue, ₦${context.kpis.expensesToday.toLocaleString()} expenses. Ask me about sales, inventory, debts, or expenses!`;
@@ -232,29 +193,25 @@ export async function parseVoiceSale(
     select: { name: true },
   });
 
-  if (!process.env.OPENAI_API_KEY) {
+  const raw = await completeJsonChat({
+    systemPrompt: `Parse voice sale commands into JSON. Available products: ${products.map((p) => p.name).join(", ")}.
+Return JSON only: { "items": [{ "productName": string, "quantity": number }] }`,
+    userPrompt: transcript,
+  });
+
+  if (!raw) {
     return {
       items: [],
-      message: "Voice sales require OpenAI API key. Please configure OPENAI_API_KEY.",
+      message: isAIProviderConfigured()
+        ? "Could not parse voice command. Please try again."
+        : "Voice sales need GEMINI_API_KEY (free at Google AI Studio) or OPENAI_API_KEY.",
     };
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `Parse voice sale commands into JSON. Available products: ${products.map((p) => p.name).join(", ")}.
-Return JSON only: { "items": [{ "productName": string, "quantity": number }] }`,
-        },
-        { role: "user", content: transcript },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 200,
-    });
-
-    const parsed = JSON.parse(response.choices[0]?.message?.content ?? "{}");
+    const parsed = JSON.parse(raw) as {
+      items?: { productName: string; quantity: number }[];
+    };
     return {
       items: parsed.items ?? [],
       message: `Parsed ${parsed.items?.length ?? 0} items from voice command.`,

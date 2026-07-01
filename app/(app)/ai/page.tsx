@@ -6,6 +6,7 @@ import { AIChat } from "@/features/ai/ai-chat";
 import { UpgradePrompt } from "@/features/billing/upgrade-prompt";
 import { canAccessFeature } from "@/lib/subscription";
 import { getRequiredPlanForFeature } from "@/lib/subscription";
+import { isAIProviderConfigured } from "@/ai/assistant";
 
 export default async function AIPage() {
   const ctx = await requirePageAccess("ai");
@@ -15,10 +16,18 @@ export default async function AIPage() {
   });
 
   const hasAccess = canAccessFeature(subscription, "ai");
+  const providerConfigured = isAIProviderConfigured();
 
   return (
     <>
-      <Header title="AI Assistant" subtitle="Your business advisor" />
+      <Header
+        title="AI Assistant"
+        subtitle={
+          providerConfigured
+            ? "Powered by Google Gemini (free tier)"
+            : "Offline mode — add GEMINI_API_KEY for free AI"
+        }
+      />
       {!hasAccess ? (
         <main className="p-4 md:p-6 max-w-3xl mx-auto">
           <UpgradePrompt
@@ -27,7 +36,7 @@ export default async function AIPage() {
           />
         </main>
       ) : (
-        <AIChat />
+        <AIChat providerConfigured={providerConfigured} />
       )}
     </>
   );

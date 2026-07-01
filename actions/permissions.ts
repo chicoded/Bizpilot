@@ -50,7 +50,6 @@ export async function updateRolePermissions(permissions: RolePermissionsMap) {
 
     revalidatePath("/settings");
     revalidatePath("/menu");
-    revalidatePath("/tax");
     for (const section of APP_SECTIONS) {
       revalidatePath(section.pathPrefix);
     }
@@ -77,7 +76,6 @@ export async function resetRolePermissions() {
 
     revalidatePath("/settings");
     revalidatePath("/menu");
-    revalidatePath("/tax");
 
     return { success: true };
   } catch (error) {
@@ -132,7 +130,6 @@ export async function updateMemberSectionOverrides(
 
     revalidatePath("/settings");
     revalidatePath("/menu");
-    revalidatePath("/tax");
     for (const section of APP_SECTIONS) {
       revalidatePath(section.pathPrefix);
     }

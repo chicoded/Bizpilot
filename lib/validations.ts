@@ -164,25 +164,6 @@ export const updateMemberRoleSchema = z.object({
   role: z.enum(["MANAGER", "CASHIER", "STAFF"]),
 });
 
-export const taxProfileSchema = z.object({
-  businessType: z.enum([
-    "RETAIL",
-    "PHARMACY",
-    "RESTAURANT",
-    "ELECTRONICS",
-    "FASHION",
-    "SERVICES",
-    "OTHER",
-  ]),
-  state: z.string().min(1, "Select your state"),
-  registeredBusiness: z.boolean(),
-  tin: z.string().optional(),
-  vatRegistered: z.boolean(),
-  vatEnabled: z.boolean(),
-  vatPricingMode: z.enum(["INCLUSIVE", "EXCLUSIVE"]),
-  annualRevenueBand: z.string().min(1, "Select annual revenue band"),
-});
-
 export type BusinessInput = z.infer<typeof businessSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type SaleInput = z.infer<typeof saleSchema>;
