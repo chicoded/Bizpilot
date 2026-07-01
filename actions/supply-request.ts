@@ -5,9 +5,8 @@ import { requireSectionAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { extractPhoneFromContact, toWhatsAppWebUrl } from "@/lib/phone";
 import { formatSupplyRequestMessage } from "@/lib/supply-request";
+import { serializePurchaseOrderItems } from "@/lib/purchase-orders";
 import { supplyRequestSchema } from "@/lib/validations";
-import { sendManualWhatsAppReply } from "@/services/whatsapp";
-import { isTwilioConfigured } from "@/services/twilio";
 
 export async function sendSupplyRequest(data: {
   supplierId: string;
@@ -50,7 +49,7 @@ export async function sendSupplyRequest(data: {
   if (!phone) {
     return {
       error:
-        "Add a WhatsApp phone number to this supplier's contact field (e.g. 08012345678).",
+        "Add a phone number to this supplier's contact field (e.g. 08012345678).",
     };
   }
 
@@ -63,6 +62,7 @@ export async function sendSupplyRequest(data: {
       return { error: `Product not found for this supplier` };
     }
     requestItems.push({
+      productId: item.productId,
       name: product.name,
       quantity: item.quantity,
       currentStock: product.quantity,
@@ -92,56 +92,25 @@ export async function sendSupplyRequest(data: {
       status: "requested",
       notes: message,
       total: estimatedTotal,
+      items: serializePurchaseOrderItems(
+        requestItems.map((item) => ({
+          productId: item.productId,
+          productName: item.name,
+          quantityOrdered: item.quantity,
+          quantityReceived: 0,
+          unitPrice: item.unitPrice,
+        }))
+      ),
     },
   });
 
-  const config = await prisma.whatsAppConfig.findUnique({
-    where: { businessId: ctx.businessId },
-  });
-
-  const canSendViaTwilio = isTwilioConfigured() && config?.isEnabled;
-  let sentViaTwilio = false;
-
-  if (canSendViaTwilio) {
-    const result = await sendManualWhatsAppReply(
-      ctx.businessId,
-      phone,
-      message
-    );
-    if (result.success) {
-      sentViaTwilio = true;
-    } else if (!result.success && result.error) {
-      const whatsAppUrl = toWhatsAppWebUrl(phone, message);
-      revalidatePath(`/suppliers/${supplier.id}`);
-      revalidatePath("/suppliers");
-      return {
-        success: true,
-        sentViaTwilio: false,
-        whatsAppUrl,
-        purchaseOrderId: purchaseOrder.id,
-        warning: `Order saved, but auto-send failed: ${result.error}. Open WhatsApp to send manually.`,
-      };
-    }
-  }
-
   revalidatePath(`/suppliers/${supplier.id}`);
   revalidatePath("/suppliers");
-
-  if (sentViaTwilio) {
-    return {
-      success: true,
-      sentViaTwilio: true,
-      purchaseOrderId: purchaseOrder.id,
-    };
-  }
+  revalidatePath("/suppliers/orders");
 
   return {
     success: true,
-    sentViaTwilio: false,
     whatsAppUrl: toWhatsAppWebUrl(phone, message),
     purchaseOrderId: purchaseOrder.id,
-    warning: canSendViaTwilio
-      ? undefined
-      : "WhatsApp AI is not enabled. Open WhatsApp to send the request manually.",
   };
 }

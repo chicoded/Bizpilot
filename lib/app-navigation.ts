@@ -10,7 +10,6 @@ import {
   BarChart3,
   Sparkles,
   Settings,
-  MessageCircle,
   History,
 } from "lucide-react";
 
@@ -31,7 +30,6 @@ export const mainNavItems: AppNavItem[] = [
   { href: "/debts", label: "Debts", icon: CreditCard, description: "Credit & payments" },
   { href: "/suppliers", label: "Suppliers", icon: Truck, description: "Supplier contacts" },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Business reports" },
-  { href: "/whatsapp", label: "WhatsApp AI", icon: MessageCircle, description: "AI on WhatsApp" },
   { href: "/ai", label: "AI Assistant", icon: Sparkles, description: "Ask your AI advisor" },
   { href: "/settings", label: "Settings", icon: Settings, description: "Business & billing" },
 ];

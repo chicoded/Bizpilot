@@ -310,6 +310,7 @@ model PurchaseOrder {
   total      Decimal  @default(0) @db.Decimal(12, 2)
   status     String   @default("pending")
   notes      String?
+  items      Json?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

@@ -6,7 +6,6 @@ import { SupplierForm } from "@/features/suppliers/supplier-form";
 import { SupplyRequestPanel } from "@/features/suppliers/supply-request-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { isTwilioConfigured } from "@/services/twilio";
 import { Package, ChevronRight } from "lucide-react";
 
 export default async function SupplierDetailPage({
@@ -46,7 +45,6 @@ export default async function SupplierDetailPage({
             quantity: p.quantity,
             reorderLevel: p.reorderLevel,
           }))}
-          twilioConfigured={isTwilioConfigured()}
         />
         <Card>
           <CardHeader className="pb-2">

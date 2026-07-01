@@ -163,8 +163,7 @@ export type PlanFeature =
   | "reports"
   | "debts"
   | "export"
-  | "ai"
-  | "whatsapp";
+  | "ai";
 
 export interface SubscriptionPlanDefinition {
   id: SubscriptionPlanId;
@@ -206,9 +205,8 @@ export const SUBSCRIPTION_PLANS: readonly SubscriptionPlanDefinition[] = [
       "Everything in Business",
       "AI Assistant",
       "Health Score",
-      "WhatsApp AI",
       "Unlimited Users",
     ],
-    highlights: ["inventory", "pos", "reports", "debts", "export", "ai", "whatsapp"],
+    highlights: ["inventory", "pos", "reports", "debts", "export", "ai"],
   },
 ];

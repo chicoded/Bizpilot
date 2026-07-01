@@ -30,7 +30,7 @@ export function MobileNav({ role, rolePermissions }: MobileNavProps) {
               pathname === item.href ||
               pathname.startsWith(`${item.href}/`) ||
               (item.href === "/menu" &&
-                ["/settings", "/expenses", "/customers", "/debts", "/suppliers", "/reports", "/whatsapp"].some(
+                ["/settings", "/expenses", "/customers", "/debts", "/suppliers", "/reports"].some(
                   (path) =>
                     pathname === path || pathname.startsWith(`${path}/`)
                 ));

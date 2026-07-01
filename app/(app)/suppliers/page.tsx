@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Truck, Plus, ChevronRight, Mail, MapPin } from "lucide-react";
+import { Truck, Plus, ChevronRight, Mail, MapPin, ClipboardList } from "lucide-react";
 
 export default async function SuppliersPage() {
   const ctx = await requirePageAccess("suppliers");
@@ -19,6 +19,13 @@ export default async function SuppliersPage() {
     <>
       <Header title="Suppliers" subtitle={`${suppliers.length} suppliers`} />
       <main className="p-4 md:p-6 max-w-3xl mx-auto space-y-4 mobile-page">
+        <Button size="lg" variant="outline" className="w-full" asChild>
+          <Link href="/suppliers/orders">
+            <ClipboardList className="h-5 w-5" />
+            Purchase orders
+          </Link>
+        </Button>
+
         <Button size="lg" className="w-full" asChild>
           <Link href="/suppliers/new">
             <Plus className="h-5 w-5" />

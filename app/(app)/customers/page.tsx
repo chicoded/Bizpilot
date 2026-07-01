@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatRelativeDate } from "@/lib/utils";
-import { Users, Phone, Plus, ChevronRight, Megaphone } from "lucide-react";
+import { Users, Phone, Plus, ChevronRight } from "lucide-react";
 
 export default async function CustomersPage() {
   const ctx = await requirePageAccess("customers");
@@ -32,13 +32,6 @@ export default async function CustomersPage() {
           <Link href="/customers/new">
             <Plus className="h-5 w-5" />
             Add Customer
-          </Link>
-        </Button>
-
-        <Button size="lg" variant="outline" className="w-full" asChild>
-          <Link href="/customers/broadcast">
-            <Megaphone className="h-5 w-5" />
-            Broadcast WhatsApp
           </Link>
         </Button>
 

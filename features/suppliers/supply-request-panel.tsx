@@ -20,13 +20,11 @@ export function SupplyRequestPanel({
   supplierName,
   supplierContact,
   products,
-  twilioConfigured,
 }: {
   supplierId: string;
   supplierName: string;
   supplierContact: string | null;
   products: SupplierProduct[];
-  twilioConfigured: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -77,19 +75,13 @@ export function SupplyRequestPanel({
         window.open(result.whatsAppUrl, "_blank", "noopener,noreferrer");
       }
 
-      if (result.sentViaTwilio) {
-        setSuccess(`Supply request sent to ${supplierName} on WhatsApp.`);
-      } else if (result.warning) {
-        setSuccess(result.warning);
-      } else {
-        setSuccess("Supply request saved. WhatsApp opened for you to send.");
-      }
+      setSuccess(
+        `Purchase order saved. WhatsApp opened — tap Send to message ${supplierName}.`
+      );
 
-      if (!result.whatsAppUrl && result.sentViaTwilio) {
-        setQuantities(Object.fromEntries(products.map((p) => [p.id, ""])));
-        setNotes("");
-        setCustomMessage("");
-      }
+      setQuantities(Object.fromEntries(products.map((p) => [p.id, ""])));
+      setNotes("");
+      setCustomMessage("");
     });
   }
 
@@ -98,28 +90,21 @@ export function SupplyRequestPanel({
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <PackagePlus className="h-4 w-4" />
-          Request supply via WhatsApp
+          Request supply
         </CardTitle>
       </CardHeader>
       <CardContent>
         {!hasPhone ? (
           <p className="text-sm text-amber-700 rounded-lg bg-amber-50 px-3 py-2">
             Add a phone number to this supplier&apos;s contact field (e.g.{" "}
-            08012345678) to send WhatsApp supply requests.
+            08012345678) to open WhatsApp with a pre-filled order message.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {twilioConfigured ? (
-              <p className="text-xs text-muted-foreground">
-                Requests are sent automatically from your business WhatsApp when
-                WhatsApp AI is enabled.
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                WhatsApp will open with a pre-filled message for you to send to
-                the supplier.
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Saves a purchase order and opens WhatsApp with your message ready
+              to send — no paid API required.
+            </p>
 
             {products.length > 0 ? (
               <div className="space-y-2">
