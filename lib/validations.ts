@@ -33,6 +33,7 @@ export const productSchema = z.object({
   supplierId: z.string().trim().optional(),
   purchasePrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
+  unitsPerPack: z.coerce.number().int().min(1).default(1),
   quantity: z.coerce.number().int().min(0).default(0),
   reorderLevel: z.coerce.number().int().min(0).default(5),
   batchNumber: z.string().trim().optional(),

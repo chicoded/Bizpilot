@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
+import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 
 interface ProductEditFormProps {
@@ -22,6 +23,7 @@ interface ProductEditFormProps {
     barcode: string | null;
     purchasePrice: number;
     sellingPrice: number;
+    unitsPerPack: number;
     quantity: number;
     reorderLevel: number;
     expiryDate: string | null;
@@ -93,32 +95,12 @@ export function ProductEditForm({
                   defaultValue={product.name}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Cost price (₦)</Label>
-                  <Input
-                    id="purchasePrice"
-                    name="purchasePrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={product.purchasePrice}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sellingPrice">Selling price (₦)</Label>
-                  <Input
-                    id="sellingPrice"
-                    name="sellingPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={product.sellingPrice}
-                  />
-                </div>
-              </div>
+              <PackPricingFields
+                defaultPurchasePrice={product.purchasePrice}
+                defaultSellingPrice={product.sellingPrice}
+                defaultUnitsPerPack={product.unitsPerPack}
+                disabled={isPending}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantity</Label>

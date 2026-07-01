@@ -26,6 +26,7 @@ const inventoryDetailSelect = {
   ...inventoryListSelect,
   barcode: true,
   purchasePrice: true,
+  unitsPerPack: true,
   supplierId: true,
 } as const;
 
@@ -70,6 +71,7 @@ function normalizeDetailProduct(
     barcode: string | null;
     purchasePrice: { toString(): string } | number;
     sellingPrice: { toString(): string } | number;
+    unitsPerPack?: number;
     quantity: number;
     reorderLevel: number;
     expiryDate: Date | null;
@@ -82,6 +84,7 @@ function normalizeDetailProduct(
     ...normalizeListProduct(product, withImages),
     barcode: product.barcode ?? null,
     purchasePrice: Number(product.purchasePrice),
+    unitsPerPack: product.unitsPerPack ?? 1,
     supplierId: product.supplierId ?? null,
   };
 }

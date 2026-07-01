@@ -31,6 +31,7 @@ export default async function ProductDetailPage({
         barcode: product.barcode,
         purchasePrice: product.purchasePrice,
         sellingPrice: product.sellingPrice,
+        unitsPerPack: product.unitsPerPack,
         quantity: product.quantity,
         reorderLevel: product.reorderLevel,
         expiryDate: product.expiryDate

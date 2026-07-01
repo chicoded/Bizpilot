@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
+import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 
 interface NewProductFormProps {
@@ -71,32 +72,7 @@ export function NewProductForm({
                 <Label htmlFor="name">Product name *</Label>
                 <Input id="name" name="name" required placeholder="Paracetamol 500mg" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Cost price (₦)</Label>
-                  <Input
-                    id="purchasePrice"
-                    name="purchasePrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue="0"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sellingPrice">Selling price (₦)</Label>
-                  <Input
-                    id="sellingPrice"
-                    name="sellingPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue="0"
-                    required
-                  />
-                </div>
-              </div>
+              <PackPricingFields disabled={isPending} />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantity</Label>
