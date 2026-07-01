@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
 import { getSupplierWithProducts } from "@/lib/suppliers";
 import { SupplierForm } from "@/features/suppliers/supplier-form";
+import { SupplyRequestPanel } from "@/features/suppliers/supply-request-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { isTwilioConfigured } from "@/services/twilio";
 import { Package, ChevronRight } from "lucide-react";
 
 export default async function SupplierDetailPage({
@@ -33,7 +35,19 @@ export default async function SupplierDetailPage({
           address: supplier.address ?? "",
         }}
       />
-      <section className="p-4 md:p-6 max-w-lg mx-auto -mt-2 pb-8 mobile-page">
+      <section className="p-4 md:p-6 max-w-lg mx-auto -mt-2 pb-8 mobile-page space-y-4">
+        <SupplyRequestPanel
+          supplierId={supplier.id}
+          supplierName={supplier.name}
+          supplierContact={supplier.contact}
+          products={supplier.products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            quantity: p.quantity,
+            reorderLevel: p.reorderLevel,
+          }))}
+          twilioConfigured={isTwilioConfigured()}
+        />
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">

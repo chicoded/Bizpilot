@@ -21,6 +21,7 @@ export async function getSupplierWithProducts(
           id: true,
           name: true,
           quantity: true,
+          reorderLevel: true,
           sellingPrice: true,
           category: true,
         },

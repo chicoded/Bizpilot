@@ -116,13 +116,13 @@ export function SupplierForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact">Contact person / phone</Label>
+                <Label htmlFor="contact">Phone / WhatsApp</Label>
                 <Input
                   id="contact"
                   name="contact"
                   type="tel"
                   defaultValue={defaultValues?.contact}
-                  placeholder="08012345678 or contact name"
+                  placeholder="08012345678"
                 />
               </div>
               <div className="space-y-2">

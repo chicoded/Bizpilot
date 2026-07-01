@@ -99,6 +99,32 @@ export const supplierSchema = z.object({
   address: z.string().optional(),
 });
 
+export const supplyRequestSchema = z
+  .object({
+    supplierId: z.string().min(1),
+    items: z
+      .array(
+        z.object({
+          productId: z.string().min(1),
+          quantity: z.coerce.number().int().min(1),
+        })
+      )
+      .default([]),
+    customMessage: z.string().max(1000).optional(),
+    notes: z.string().max(500).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasItems = data.items.length > 0;
+    const hasMessage = Boolean(data.customMessage?.trim());
+    if (!hasItems && !hasMessage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one product or describe what you need",
+        path: ["customMessage"],
+      });
+    }
+  });
+
 export const aiChatSchema = z.object({
   message: z.string().min(1, "Message is required").max(2000),
   businessId: z.string(),
@@ -127,3 +153,4 @@ export type SaleInput = z.infer<typeof saleSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type CustomerInput = z.infer<typeof customerSchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;
+export type SupplyRequestInput = z.infer<typeof supplyRequestSchema>;
