@@ -125,6 +125,28 @@ export const supplyRequestSchema = z
     }
   });
 
+export const customerBroadcastSchema = z
+  .object({
+    message: z
+      .string()
+      .min(1, "Message is required")
+      .max(1000, "Message is too long"),
+    audience: z.enum(["all", "debtors", "selected"]),
+    customerIds: z.array(z.string()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.audience === "selected" &&
+      (!data.customerIds || data.customerIds.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one customer",
+        path: ["customerIds"],
+      });
+    }
+  });
+
 export const aiChatSchema = z.object({
   message: z.string().min(1, "Message is required").max(2000),
   businessId: z.string(),
@@ -154,3 +176,4 @@ export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type CustomerInput = z.infer<typeof customerSchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;
 export type SupplyRequestInput = z.infer<typeof supplyRequestSchema>;
+export type CustomerBroadcastInput = z.infer<typeof customerBroadcastSchema>;

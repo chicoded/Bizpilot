@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -10,7 +11,8 @@ import { MessageLog } from "@/features/whatsapp/message-log";
 import { UpgradePrompt } from "@/features/billing/upgrade-prompt";
 import { canAccessFeature, getRequiredPlanForFeature } from "@/lib/subscription";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Zap, Package, Clock } from "lucide-react";
+import { MessageCircle, Zap, Package, Clock, Megaphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default async function WhatsAppPage() {
   const ctx = await requirePageAccess("whatsapp");
@@ -97,6 +99,24 @@ export default async function WhatsAppPage() {
           />
           <WhatsAppSimulator twilioConfigured={settings.twilioConfigured} />
         </div>
+
+        <Card>
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="font-medium flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-emerald-600" />
+                Customer broadcasts
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Send promotions, stock updates, or debt reminders to customers on
+                WhatsApp.
+              </p>
+            </div>
+            <Button asChild className="shrink-0">
+              <Link href="/customers/broadcast">Open broadcast</Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         <MessageLog messages={messages} />
       </main>

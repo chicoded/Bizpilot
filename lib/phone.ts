@@ -18,6 +18,22 @@ export function extractPhoneFromContact(
   return normalizeNigerianPhone(match[0]);
 }
 
+export function resolveCustomerPhone(
+  phone: string | null | undefined
+): string | null {
+  if (!phone?.trim()) return null;
+
+  const extracted = extractPhoneFromContact(phone);
+  if (extracted) return extracted;
+
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length >= 10) {
+    return normalizeNigerianPhone(phone.trim());
+  }
+
+  return null;
+}
+
 export function toWhatsAppWebUrl(phone: string, message: string): string {
   const digits = normalizeNigerianPhone(phone).replace(/\D/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
