@@ -25,7 +25,11 @@ export function ServiceWorkerRegister() {
 
     const register = async () => {
       try {
-        await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+        });
+        // Pick up service worker fixes without waiting for the next visit.
+        await registration.update();
       } catch {
         // SW registration failed — app still works online
       }

@@ -1,12 +1,9 @@
-const CACHE_NAME = "bizpilot-v4";
+const CACHE_NAME = "bizpilot-v5";
 const OFFLINE_URL = "/offline";
 
 const PRECACHE_URLS = [OFFLINE_URL];
 
-const SKIP_CACHE_PATHS = [
-  "/manifest.webmanifest",
-  "/sw.js",
-];
+const SKIP_CACHE_PATHS = ["/manifest.webmanifest", "/sw.js"];
 
 function isNextAppRequest(request) {
   const url = new URL(request.url);
@@ -31,6 +28,10 @@ function shouldBypassServiceWorker(url) {
   );
 }
 
+function isSameOrigin(request) {
+  return new URL(request.url).origin === self.location.origin;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
@@ -53,10 +54,13 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
 
   if (request.method !== "GET") return;
-  if (isNextAppRequest(request)) return;
 
   const url = new URL(request.url);
 
+  // Never intercept cross-origin requests (Clerk proxy, CDNs, analytics, etc.)
+  if (!isSameOrigin(request)) return;
+
+  if (isNextAppRequest(request)) return;
   if (shouldBypassServiceWorker(url)) return;
 
   if (
@@ -93,13 +97,13 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (
-    url.pathname.match(
-      /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/
-    )
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const network = fetch(request)
+        if (cached) return cached;
+
+        return fetch(request)
           .then((response) => {
             if (response.ok && response.type === "basic") {
               const clone = response.clone();
@@ -107,13 +111,10 @@ self.addEventListener("fetch", (event) => {
             }
             return response;
           })
-          .catch(() => cached);
-
-        return (
-          cached ??
-          network ??
-          new Response("", { status: 504, statusText: "Offline" })
-        );
+          .catch(
+            () =>
+              new Response("", { status: 504, statusText: "Offline" })
+          );
       })
     );
   }
