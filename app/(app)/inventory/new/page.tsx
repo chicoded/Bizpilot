@@ -1,4 +1,5 @@
 import { requirePageAccess } from "@/lib/auth";
+import { listSuppliersForBusiness } from "@/lib/suppliers";
 import { NewProductForm } from "@/features/inventory/new-product-form";
 
 export default async function NewProductPage({
@@ -6,7 +7,10 @@ export default async function NewProductPage({
 }: {
   searchParams: Promise<{ barcode?: string }>;
 }) {
-  await requirePageAccess("inventory");
+  const ctx = await requirePageAccess("inventory");
   const { barcode } = await searchParams;
-  return <NewProductForm initialBarcode={barcode ?? ""} />;
+  const suppliers = await listSuppliersForBusiness(ctx.businessId);
+  return (
+    <NewProductForm initialBarcode={barcode ?? ""} suppliers={suppliers} />
+  );
 }

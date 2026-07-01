@@ -26,6 +26,7 @@ const inventoryDetailSelect = {
   ...inventoryListSelect,
   barcode: true,
   purchasePrice: true,
+  supplierId: true,
 } as const;
 
 const productApiSelect = {
@@ -72,6 +73,7 @@ function normalizeDetailProduct(
     quantity: number;
     reorderLevel: number;
     expiryDate: Date | null;
+    supplierId?: string | null;
     imageUrl?: string | null;
   },
   withImages: boolean
@@ -80,6 +82,7 @@ function normalizeDetailProduct(
     ...normalizeListProduct(product, withImages),
     barcode: product.barcode ?? null,
     purchasePrice: Number(product.purchasePrice),
+    supplierId: product.supplierId ?? null,
   };
 }
 

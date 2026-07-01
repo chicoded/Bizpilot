@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
+import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 
 interface ProductEditFormProps {
   product: {
@@ -25,10 +26,15 @@ interface ProductEditFormProps {
     reorderLevel: number;
     expiryDate: string | null;
     imageUrl: string | null;
+    supplierId: string | null;
   };
+  suppliers?: { id: string; name: string }[];
 }
 
-export function ProductEditForm({ product }: ProductEditFormProps) {
+export function ProductEditForm({
+  product,
+  suppliers = [],
+}: ProductEditFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +153,13 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                   defaultValue={product.category ?? ""}
                 />
               </div>
+              {suppliers.length > 0 && (
+                <SupplierSelectField
+                  suppliers={suppliers}
+                  defaultValue={product.supplierId}
+                  disabled={isPending}
+                />
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <BarcodeScanField
                   value={barcode}

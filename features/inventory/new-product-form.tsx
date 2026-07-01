@@ -12,12 +12,17 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
+import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 
 interface NewProductFormProps {
   initialBarcode?: string;
+  suppliers?: { id: string; name: string }[];
 }
 
-export function NewProductForm({ initialBarcode = "" }: NewProductFormProps) {
+export function NewProductForm({
+  initialBarcode = "",
+  suppliers = [],
+}: NewProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +127,9 @@ export function NewProductForm({ initialBarcode = "" }: NewProductFormProps) {
                 <Label htmlFor="category">Category</Label>
                 <Input id="category" name="category" placeholder="Medicine, Drinks, etc." />
               </div>
+              {suppliers.length > 0 && (
+                <SupplierSelectField suppliers={suppliers} disabled={isPending} />
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <BarcodeScanField
                   value={barcode}

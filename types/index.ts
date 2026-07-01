@@ -12,6 +12,7 @@ export interface InventoryListProduct {
 export interface InventoryDetailProduct extends InventoryListProduct {
   barcode: string | null;
   purchasePrice: number;
+  supplierId: string | null;
 }
 
 export interface ProductApiItem {

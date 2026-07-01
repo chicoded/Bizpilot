@@ -167,14 +167,27 @@ export async function createProduct(formData: FormData) {
       reorderLevel: formData.get("reorderLevel"),
       batchNumber: formValue(formData.get("batchNumber")),
       expiryDate: formValue(formData.get("expiryDate")),
+      supplierId: formValue(formData.get("supplierId")),
     });
 
     if (!parsed.success) {
       return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
     }
 
-    const { expiryDate, sku, barcode, category, batchNumber, ...rest } =
+    const { expiryDate, sku, barcode, category, batchNumber, supplierId, ...rest } =
       parsed.data;
+
+    let resolvedSupplierId: string | null = null;
+    if (supplierId) {
+      const supplier = await prisma.supplier.findFirst({
+        where: { id: supplierId, businessId: ctx.businessId },
+        select: { id: true },
+      });
+      if (!supplier) {
+        return { error: "Selected supplier not found" };
+      }
+      resolvedSupplierId = supplier.id;
+    }
 
     const product = await createInventoryProduct({
       ...rest,
@@ -182,6 +195,7 @@ export async function createProduct(formData: FormData) {
       barcode: barcode ?? null,
       category: category ?? null,
       batchNumber: batchNumber ?? null,
+      supplierId: resolvedSupplierId,
       businessId: ctx.businessId,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
     });
@@ -245,14 +259,27 @@ export async function updateProduct(productId: string, formData: FormData) {
       reorderLevel: formData.get("reorderLevel"),
       batchNumber: formValue(formData.get("batchNumber")),
       expiryDate: formValue(formData.get("expiryDate")),
+      supplierId: formValue(formData.get("supplierId")),
     });
 
     if (!parsed.success) {
       return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
     }
 
-    const { expiryDate, sku, barcode, category, batchNumber, quantity, ...rest } =
+    const { expiryDate, sku, barcode, category, batchNumber, quantity, supplierId, ...rest } =
       parsed.data;
+
+    let resolvedSupplierId: string | null = null;
+    if (supplierId) {
+      const supplier = await prisma.supplier.findFirst({
+        where: { id: supplierId, businessId: ctx.businessId },
+        select: { id: true },
+      });
+      if (!supplier) {
+        return { error: "Selected supplier not found" };
+      }
+      resolvedSupplierId = supplier.id;
+    }
 
     const quantityDelta = quantity - existing.quantity;
 
@@ -278,6 +305,7 @@ export async function updateProduct(productId: string, formData: FormData) {
           barcode: barcode ?? null,
           category: category ?? null,
           batchNumber: batchNumber ?? null,
+          supplierId: resolvedSupplierId,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
         },
         tx
