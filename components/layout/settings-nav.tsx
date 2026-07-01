@@ -8,6 +8,7 @@ import {
   Users,
   Shield,
   ChevronRight,
+  Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const settingsLinks = [
   { href: "/settings/profile", label: "Business profile", icon: Building2 },
   { href: "/settings/team", label: "Team", icon: Users },
   { href: "/settings/access", label: "Page access", icon: Shield, ownerOnly: true },
+  { href: "/settings/launch", label: "Launch checklist", icon: Rocket, ownerOnly: true },
   { href: "/settings/billing", label: "Billing", icon: CreditCard, billingOnly: true },
 ];
 

@@ -87,4 +87,5 @@ export const PRODUCTION_ENV_CHECKLIST = [
   { key: "HEALTH_CHECK_SECRET", required: false, service: "Detailed /api/health responses" },
   { key: "NEXT_PUBLIC_SENTRY_DSN", required: false, service: "Sentry (client)" },
   { key: "SENTRY_DSN", required: false, service: "Sentry (server)" },
+  { key: "RUN_PRISMA_MIGRATE", required: false, service: "Auto-apply DB migrations on deploy" },
 ] as const;
