@@ -24,6 +24,18 @@
     --input: 214 20% 90%;
     --ring: 213 52% 24%;
     --radius: 0.75rem;
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83% 14%;
+    --info: 213 52% 24%;
+    --info-foreground: 0 0% 100%;
+  }
+}
+
+@layer utilities {
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    @apply sr-only;
   }
 }
 

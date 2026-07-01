@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createSale } from "@/actions/business";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
+import { toast } from "@/hooks/use-toast";
 import {
   CreditCustomerPicker,
   type CustomerOption,
@@ -28,7 +30,10 @@ import {
   History,
   FileText,
   Printer,
+  RefreshCw,
+  PackageOpen,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -43,8 +48,20 @@ interface CartItem {
   quantity: number;
 }
 
+function ProductSkeletonGrid() {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <Skeleton key={i} className="h-[72px]" />
+      ))}
+    </div>
+  );
+}
+
 export default function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
@@ -54,23 +71,46 @@ export default function SalesPage() {
   const [isPending, startTransition] = useTransition();
   const [saleComplete, setSaleComplete] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
+
+  const loadProducts = useCallback(async () => {
+    setProductsLoading(true);
+    setProductsError(null);
+    try {
+      const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Failed to load products");
+      const data = await response.json();
+      setProducts(data.products ?? []);
+    } catch {
+      setProductsError("Could not load products. Check your connection and try again.");
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      const response = await fetch("/api/customers");
+      if (!response.ok) return;
+      const data = await response.json();
+      setCustomers(data.customers ?? []);
+    } catch {
+      // Non-blocking for POS
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((data) => setProducts(data.products ?? []))
-      .catch(() => {});
-    fetch("/api/customers")
-      .then((r) => r.json())
-      .then((data) => setCustomers(data.customers ?? []))
-      .catch(() => {});
-  }, []);
+    loadProducts();
+    loadCustomers();
+  }, [loadProducts, loadCustomers]);
 
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.barcode?.includes(search)
   );
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.product.sellingPrice * item.quantity,
@@ -104,6 +144,10 @@ export default function SalesPage() {
     );
   }
 
+  function scrollToCart() {
+    cartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function completeSale() {
     if (cart.length === 0) return;
     if (paymentMethod === "CREDIT" && !customerId) {
@@ -125,75 +169,136 @@ export default function SalesPage() {
         setCart([]);
         setCustomerId("");
         setSaleComplete(true);
-        setLastSaleId(result.sale?.id ?? null);
+        const saleId = result.sale?.id ?? null;
+        setLastSaleId(saleId);
+        toast({
+          title: "Sale complete",
+          description: formatCurrency(subtotal) + " recorded successfully.",
+          variant: "success",
+          action: saleId
+            ? {
+                label: "View receipt",
+                onClick: () => {
+                  window.location.href = `/sales/${saleId}`;
+                },
+              }
+            : undefined,
+        });
         setTimeout(() => setSaleComplete(false), 8000);
-        fetch("/api/customers")
-          .then((r) => r.json())
-          .then((data) => setCustomers(data.customers ?? []))
-          .catch(() => {});
+        loadProducts();
+        loadCustomers();
       } else if (result.error) {
-        setSaleError(
-          typeof result.error === "string" ? result.error : "Sale failed"
-        );
+        const message =
+          typeof result.error === "string" ? result.error : "Sale failed";
+        setSaleError(message);
+        toast({
+          title: "Sale failed",
+          description: message,
+          variant: "destructive",
+        });
       }
     });
   }
 
   return (
     <>
-      <Header title="Point of Sale" subtitle="Tap products to add to cart" />
-      <main className="p-4 md:p-6 max-w-7xl mobile-page">
-        <div className="flex justify-end mb-3">
+      <AppShell
+        title="Point of Sale"
+        subtitle="Tap products to add to cart"
+        className={cn(cart.length > 0 && "pb-36 lg:pb-6")}
+        actions={
           <Link
             href="/sales/history"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-biz-blue hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-biz-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg px-1"
           >
-            <History className="h-4 w-4" />
+            <History className="h-4 w-4" aria-hidden />
             Sales history
           </Link>
-        </div>
+        }
+      >
         <div className="grid gap-4 lg:grid-cols-5">
-          {/* Product search */}
           <div className="lg:col-span-3 space-y-4">
             <ScanProductButton onProductFound={addToCart} disabled={isPending} />
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 placeholder="Search products or scan barcode..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 h-14 text-base"
                 autoFocus
+                aria-label="Search products"
               />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
-              {filtered.map((product) => (
-                <button
-                  key={product.id}
+
+            {productsLoading ? (
+              <ProductSkeletonGrid />
+            ) : productsError ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center space-y-3"
+              >
+                <p className="text-sm text-destructive font-medium">{productsError}</p>
+                <Button
                   type="button"
-                  onClick={() => addToCart(product)}
-                  disabled={product.quantity === 0}
-                  className="rounded-xl border border-border/50 bg-white p-3 text-left hover:border-biz-blue hover:shadow-soft transition-all disabled:opacity-40 active:scale-[0.97] touch-manipulation min-h-[72px]"
+                  variant="outline"
+                  size="sm"
+                  onClick={loadProducts}
                 >
-                  <p className="font-semibold text-sm truncate">{product.name}</p>
-                  <p className="text-biz-blue font-bold mt-1">
-                    {formatCurrency(product.sellingPrice)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {product.quantity} left
-                  </p>
-                </button>
-              ))}
-            </div>
+                  <RefreshCw className="h-4 w-4" aria-hidden />
+                  Retry
+                </Button>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center space-y-3">
+                <PackageOpen className="h-10 w-10 text-muted-foreground mx-auto" />
+                <p className="font-medium">No products yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Add products to inventory before recording sales.
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/inventory/new">Add product</Link>
+                </Button>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center space-y-2">
+                <p className="font-medium">No products match &ldquo;{search}&rdquo;</p>
+                <p className="text-sm text-muted-foreground">
+                  Try a different search or scan a barcode.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
+                {filtered.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => addToCart(product)}
+                    disabled={product.quantity === 0}
+                    className="rounded-xl border border-border/50 bg-white p-3 text-left hover:border-biz-blue hover:shadow-soft transition-all disabled:opacity-40 active:scale-[0.97] touch-manipulation min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <p className="font-semibold text-sm truncate">{product.name}</p>
+                    <p className="text-biz-blue font-bold mt-1">
+                      {formatCurrency(product.sellingPrice)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {product.quantity} left
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Cart */}
-          <div className="lg:col-span-2">
-            <Card className="sticky top-20">
+          <div className="lg:col-span-2" ref={cartRef}>
+            <Card className="lg:sticky lg:top-20">
               <CardContent className="p-4 space-y-4">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-biz-blue" />
-                  <h2 className="font-semibold">Cart ({cart.length})</h2>
+                  <ShoppingCart className="h-5 w-5 text-biz-blue" aria-hidden />
+                  <h2 className="font-semibold">Cart ({cartItemCount})</h2>
                 </div>
 
                 {cart.length === 0 ? (
@@ -216,30 +321,42 @@ export default function SalesPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
                             onClick={() => updateQty(item.product.id, -1)}
-                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border"
+                            aria-label={`Decrease quantity of ${item.product.name}`}
                           >
                             <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-6 text-center text-sm font-bold">
+                          </Button>
+                          <span
+                            className="w-6 text-center text-sm font-bold"
+                            aria-label={`Quantity: ${item.quantity}`}
+                          >
                             {item.quantity}
                           </span>
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
                             onClick={() => updateQty(item.product.id, 1)}
-                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border"
+                            aria-label={`Increase quantity of ${item.product.name}`}
                           >
                             <Plus className="h-3 w-3" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-destructive hover:text-destructive"
                             onClick={() => updateQty(item.product.id, -item.quantity)}
-                            className="h-8 w-8 flex items-center justify-center rounded-lg text-red-500"
+                            aria-label={`Remove ${item.product.name} from cart`}
                           >
                             <Trash2 className="h-3 w-3" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -254,17 +371,23 @@ export default function SalesPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div
+                    className="grid grid-cols-2 gap-2"
+                    role="group"
+                    aria-label="Payment method"
+                  >
                     {PAYMENT_METHODS.map((method) => (
                       <button
                         key={method.value}
                         type="button"
                         onClick={() => setPaymentMethod(method.value)}
-                        className={`rounded-xl py-3 text-sm font-semibold border transition-all ${
+                        aria-pressed={paymentMethod === method.value}
+                        className={cn(
+                          "rounded-xl py-3 text-sm font-semibold border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           paymentMethod === method.value
                             ? "bg-biz-blue text-white border-biz-blue"
                             : "bg-white border-border hover:border-biz-blue/50"
-                        }`}
+                        )}
                       >
                         {method.label}
                       </button>
@@ -287,27 +410,29 @@ export default function SalesPage() {
                   )}
 
                   {saleError && (
-                    <p className="text-sm text-red-500 text-center">{saleError}</p>
+                    <p role="alert" className="text-sm text-destructive text-center">
+                      {saleError}
+                    </p>
                   )}
 
                   {saleComplete && lastSaleId && (
-                    <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 space-y-2">
-                      <p className="text-sm font-medium text-emerald-800 text-center">
+                    <div className="rounded-lg bg-success/10 border border-success/20 p-3 space-y-2">
+                      <p className="text-sm font-medium text-success text-center">
                         Sale complete
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <Link
                           href={`/sales/${lastSaleId}`}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white border border-emerald-200 text-emerald-800 text-sm font-medium py-2 hover:bg-emerald-100 transition-colors"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white border border-success/30 text-success text-sm font-medium py-2 hover:bg-success/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <FileText className="h-4 w-4" />
+                          <FileText className="h-4 w-4" aria-hidden />
                           Receipt
                         </Link>
                         <Link
                           href={`/sales/${lastSaleId}?print=1`}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-700 text-white text-sm font-medium py-2 hover:bg-emerald-800 transition-colors"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-success text-success-foreground text-sm font-medium py-2 hover:bg-success/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <Printer className="h-4 w-4" />
+                          <Printer className="h-4 w-4" aria-hidden />
                           Print
                         </Link>
                       </div>
@@ -317,15 +442,15 @@ export default function SalesPage() {
                   <Button
                     size="lg"
                     variant="success"
-                    className="w-full h-14 text-base"
+                    className="w-full h-14 text-base hidden lg:flex"
                     onClick={completeSale}
                     disabled={cart.length === 0 || isPending}
                   >
                     {isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" aria-label="Processing sale" />
                     ) : saleComplete ? (
                       <>
-                        <Check className="h-5 w-5" />
+                        <Check className="h-5 w-5" aria-hidden />
                         Sale Complete!
                       </>
                     ) : (
@@ -337,7 +462,44 @@ export default function SalesPage() {
             </Card>
           </div>
         </div>
-      </main>
+      </AppShell>
+
+      {cart.length > 0 && (
+        <div className="fixed bottom-[4.5rem] left-0 right-0 z-[90] md:hidden border-t border-border/40 bg-white/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(30,58,95,0.08)]">
+          <div className="flex items-center gap-3 max-w-7xl mx-auto">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">
+                {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
+              </p>
+              <p className="text-lg font-bold text-biz-blue">
+                {formatCurrency(subtotal)}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={scrollToCart}
+            >
+              Review
+            </Button>
+            <Button
+              type="button"
+              variant="success"
+              size="sm"
+              className="min-w-[88px]"
+              onClick={completeSale}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-label="Processing sale" />
+              ) : (
+                "Pay"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { requirePageAccess } from "@/lib/auth";
-import Link from "next/link";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
+import { StatusChip } from "@/components/ui/status-chip";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { BusinessHealthScore } from "@/components/dashboard/business-health-score";
 import { AIInsightsWidget } from "@/components/dashboard/ai-insights-widget";
@@ -64,17 +64,21 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Header
+      <AppShell
         title="Dashboard"
         subtitle={`Good ${getGreeting()}, ${ctx.business.name}`}
-      />
-      <main className="p-4 md:p-6 space-y-6 max-w-7xl mobile-page">
+      >
         {loadError && (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p
+            role="alert"
+            aria-live="polite"
+            className="text-sm text-warning-foreground bg-warning/15 border border-warning/30 rounded-xl px-4 py-3 mb-6"
+          >
             {loadError}
           </p>
         )}
 
+        <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <KPICard
             title="Sales Today"
@@ -112,25 +116,28 @@ export default async function DashboardPage() {
 
         <div className="flex flex-wrap gap-2">
           {kpis.lowStockCount > 0 && (
-            <Link
+            <StatusChip
+              icon={Package}
+              label={`${kpis.lowStockCount} low stock`}
               href="/inventory/low-stock"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200 transition-colors"
-            >
-              <Package className="h-3.5 w-3.5" />
-              {kpis.lowStockCount} low stock
-            </Link>
+              variant="warning"
+            />
           )}
           {kpis.expiringCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              {kpis.expiringCount} expiring soon
-            </span>
+            <StatusChip
+              icon={AlertTriangle}
+              label={`${kpis.expiringCount} expiring soon`}
+              href="/inventory"
+              variant="danger"
+            />
           )}
           {kpis.debtorsCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700">
-              <Users className="h-3.5 w-3.5" />
-              {kpis.debtorsCount} debtors
-            </span>
+            <StatusChip
+              icon={Users}
+              label={`${kpis.debtorsCount} debtors`}
+              href="/debts"
+              variant="warning"
+            />
           )}
         </div>
 
@@ -144,7 +151,8 @@ export default async function DashboardPage() {
             <RevenueChart businessId={ctx.businessId} />
           </div>
         </div>
-      </main>
+        </div>
+      </AppShell>
     </>
   );
 }

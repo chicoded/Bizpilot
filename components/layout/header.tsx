@@ -1,7 +1,6 @@
 "use client";
 
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { Bell } from "lucide-react";
 
 interface HeaderProps {
   title: string;
@@ -18,13 +17,6 @@ export function Header({ title, subtitle }: HeaderProps) {
         )}
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl hover:bg-accent transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5 text-muted-foreground" />
-        </button>
         <ClerkLoading>
           <div
             className="h-9 w-9 rounded-full bg-muted animate-pulse"

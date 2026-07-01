@@ -48,6 +48,7 @@ export function MobileNav({
                   key={item.href}
                   href={item.href}
                   prefetch
+                  aria-current={isActive ? "page" : undefined}
                   className="relative z-10 flex flex-col items-center -mt-5 touch-manipulation"
                 >
                   <div
@@ -77,6 +78,7 @@ export function MobileNav({
                 key={item.href}
                 href={item.href}
                 prefetch
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "relative z-10 flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 min-w-[56px] touch-manipulation active:scale-95 transition-transform",
                   isActive ? "text-biz-blue" : "text-muted-foreground"

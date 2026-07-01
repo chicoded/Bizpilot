@@ -11,6 +11,7 @@ import {
   Sparkles,
   Settings,
   History,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface AppNavItem {
@@ -39,5 +40,5 @@ export const mobileNavItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/sales", label: "Sales", icon: ShoppingCart, primary: true },
   { href: "/ai", label: "AI", icon: Sparkles },
-  { href: "/menu", label: "Menu", icon: Settings },
+  { href: "/menu", label: "Menu", icon: LayoutGrid },
 ] as const;
