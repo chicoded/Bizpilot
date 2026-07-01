@@ -45,6 +45,14 @@ const nextConfig: NextConfig = {
       source: "/api/health",
       headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
     },
+    {
+      source: "/sign-in/:path*",
+      headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+    },
+    {
+      source: "/sign-up/:path*",
+      headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+    },
   ],
 };
 
