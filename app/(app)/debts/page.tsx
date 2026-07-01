@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Header } from "@/components/layout/header";
@@ -8,21 +7,29 @@ import { formatCurrency } from "@/lib/utils";
 import { CreditCard, Phone } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { RecordPaymentButton } from "@/features/debts/record-payment-button";
+import { AddDebtForm } from "@/features/debts/add-debt-form";
 
 export default async function DebtsPage() {
   const ctx = await requirePageAccess("debts");
 
-  const debtors = await prisma.customer.findMany({
-    where: { businessId: ctx.businessId, debt: { gt: 0 } },
-    orderBy: { debt: "desc" },
-    include: {
-      sales: {
-        where: { isCredit: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
+  const [debtors, customers] = await Promise.all([
+    prisma.customer.findMany({
+      where: { businessId: ctx.businessId, debt: { gt: 0 } },
+      orderBy: { debt: "desc" },
+      include: {
+        sales: {
+          where: { isCredit: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
-    },
-  });
+    }),
+    prisma.customer.findMany({
+      where: { businessId: ctx.businessId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, phone: true, debt: true },
+    }),
+  ]);
 
   const totalDebt = debtors.reduce((sum, d) => sum + Number(d.debt), 0);
 
@@ -33,13 +40,24 @@ export default async function DebtsPage() {
         subtitle={`₦${totalDebt.toLocaleString()} total outstanding`}
       />
       <main className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+        <AddDebtForm
+          currency={ctx.business.currency}
+          customers={customers.map((c) => ({
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            debt: Number(c.debt),
+          }))}
+        />
+
         {debtors.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <CreditCard className="h-10 w-10 mx-auto mb-3 text-emerald-500" />
               <p className="font-medium text-emerald-600">No outstanding debts</p>
               <p className="text-sm text-muted-foreground mt-1">
-                All customers have paid up. Great job!
+                Use the form above to record existing balances, or sell on credit at
+                Point of Sale.
               </p>
             </CardContent>
           </Card>

@@ -655,6 +655,36 @@ export async function recordDebtPayment(data: {
   return { success: true };
 }
 
+export async function addCustomerDebt(data: {
+  customerId: string;
+  amount: number;
+}) {
+  const ctx = await requireSectionAccess("debts");
+  const parsed = debtPaymentSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { error: "Enter a valid customer and amount" };
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: parsed.data.customerId, businessId: ctx.businessId },
+  });
+
+  if (!customer) {
+    return { error: "Customer not found" };
+  }
+
+  await prisma.customer.update({
+    where: { id: customer.id },
+    data: { debt: { increment: parsed.data.amount } },
+  });
+
+  revalidatePath("/debts");
+  revalidatePath("/customers");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function sendAIMessage(message: string) {
   const ctx = await requireSectionAccess("ai");
   const subscription = await prisma.subscription.findUnique({
