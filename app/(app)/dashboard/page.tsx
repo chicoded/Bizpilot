@@ -5,10 +5,10 @@ import { KPICard } from "@/components/dashboard/kpi-card";
 import { BusinessHealthScore } from "@/components/dashboard/business-health-score";
 import { AIInsightsWidget } from "@/components/dashboard/ai-insights-widget";
 import {
-  getDashboardKPIs,
-  calculateBusinessHealth,
+  getCachedDashboardKPIs,
+  getCachedBusinessHealth,
   generateAIInsights,
-  saveHealthScore,
+  saveHealthScoreIfStale,
 } from "@/services/dashboard";
 import { Package, AlertTriangle, Users } from "lucide-react";
 import { RevenueChart } from "@/features/dashboard/revenue-chart";
@@ -49,11 +49,11 @@ export default async function DashboardPage() {
 
   try {
     [kpis, health, insights] = await Promise.all([
-      getDashboardKPIs(ctx.businessId),
-      calculateBusinessHealth(ctx.businessId),
+      getCachedDashboardKPIs(ctx.businessId),
+      getCachedBusinessHealth(ctx.businessId),
       generateAIInsights(ctx.businessId),
     ]);
-    saveHealthScore(ctx.businessId, health);
+    saveHealthScoreIfStale(ctx.businessId, health);
   } catch (error) {
     console.error("Dashboard load failed:", error);
     loadError =

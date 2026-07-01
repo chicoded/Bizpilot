@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
 import { listSales, type SalePeriod } from "@/lib/sales";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { SalesHistoryPanel } from "@/features/sales/sales-history-panel";
 import { ShoppingCart } from "lucide-react";
@@ -29,10 +28,13 @@ export default async function SalesHistoryPage({
   );
 
   return (
-    <>
-      <Header title="Sales History" subtitle={`${count} transactions`} />
-      <main className="p-4 md:p-6 max-w-2xl mx-auto mobile-page space-y-4">
-        <Button size="lg" className="w-full" asChild>
+    <AppShell
+      title="Sales History"
+      subtitle={`${count} transactions`}
+      maxWidth="narrow"
+      className="space-y-4"
+    >
+      <Button size="lg" className="w-full" asChild>
           <Link href="/sales">
             <ShoppingCart className="h-5 w-5" />
             New Sale
@@ -46,7 +48,6 @@ export default async function SalesHistoryPage({
           currency={ctx.business.currency}
           period={period}
         />
-      </main>
-    </>
+    </AppShell>
   );
 }

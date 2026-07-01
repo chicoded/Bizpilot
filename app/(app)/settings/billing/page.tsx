@@ -1,15 +1,13 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
-import { Header } from "@/components/layout/header";
 import { getBillingData } from "@/actions/billing";
 import { getAppUrl } from "@/lib/env";
+import { SettingsShell } from "@/components/layout/settings-shell";
 import { SubscriptionStatusCard } from "@/features/billing/subscription-status-card";
 import { PlanSelector } from "@/features/billing/plan-selector";
 import { PaymentHistory } from "@/features/billing/payment-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 export default async function BillingPage() {
   const ctx = await requirePageAccess("billing");
@@ -18,23 +16,19 @@ export default async function BillingPage() {
   const appUrl = getAppUrl();
 
   return (
-    <>
-      <Header title="Billing" subtitle="Manage your subscription" />
-      <main className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-        <Link
-          href="/settings"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to settings
-        </Link>
-
+    <SettingsShell
+      title="Settings"
+      subtitle="Billing & subscription"
+      isOwner={ctx.role === "OWNER"}
+      canAccessBilling
+    >
+      <div className="space-y-6">
         {!paystackConfigured && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4 text-sm text-amber-800">
+          <Card className="border-warning/30 bg-warning/10">
+            <CardContent className="p-4 text-sm">
               Paystack is not configured. Add{" "}
-              <code className="bg-white px-1 rounded">PAYSTACK_SECRET_KEY</code> and{" "}
-              <code className="bg-white px-1 rounded">
+              <code className="bg-background px-1 rounded">PAYSTACK_SECRET_KEY</code> and{" "}
+              <code className="bg-background px-1 rounded">
                 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
               </code>{" "}
               to enable payments.
@@ -62,7 +56,7 @@ export default async function BillingPage() {
             <p className="text-xs font-semibold text-muted-foreground uppercase">
               Paystack Webhook URL
             </p>
-            <code className="block text-xs bg-slate-50 p-3 rounded-lg break-all">
+            <code className="block text-xs bg-muted p-3 rounded-lg break-all">
               {appUrl}/api/webhooks/paystack
             </code>
             <p className="text-xs text-muted-foreground">
@@ -81,7 +75,7 @@ export default async function BillingPage() {
             </a>
           </CardContent>
         </Card>
-      </main>
-    </>
+      </div>
+    </SettingsShell>
   );
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import {
   getFullReport,
   getWeeklyComparison,
@@ -34,12 +33,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   ]);
 
   return (
-    <>
-      <Header
-        title="Reports"
-        subtitle={report.periodLabel}
-      />
-      <main className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+    <AppShell title="Reports" subtitle={report.periodLabel} className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Suspense fallback={<div className="h-11 bg-muted rounded-xl animate-pulse" />}>
             <ReportPeriodFilter />
@@ -72,7 +66,6 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           totals={report.inventoryTotals}
           currency={ctx.business.currency}
         />
-      </main>
-    </>
+    </AppShell>
   );
 }

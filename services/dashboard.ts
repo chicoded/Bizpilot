@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { DashboardKPIs, AIInsight, BusinessHealthResult } from "@/types";
 import { startOfDay, endOfDay, addDays, subDays } from "date-fns";
+import { unstable_cache } from "next/cache";
 
 export async function getDashboardKPIs(
   businessId: string
@@ -58,6 +59,26 @@ export async function getDashboardKPIs(
     debtorsCount: debtors.length,
     totalDebt: debtors.reduce((sum, c) => sum + Number(c.debt), 0),
   };
+}
+
+export async function getCachedDashboardKPIs(
+  businessId: string
+): Promise<DashboardKPIs> {
+  return unstable_cache(
+    () => getDashboardKPIs(businessId),
+    [`dashboard-kpis-${businessId}`],
+    { revalidate: 300 }
+  )();
+}
+
+export async function getCachedBusinessHealth(
+  businessId: string
+): Promise<BusinessHealthResult> {
+  return unstable_cache(
+    () => calculateBusinessHealth(businessId),
+    [`dashboard-health-${businessId}`],
+    { revalidate: 300 }
+  )();
 }
 
 export async function generateAIInsights(
@@ -310,6 +331,31 @@ export async function calculateBusinessHealth(
     recommendations,
     breakdown,
   };
+}
+
+export async function saveHealthScoreIfStale(
+  businessId: string,
+  health: BusinessHealthResult
+) {
+  try {
+    const latest = await prisma.businessHealthScore.findFirst({
+      where: { businessId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, score: true },
+    });
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (
+      latest &&
+      latest.createdAt > thirtyMinAgo &&
+      latest.score === health.score
+    ) {
+      return null;
+    }
+    return await saveHealthScore(businessId, health);
+  } catch (error) {
+    console.error("saveHealthScoreIfStale failed:", error);
+    return null;
+  }
 }
 
 export async function saveHealthScore(

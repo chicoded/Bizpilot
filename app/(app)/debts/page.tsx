@@ -1,6 +1,6 @@
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -34,12 +34,12 @@ export default async function DebtsPage() {
   const totalDebt = debtors.reduce((sum, d) => sum + Number(d.debt), 0);
 
   return (
-    <>
-      <Header
-        title="Debt Management"
-        subtitle={`₦${totalDebt.toLocaleString()} total outstanding`}
-      />
-      <main className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+    <AppShell
+      title="Debt Management"
+      subtitle={`${formatCurrency(totalDebt, ctx.business.currency)} total outstanding`}
+      maxWidth="default"
+      className="space-y-4"
+    >
         <AddDebtForm
           currency={ctx.business.currency}
           customers={customers.map((c) => ({
@@ -123,7 +123,6 @@ export default async function DebtsPage() {
             );
           })
         )}
-      </main>
-    </>
+    </AppShell>
   );
 }

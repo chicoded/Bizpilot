@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatRelativeDate } from "@/lib/utils";
 import { Users, Phone, Plus, ChevronRight } from "lucide-react";
 
@@ -25,25 +25,29 @@ export default async function CustomersPage() {
   });
 
   return (
-    <>
-      <Header title="Customers" subtitle={`${customers.length} customers`} />
-      <main className="p-4 md:p-6 max-w-3xl mx-auto space-y-4 mobile-page">
-        <Button size="lg" className="w-full" asChild>
+    <AppShell
+      title="Customers"
+      subtitle={`${customers.length} customers`}
+      maxWidth="default"
+      actions={
+        <Button size="sm" asChild>
           <Link href="/customers/new">
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
             Add Customer
           </Link>
         </Button>
-
-        {customers.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p>No customers yet. Add one or create them during credit sales at POS.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          customers.map((customer) => (
+      }
+    >
+      {customers.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No customers yet"
+          description="Add customers manually or create them during credit sales at POS."
+          action={{ label: "Add customer", href: "/customers/new" }}
+        />
+      ) : (
+        <div className="space-y-3">
+          {customers.map((customer) => (
             <Link key={customer.id} href={`/customers/${customer.id}`}>
               <Card className="hover:shadow-glass transition-shadow">
                 <CardContent className="p-4 flex items-center justify-between gap-3">
@@ -64,14 +68,14 @@ export default async function CustomersPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Lifetime value</p>
-                      <p className="font-bold text-biz-emerald">
+                      <p className="font-bold text-success">
                         {formatCurrency(
                           Number(customer.lifetimeValue),
                           ctx.business.currency
                         )}
                       </p>
                       {Number(customer.debt) > 0 && (
-                        <p className="text-sm font-medium text-red-500">
+                        <p className="text-sm font-medium text-destructive">
                           Owes{" "}
                           {formatCurrency(Number(customer.debt), ctx.business.currency)}
                         </p>
@@ -82,9 +86,9 @@ export default async function CustomersPage() {
                 </CardContent>
               </Card>
             </Link>
-          ))
-        )}
-      </main>
-    </>
+          ))}
+        </div>
+      )}
+    </AppShell>
   );
 }

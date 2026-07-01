@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Truck, Plus, ChevronRight, Mail, MapPin, ClipboardList } from "lucide-react";
@@ -16,9 +17,12 @@ export default async function SuppliersPage() {
   });
 
   return (
-    <>
-      <Header title="Suppliers" subtitle={`${suppliers.length} suppliers`} />
-      <main className="p-4 md:p-6 max-w-3xl mx-auto space-y-4 mobile-page">
+    <AppShell
+      title="Suppliers"
+      subtitle={`${suppliers.length} suppliers`}
+      maxWidth="default"
+      className="space-y-4"
+    >
         <Button size="lg" variant="outline" className="w-full" asChild>
           <Link href="/suppliers/orders">
             <ClipboardList className="h-5 w-5" />
@@ -34,12 +38,12 @@ export default async function SuppliersPage() {
         </Button>
 
         {suppliers.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <Truck className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p>No suppliers yet. Add one to link products and track purchase orders.</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Truck}
+            title="No suppliers yet"
+            description="Add suppliers to link products and track purchase orders."
+            action={{ label: "Add supplier", href: "/suppliers/new" }}
+          />
         ) : (
           suppliers.map((supplier) => (
             <Link key={supplier.id} href={`/suppliers/${supplier.id}`}>
@@ -73,7 +77,6 @@ export default async function SuppliersPage() {
             </Link>
           ))
         )}
-      </main>
-    </>
+    </AppShell>
   );
 }

@@ -7,8 +7,12 @@ import {
   Shield,
   Smartphone,
   ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+  CircleDot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LandingNav } from "@/features/landing/landing-nav";
 
 const features = [
   {
@@ -45,36 +49,8 @@ const features = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-4 py-4 md:px-8 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-biz-gradient text-white font-bold">
-            BP
-          </div>
-          <span className="text-xl font-bold text-biz-blue">BizPilot AI</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <SignedOut>
-            <Link href="/sign-in">
-              <Button variant="ghost" size="sm">
-                Sign in
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button size="sm">Get Started</Button>
-            </Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard">
-              <Button size="sm">
-                Go to Dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </SignedIn>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20">
+      <LandingNav />
 
       {/* Hero */}
       <section className="px-4 py-16 md:py-24 max-w-6xl mx-auto text-center">
@@ -122,9 +98,35 @@ export default function LandingPage() {
             <div className="text-sm text-muted-foreground">/100 · Good</div>
           </div>
           <div className="space-y-2 text-sm">
-            <p className="text-emerald-600">✓ Strong sales this week</p>
-            <p className="text-amber-600">⚠ High generator fuel costs</p>
-            <p className="text-biz-blue">• Restock Vitamin C · Follow up debtors</p>
+            <p className="text-success flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Strong sales this week
+            </p>
+            <p className="text-warning flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              High generator fuel costs
+            </p>
+            <p className="text-biz-blue flex items-center gap-2">
+              <CircleDot className="h-4 w-4 shrink-0" />
+              Restock Vitamin C · Follow up debtors
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 mx-auto max-w-4xl rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-glass overflow-hidden text-left">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full bg-destructive/80" />
+            <div className="h-3 w-3 rounded-full bg-warning/80" />
+            <div className="h-3 w-3 rounded-full bg-success/80" />
+            <span className="text-xs text-muted-foreground ml-2">BizPilot Dashboard</span>
+          </div>
+          <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {["Sales Today", "Profit", "Expenses", "Debt"].map((label) => (
+              <div key={label} className="rounded-xl border bg-background p-3">
+                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-lg font-bold text-biz-blue mt-1">₦124,500</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

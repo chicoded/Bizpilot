@@ -37,7 +37,7 @@ export function OnboardingForm() {
         setError("Please check your inputs and try again.");
         return;
       }
-      router.push("/dashboard");
+      router.push("/get-started");
     });
   }
 
