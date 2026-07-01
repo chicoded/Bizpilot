@@ -12,6 +12,7 @@ function shouldRegisterServiceWorker(hostname: string) {
     return productionHosts.has(hostname);
   }
 
+  // Custom domains (e.g. ritualgames.com.ng) — enable PWA/service worker.
   return true;
 }
 
