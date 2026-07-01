@@ -9,7 +9,6 @@ import {
 import {
   getActiveBusinessIdFromCookie,
   pickActiveMembership,
-  setActiveBusinessId,
   type MembershipWithBusiness,
 } from "@/lib/active-business";
 
@@ -113,10 +112,6 @@ export async function getBusinessContext(businessId?: string) {
     const membership = await loadMembershipForUser(userId, businessId);
     if (!membership) return null;
 
-    if (!businessId) {
-      await setActiveBusinessId(membership.businessId);
-    }
-
     return formatBusinessContext(membership, userId);
   } catch (error) {
     const missingRolePermissions =
@@ -133,10 +128,6 @@ export async function getBusinessContext(businessId?: string) {
     );
 
     if (!membership) return null;
-
-    if (!businessId) {
-      await setActiveBusinessId(membership.businessId);
-    }
 
     return formatBusinessContext(
       {

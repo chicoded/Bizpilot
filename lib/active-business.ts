@@ -14,14 +14,18 @@ export async function getActiveBusinessIdFromCookie(): Promise<string | null> {
 }
 
 export async function setActiveBusinessId(businessId: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(ACTIVE_BUSINESS_COOKIE, businessId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(ACTIVE_BUSINESS_COOKIE, businessId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  } catch (error) {
+    console.warn("setActiveBusinessId:", error);
+  }
 }
 
 export function pickActiveMembership(
