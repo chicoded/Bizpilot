@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
-import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, getProductsForSale, updateInventoryProduct } from "@/lib/products";
+import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, updateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, requireSectionAccess } from "@/lib/auth";
 import { setActiveBusinessId } from "@/lib/active-business";
@@ -484,7 +484,7 @@ export async function createSale(data: {
     return { error: parsed.error.flatten().fieldErrors.customerId?.[0] ?? "Invalid sale data" };
   }
 
-  if (parsed.data.paymentMethod === "CREDIT") {
+  if (parsed.data.customerId) {
     const customer = await prisma.customer.findFirst({
       where: { id: parsed.data.customerId, businessId: ctx.businessId },
     });
@@ -493,105 +493,144 @@ export async function createSale(data: {
     }
   }
 
-  const products = await getProductsForSale(
-    ctx.businessId,
-    parsed.data.items.map((i) => i.productId)
-  );
+  try {
+    const sale = await prisma.$transaction(async (tx) => {
+      const productIds = parsed.data.items.map((i) => i.productId);
+      const products = await tx.product.findMany({
+        where: {
+          id: { in: productIds },
+          businessId: ctx.businessId,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          quantity: true,
+          sellingPrice: true,
+          purchasePrice: true,
+        },
+      });
 
-  const productMap = new Map(products.map((p) => [p.id, p]));
+      const productMap = new Map(products.map((p) => [p.id, p]));
 
-  let subtotal = 0;
-  let totalCost = 0;
-  const saleItems = parsed.data.items.map((item) => {
-    const product = productMap.get(item.productId);
-    if (!product) throw new Error(`Product not found: ${item.productId}`);
-    if (product.quantity < item.quantity) {
-      throw new Error(`Insufficient stock for ${product.name}`);
-    }
-    const sellingPrice = Number(product.sellingPrice);
-    const cost = Number(product.purchasePrice);
-    const lineTotal = sellingPrice * item.quantity;
-    subtotal += lineTotal;
-    totalCost += cost * item.quantity;
-    return {
-      productId: item.productId,
-      quantity: item.quantity,
-      cost,
-      sellingPrice,
-      total: lineTotal,
-    };
-  });
+      let subtotal = 0;
+      let totalCost = 0;
+      const saleItems: {
+        productId: string;
+        quantity: number;
+        cost: number;
+        sellingPrice: number;
+        total: number;
+      }[] = [];
 
-  const discount = parsed.data.discount ?? 0;
-  const tax = parsed.data.tax ?? 0;
-  const total = subtotal - discount + tax;
-  const profit = total - totalCost - discount;
+      for (const item of parsed.data.items) {
+        const product = productMap.get(item.productId);
+        if (!product) {
+          throw new Error("One or more products were not found");
+        }
 
-  const sale = await prisma.$transaction(async (tx) => {
-    const newSale = await tx.sale.create({
-      data: {
-        businessId: ctx.businessId,
-        customerId: parsed.data.customerId,
-        paymentMethod: parsed.data.paymentMethod,
-        subtotal,
-        discount,
-        tax,
-        total,
-        profit,
-        isCredit: parsed.data.paymentMethod === "CREDIT",
-        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-        createdBy: ctx.userId,
-        items: { create: saleItems },
-      },
-      include: { items: true },
+        const sellingPrice = Number(product.sellingPrice);
+        const cost = Number(product.purchasePrice);
+        const lineTotal = sellingPrice * item.quantity;
+        subtotal += lineTotal;
+        totalCost += cost * item.quantity;
+
+        const stockUpdate = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            businessId: ctx.businessId,
+            quantity: { gte: item.quantity },
+          },
+          data: { quantity: { decrement: item.quantity } },
+        });
+
+        if (stockUpdate.count === 0) {
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        saleItems.push({
+          productId: item.productId,
+          quantity: item.quantity,
+          cost,
+          sellingPrice,
+          total: lineTotal,
+        });
+      }
+
+      const discount = parsed.data.discount ?? 0;
+      const tax = parsed.data.tax ?? 0;
+      const total = subtotal - discount + tax;
+      const profit = total - totalCost - discount;
+
+      const newSale = await tx.sale.create({
+        data: {
+          businessId: ctx.businessId,
+          customerId: parsed.data.customerId,
+          paymentMethod: parsed.data.paymentMethod,
+          subtotal,
+          discount,
+          tax,
+          total,
+          profit,
+          isCredit: parsed.data.paymentMethod === "CREDIT",
+          dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+          createdBy: ctx.userId,
+          items: { create: saleItems },
+        },
+        include: { items: true },
+      });
+
+      for (const item of parsed.data.items) {
+        await tx.stockAdjustment.create({
+          data: {
+            productId: item.productId,
+            businessId: ctx.businessId,
+            type: "SALE",
+            quantity: -item.quantity,
+            createdBy: ctx.userId,
+          },
+        });
+      }
+
+      if (parsed.data.customerId) {
+        if (parsed.data.paymentMethod === "CREDIT") {
+          const updated = await tx.customer.updateMany({
+            where: { id: parsed.data.customerId, businessId: ctx.businessId },
+            data: {
+              debt: { increment: total },
+              lastPurchase: new Date(),
+              lifetimeValue: { increment: total },
+            },
+          });
+          if (updated.count === 0) {
+            throw new Error("Customer not found");
+          }
+        } else {
+          await tx.customer.updateMany({
+            where: { id: parsed.data.customerId, businessId: ctx.businessId },
+            data: {
+              lastPurchase: new Date(),
+              lifetimeValue: { increment: total },
+            },
+          });
+        }
+      }
+
+      return newSale;
     });
 
-    for (const item of parsed.data.items) {
-      await updateInventoryProduct(
-        item.productId,
-        { quantity: { decrement: item.quantity } },
-        tx
-      );
-      await tx.stockAdjustment.create({
-        data: {
-          productId: item.productId,
-          businessId: ctx.businessId,
-          type: "SALE",
-          quantity: -item.quantity,
-          createdBy: ctx.userId,
-        },
-      });
-    }
-
-    if (parsed.data.paymentMethod === "CREDIT" && parsed.data.customerId) {
-      await tx.customer.update({
-        where: { id: parsed.data.customerId },
-        data: {
-          debt: { increment: total },
-          lastPurchase: new Date(),
-          lifetimeValue: { increment: total },
-        },
-      });
-    } else if (parsed.data.customerId) {
-      await tx.customer.update({
-        where: { id: parsed.data.customerId },
-        data: {
-          lastPurchase: new Date(),
-          lifetimeValue: { increment: total },
-        },
-      });
-    }
-
-    return newSale;
-  });
-
-  revalidatePath("/sales");
-  revalidatePath("/sales/history");
-  revalidatePath("/dashboard");
-  revalidatePath("/inventory");
-  revalidatePath("/customers");
-  revalidatePath("/debts");
-  return { success: true, sale };
+    revalidatePath("/sales");
+    revalidatePath("/sales/history");
+    revalidatePath("/dashboard");
+    revalidatePath("/inventory");
+    revalidatePath("/customers");
+    revalidatePath("/debts");
+    return { success: true, sale };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not complete sale";
+    return { error: message };
+  }
 }
 
 export async function createCustomer(data: {

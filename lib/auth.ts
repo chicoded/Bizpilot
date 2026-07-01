@@ -180,6 +180,14 @@ export async function requireTeamManager() {
   return ctx;
 }
 
+export async function requireOwner() {
+  const ctx = await requireBusinessContext();
+  if (ctx.role !== Role.OWNER) {
+    throw new Error("Only the business owner can perform this action");
+  }
+  return ctx;
+}
+
 export async function requireSectionAccess(section: AppSectionId) {
   const ctx = await requireBusinessContext();
   if (

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireBusinessContext } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import {
   getProductSchemaStatus,
   repairProductSchema,
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireBusinessContext();
+    await requireOwner();
     const status = await getProductSchemaStatus();
 
     return NextResponse.json({
@@ -17,14 +17,20 @@ export async function GET() {
       missing: status.missing,
       present: status.present,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if (error instanceof Error && error.message.includes("owner")) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 }
 
 export async function POST() {
   try {
-    await requireBusinessContext();
+    await requireOwner();
 
     const before = await getProductSchemaStatus();
     if (before.ok) {
@@ -66,6 +72,9 @@ export async function POST() {
   } catch (error) {
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if (error instanceof Error && error.message.includes("owner")) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
     console.error("[schema/repair] Unexpected error:", error);
     return NextResponse.json(

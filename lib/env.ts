@@ -84,4 +84,7 @@ export const PRODUCTION_ENV_CHECKLIST = [
   { key: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", required: false, service: "Supabase Storage" },
   { key: "SUPABASE_SERVICE_ROLE_KEY", required: false, service: "Product image uploads" },
   { key: "NEXT_PUBLIC_POSTHOG_KEY", required: false, service: "PostHog" },
+  { key: "HEALTH_CHECK_SECRET", required: false, service: "Detailed /api/health responses" },
+  { key: "NEXT_PUBLIC_SENTRY_DSN", required: false, service: "Sentry (client)" },
+  { key: "SENTRY_DSN", required: false, service: "Sentry (server)" },
 ] as const;

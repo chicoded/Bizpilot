@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateServerEnv, getAppUrl } from "@/lib/env";
 import { isProductImageUploadEnabled } from "@/lib/product-images";
-import {
-  getProductSchemaStatus,
-  repairProductSchema,
-} from "@/lib/schema";
+import { getProductSchemaStatus } from "@/lib/schema";
+import { isDetailedHealthAuthorized } from "@/lib/health-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const detailed = isDetailedHealthAuthorized(request);
   const envCheck = validateServerEnv();
   const started = Date.now();
 
@@ -30,11 +29,9 @@ export async function GET() {
       if (status.ok) {
         schema = "ok";
       } else {
-        missingColumns = status.missing;
-        const repaired = await repairProductSchema();
-        schema = repaired.ok ? "ok" : "error";
-        if (!repaired.ok) {
-          missingColumns = repaired.stillMissing;
+        schema = "error";
+        if (detailed) {
+          missingColumns = status.missing;
         }
       }
     } catch {
@@ -43,7 +40,14 @@ export async function GET() {
   }
 
   const healthy = envCheck.valid && database === "ok" && schema === "ok";
-  const status = healthy ? 200 : 503;
+  const statusCode = healthy ? 200 : 503;
+
+  if (!detailed) {
+    return NextResponse.json(
+      { status: healthy ? "healthy" : "unhealthy" },
+      { status: statusCode }
+    );
+  }
 
   return NextResponse.json(
     {
@@ -63,6 +67,6 @@ export async function GET() {
       responseTimeMs: Date.now() - started,
       timestamp: new Date().toISOString(),
     },
-    { status }
+    { status: statusCode }
   );
 }
