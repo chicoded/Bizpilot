@@ -12,6 +12,7 @@ export type AppSectionId =
   | "debts"
   | "suppliers"
   | "reports"
+  | "tax"
   | "ai"
   | "settings"
   | "billing";
@@ -85,6 +86,12 @@ export const APP_SECTIONS: {
     label: "Reports",
     description: "Business reports and exports",
     pathPrefix: "/reports",
+  },
+  {
+    id: "tax",
+    label: "Tax & Compliance",
+    description: "Tax estimates and compliance insights",
+    pathPrefix: "/tax",
   },
   {
     id: "ai",

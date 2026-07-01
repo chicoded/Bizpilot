@@ -11,6 +11,7 @@ import {
   Sparkles,
   Settings,
   History,
+  Calculator,
 } from "lucide-react";
 
 export interface AppNavItem {
@@ -30,6 +31,7 @@ export const mainNavItems: AppNavItem[] = [
   { href: "/debts", label: "Debts", icon: CreditCard, description: "Credit & payments" },
   { href: "/suppliers", label: "Suppliers", icon: Truck, description: "Supplier contacts" },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Business reports" },
+  { href: "/tax", label: "Tax & Compliance", icon: Calculator, description: "Tax estimates & VAT" },
   { href: "/ai", label: "AI Assistant", icon: Sparkles, description: "Ask your AI advisor" },
   { href: "/settings", label: "Settings", icon: Settings, description: "Business & billing" },
 ];

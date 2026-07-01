@@ -80,6 +80,21 @@ enum WhatsAppMessageStatus {
   FAILED
 }
 
+enum VatPricingMode {
+  INCLUSIVE
+  EXCLUSIVE
+}
+
+enum TaxBusinessType {
+  RETAIL
+  PHARMACY
+  RESTAURANT
+  ELECTRONICS
+  FASHION
+  SERVICES
+  OTHER
+}
+
 model Business {
   id        String   @id @default(cuid())
   name      String
@@ -107,6 +122,8 @@ model Business {
   healthScores   BusinessHealthScore[]
   whatsappConfig WhatsAppConfig?
   whatsappMessages WhatsAppMessage[]
+  taxProfile     BusinessTaxProfile?
+  taxEstimates   TaxEstimate[]
 
   @@map("businesses")
 }
@@ -447,4 +464,65 @@ model WhatsAppMessage {
   @@index([businessId, createdAt])
   @@index([customerPhone])
   @@map("whatsapp_messages")
+}
+
+// ─── Tax & Compliance (estimates only — not legal/tax advice) ───────────────
+
+model TaxRuleConfig {
+  id            String    @id @default(cuid())
+  countryCode   String    @default("NG")
+  ruleKey       String
+  value         Decimal   @db.Decimal(14, 6)
+  label         String
+  description   String?
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([countryCode, ruleKey])
+  @@map("tax_rule_configs")
+}
+
+model BusinessTaxProfile {
+  id                 String          @id @default(cuid())
+  businessId         String          @unique
+  businessType       TaxBusinessType @default(OTHER)
+  state              String?
+  registeredBusiness Boolean         @default(false)
+  tin                String?
+  vatRegistered      Boolean         @default(false)
+  vatEnabled         Boolean         @default(false)
+  vatPricingMode     VatPricingMode  @default(EXCLUSIVE)
+  annualRevenueBand  String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_tax_profiles")
+}
+
+model TaxEstimate {
+  id                    String   @id @default(cuid())
+  businessId            String
+  month                 Int
+  year                  Int
+  estimatedRevenue      Decimal  @default(0) @db.Decimal(14, 2)
+  estimatedExpenses     Decimal  @default(0) @db.Decimal(14, 2)
+  estimatedProfit       Decimal  @default(0) @db.Decimal(14, 2)
+  estimatedVATCollected Decimal  @default(0) @db.Decimal(14, 2)
+  estimatedTax          Decimal  @default(0) @db.Decimal(14, 2)
+  confidence            Int      @default(70)
+  metadata              Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, month, year])
+  @@index([businessId])
+  @@map("tax_estimates")
 }
