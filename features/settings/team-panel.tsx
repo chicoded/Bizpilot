@@ -21,10 +21,14 @@ import {
 } from "@/components/ui/select";
 import { ROLE_LABELS } from "@/lib/team";
 import { Copy, Loader2, Trash2, UserMinus } from "lucide-react";
+import type { Prisma } from "@prisma/client";
+import { MemberAccessEditor } from "@/features/settings/member-access-editor";
+import type { RolePermissionsMap } from "@/lib/permissions";
 
 type Member = {
   id: string;
   role: Role;
+  sectionOverrides?: Prisma.JsonValue | null;
   user: {
     id: string;
     email: string;
@@ -46,6 +50,8 @@ interface TeamPanelProps {
   currentUserId: string;
   canManage: boolean;
   canChangeRoles: boolean;
+  canCustomizeMemberAccess?: boolean;
+  rolePermissions?: RolePermissionsMap;
   inviteableRoles: Role[];
 }
 
@@ -63,6 +69,8 @@ export function TeamPanel({
   currentUserId,
   canManage,
   canChangeRoles,
+  canCustomizeMemberAccess = false,
+  rolePermissions,
   inviteableRoles,
 }: TeamPanelProps) {
   const router = useRouter();
@@ -212,6 +220,18 @@ export function TeamPanel({
               <div>
                 <p className="font-medium">{memberName(member)}</p>
                 <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                {canCustomizeMemberAccess &&
+                  rolePermissions &&
+                  member.role !== Role.OWNER && (
+                    <div className="mt-2">
+                      <MemberAccessEditor
+                        membershipId={member.id}
+                        memberRole={member.role}
+                        sectionOverrides={member.sectionOverrides ?? null}
+                        rolePermissions={rolePermissions}
+                      />
+                    </div>
+                  )}
               </div>
               <div className="flex items-center gap-2">
                 {canChangeRoles &&

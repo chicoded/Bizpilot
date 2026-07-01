@@ -27,6 +27,7 @@ import {
   Loader2,
   History,
   FileText,
+  Printer,
 } from "lucide-react";
 
 interface Product {
@@ -290,13 +291,27 @@ export default function SalesPage() {
                   )}
 
                   {saleComplete && lastSaleId && (
-                    <Link
-                      href={`/sales/${lastSaleId}`}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-medium py-2.5 hover:bg-emerald-100 transition-colors"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View receipt
-                    </Link>
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 space-y-2">
+                      <p className="text-sm font-medium text-emerald-800 text-center">
+                        Sale complete
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          href={`/sales/${lastSaleId}`}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white border border-emerald-200 text-emerald-800 text-sm font-medium py-2 hover:bg-emerald-100 transition-colors"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Receipt
+                        </Link>
+                        <Link
+                          href={`/sales/${lastSaleId}?print=1`}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-700 text-white text-sm font-medium py-2 hover:bg-emerald-800 transition-colors"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Print
+                        </Link>
+                      </div>
+                    </div>
                   )}
 
                   <Button

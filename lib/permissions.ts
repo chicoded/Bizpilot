@@ -148,12 +148,38 @@ export function parseRolePermissions(
   return result;
 }
 
+export function parseMemberSectionOverrides(
+  value: Prisma.JsonValue | null | undefined
+): AppSectionId[] | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  return value.filter((s): s is AppSectionId =>
+    typeof s === "string" && ALL_SECTIONS.includes(s as AppSectionId)
+  );
+}
+
+export function hasCustomMemberAccess(
+  value: Prisma.JsonValue | null | undefined
+): boolean {
+  return value !== null && value !== undefined && Array.isArray(value);
+}
+
 export function getAllowedSections(
   role: Role,
-  rolePermissions: Prisma.JsonValue | null | undefined
+  rolePermissions: Prisma.JsonValue | null | undefined,
+  memberSectionOverrides?: Prisma.JsonValue | null
 ): AppSectionId[] {
   if (role === "OWNER") {
     return ALL_SECTIONS;
+  }
+
+  const overrides = parseMemberSectionOverrides(memberSectionOverrides);
+  if (overrides !== null) {
+    return overrides;
   }
 
   const map = parseRolePermissions(rolePermissions);
@@ -189,15 +215,21 @@ export function resolveSectionFromPath(pathname: string): AppSectionId | null {
 export function canAccessSection(
   role: Role,
   rolePermissions: Prisma.JsonValue | null | undefined,
-  section: AppSectionId
+  section: AppSectionId,
+  memberSectionOverrides?: Prisma.JsonValue | null
 ): boolean {
-  return getAllowedSections(role, rolePermissions).includes(section);
+  return getAllowedSections(
+    role,
+    rolePermissions,
+    memberSectionOverrides
+  ).includes(section);
 }
 
 export function canAccessPath(
   role: Role,
   rolePermissions: Prisma.JsonValue | null | undefined,
-  pathname: string
+  pathname: string,
+  memberSectionOverrides?: Prisma.JsonValue | null
 ): boolean {
   if (UNGUARDED_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return true;
@@ -208,7 +240,12 @@ export function canAccessPath(
     return true;
   }
 
-  return canAccessSection(role, rolePermissions, section);
+  return canAccessSection(
+    role,
+    rolePermissions,
+    section,
+    memberSectionOverrides
+  );
 }
 
 export function sectionForNavHref(href: string): AppSectionId | null {
@@ -223,11 +260,17 @@ export function sectionForNavHref(href: string): AppSectionId | null {
 export function filterNavItemsByAccess<T extends { href: string }>(
   items: T[],
   role: Role,
-  rolePermissions: Prisma.JsonValue | null | undefined
+  rolePermissions: Prisma.JsonValue | null | undefined,
+  memberSectionOverrides?: Prisma.JsonValue | null
 ): T[] {
   return items.filter((item) => {
     const section = sectionForNavHref(item.href);
     if (!section) return true;
-    return canAccessSection(role, rolePermissions, section);
+    return canAccessSection(
+      role,
+      rolePermissions,
+      section,
+      memberSectionOverrides
+    );
   });
 }

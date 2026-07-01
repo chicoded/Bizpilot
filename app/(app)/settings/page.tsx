@@ -44,7 +44,8 @@ export default async function SettingsPage() {
   const sectionLinks = filterNavItemsByAccess(
     mainNavItems,
     ctx.role,
-    ctx.business.rolePermissions
+    ctx.business.rolePermissions,
+    ctx.sectionOverrides
   ).filter((item) => item.href !== "/settings");
 
   return (
@@ -71,7 +72,12 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        {canAccessSection(ctx.role, ctx.business.rolePermissions, "billing") && (
+        {canAccessSection(
+          ctx.role,
+          ctx.business.rolePermissions,
+          "billing",
+          ctx.sectionOverrides
+        ) && (
         <Link href="/settings/billing">
           <Card className="hover:shadow-glass transition-shadow cursor-pointer">
             <CardContent className="p-5 flex items-center justify-between">
@@ -110,6 +116,8 @@ export default async function SettingsPage() {
               currentUserId={ctx.userId}
               canManage={canManageTeam(ctx.role)}
               canChangeRoles={canChangeRoles(ctx.role)}
+              canCustomizeMemberAccess={ctx.role === Role.OWNER}
+              rolePermissions={rolePermissions}
               inviteableRoles={inviteableRolesFor(ctx.role)}
             />
           </CardContent>

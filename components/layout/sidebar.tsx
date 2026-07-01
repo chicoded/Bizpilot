@@ -11,10 +11,21 @@ interface SidebarProps {
   businessName?: string;
   role: Role;
   rolePermissions: Prisma.JsonValue | null;
+  sectionOverrides?: Prisma.JsonValue | null;
 }
 
-export function Sidebar({ businessName, role, rolePermissions }: SidebarProps) {
-  const navItems = filterNavItemsByAccess(mainNavItems, role, rolePermissions);
+export function Sidebar({
+  businessName,
+  role,
+  rolePermissions,
+  sectionOverrides,
+}: SidebarProps) {
+  const navItems = filterNavItemsByAccess(
+    mainNavItems,
+    role,
+    rolePermissions,
+    sectionOverrides
+  );
   const homeHref =
     navItems.find((item) => item.href === "/dashboard")?.href ??
     navItems[0]?.href ??

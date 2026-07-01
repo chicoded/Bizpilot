@@ -24,6 +24,7 @@ export default async function MenuPage({
         <MenuNavList
           role={ctx.role}
           rolePermissions={ctx.business.rolePermissions ?? null}
+          sectionOverrides={ctx.sectionOverrides}
         />
       </main>
     </>

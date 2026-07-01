@@ -52,7 +52,53 @@
   }
 }
 
-/* Prevent pull-to-refresh on installed PWA while allowing scroll */
+/* Thermal receipt printing */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12px;
+  }
+
+  aside,
+  nav,
+  header,
+  .print\\:hidden,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .md\\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .receipt-page {
+    padding: 0 !important;
+  }
+
+  .thermal-receipt {
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  #sale-receipt {
+    padding: 0 !important;
+  }
+}
+
 @media (display-mode: standalone) {
   html {
     overscroll-behavior-y: contain;

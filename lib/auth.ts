@@ -38,6 +38,9 @@ function formatBusinessContext(
     userId,
     businessId: membership.businessId,
     role: membership.role,
+    sectionOverrides:
+      (membership as Membership & { sectionOverrides?: Prisma.JsonValue | null })
+        .sectionOverrides ?? null,
     business: {
       ...business,
       rolePermissions: business.rolePermissions ?? null,
@@ -116,7 +119,9 @@ export async function getBusinessContext(businessId?: string) {
   } catch (error) {
     const missingRolePermissions =
       error instanceof Error &&
-      /rolePermissions|column.*does not exist|P2022/i.test(error.message);
+      /rolePermissions|sectionOverrides|column.*does not exist|P2022/i.test(
+        error.message
+      );
 
     if (!missingRolePermissions) {
       throw error;
@@ -132,6 +137,7 @@ export async function getBusinessContext(businessId?: string) {
     return formatBusinessContext(
       {
         ...membership,
+        sectionOverrides: null,
         business: { ...membership.business, rolePermissions: null },
       } as MembershipWithBusiness,
       userId
@@ -176,7 +182,14 @@ export async function requireTeamManager() {
 
 export async function requireSectionAccess(section: AppSectionId) {
   const ctx = await requireBusinessContext();
-  if (!canAccessSection(ctx.role, ctx.business.rolePermissions, section)) {
+  if (
+    !canAccessSection(
+      ctx.role,
+      ctx.business.rolePermissions,
+      section,
+      ctx.sectionOverrides
+    )
+  ) {
     throw new Error("You do not have access to this section");
   }
   return ctx;
@@ -184,7 +197,14 @@ export async function requireSectionAccess(section: AppSectionId) {
 
 export async function requirePageAccess(section: AppSectionId) {
   const ctx = await requireBusinessContext();
-  if (!canAccessSection(ctx.role, ctx.business.rolePermissions, section)) {
+  if (
+    !canAccessSection(
+      ctx.role,
+      ctx.business.rolePermissions,
+      section,
+      ctx.sectionOverrides
+    )
+  ) {
     redirect("/menu?denied=1");
   }
   return ctx;

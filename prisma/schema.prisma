@@ -128,12 +128,14 @@ model User {
 }
 
 model Membership {
-  id         String   @id @default(cuid())
-  userId     String
-  businessId String
-  role       Role     @default(STAFF)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  businessId        String
+  role              Role     @default(STAFF)
+  /// When set (array of section ids), replaces role-based page access for this member.
+  sectionOverrides  Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

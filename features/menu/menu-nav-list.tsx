@@ -9,13 +9,19 @@ import { AppNavLink } from "@/components/layout/app-nav-link";
 interface MenuNavListProps {
   role: Role;
   rolePermissions: Prisma.JsonValue | null;
+  sectionOverrides?: Prisma.JsonValue | null;
 }
 
-export function MenuNavList({ role, rolePermissions }: MenuNavListProps) {
+export function MenuNavList({
+  role,
+  rolePermissions,
+  sectionOverrides,
+}: MenuNavListProps) {
   const navItems = filterNavItemsByAccess(
     mainNavItems,
     role,
-    rolePermissions
+    rolePermissions,
+    sectionOverrides
   ).filter((item) => item.href !== "/dashboard");
 
   return (

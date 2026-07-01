@@ -22,11 +22,13 @@ export default async function AppLayout({
       <AccessGuard
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions}
+        sectionOverrides={ctx.sectionOverrides}
       />
       <Sidebar
         businessName={ctx.business.name}
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions}
+        sectionOverrides={ctx.sectionOverrides}
       />
       <div className="md:pl-64">
         {children}
@@ -34,6 +36,7 @@ export default async function AppLayout({
       <MobileNav
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions}
+        sectionOverrides={ctx.sectionOverrides}
       />
       <InstallPrompt />
       <AnalyticsIdentity />

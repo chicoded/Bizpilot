@@ -11,14 +11,20 @@ import { filterNavItemsByAccess } from "@/lib/permissions";
 interface MobileNavProps {
   role: Role;
   rolePermissions: Prisma.JsonValue | null;
+  sectionOverrides?: Prisma.JsonValue | null;
 }
 
-export function MobileNav({ role, rolePermissions }: MobileNavProps) {
+export function MobileNav({
+  role,
+  rolePermissions,
+  sectionOverrides,
+}: MobileNavProps) {
   const pathname = usePathname();
   const items = filterNavItemsByAccess(
     [...mobileNavItems],
     role,
-    rolePermissions
+    rolePermissions,
+    sectionOverrides
   );
 
   return (

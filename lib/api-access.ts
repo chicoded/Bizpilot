@@ -4,7 +4,12 @@ import { canAccessSection, type AppSectionId } from "@/lib/permissions";
 export async function requireBusinessDataAccess(sections: AppSectionId[]) {
   const ctx = await requireBusinessContext();
   const allowed = sections.some((section) =>
-    canAccessSection(ctx.role, ctx.business.rolePermissions, section)
+    canAccessSection(
+      ctx.role,
+      ctx.business.rolePermissions,
+      section,
+      ctx.sectionOverrides
+    )
   );
 
   if (!allowed) {
