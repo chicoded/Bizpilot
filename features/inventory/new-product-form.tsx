@@ -13,6 +13,7 @@ import Link from "next/link";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
+import { parseMoneyInput } from "@/lib/pack-pricing";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 
 interface NewProductFormProps {
@@ -34,7 +35,23 @@ export function NewProductForm({
     e.preventDefault();
     setError(null);
     setWarning(null);
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    for (const key of ["purchasePrice", "sellingPrice"] as const) {
+      const val = formData.get(key);
+      if (typeof val === "string") {
+        formData.set(key, String(parseMoneyInput(val)));
+      }
+    }
+
+    for (const key of ["quantity", "reorderLevel"] as const) {
+      const val = formData.get(key);
+      if (val === "" || val === null) {
+        formData.set(key, key === "reorderLevel" ? "5" : "0");
+      }
+    }
+
     startTransition(async () => {
       const result = await createProduct(formData);
       if (result.success) {
@@ -50,6 +67,9 @@ export function NewProductForm({
           ? result.error
           : "Could not save product. Please try again."
       );
+      document
+        .getElementById("product-form-error")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   }
 
@@ -70,20 +90,27 @@ export function NewProductForm({
               <ProductImageField disabled={isPending} />
               <div className="space-y-2">
                 <Label htmlFor="name">Product name *</Label>
-                <Input id="name" name="name" required placeholder="Paracetamol 500mg" />
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  placeholder="Paracetamol 500mg"
+                  autoComplete="off"
+                />
               </div>
               <PackPricingFields disabled={isPending} />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantity</Label>
                   <Input
                     id="quantity"
                     name="quantity"
-                    type="number"
-                    min="0"
-                    step="1"
-                    defaultValue="0"
-                    required
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="0"
+                    defaultValue=""
+                    autoComplete="off"
                   />
                 </div>
                 <div className="space-y-2">
@@ -91,11 +118,12 @@ export function NewProductForm({
                   <Input
                     id="reorderLevel"
                     name="reorderLevel"
-                    type="number"
-                    min="0"
-                    step="1"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="5"
                     defaultValue="5"
-                    required
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -125,14 +153,20 @@ export function NewProductForm({
               )}
 
               {error && (
-                <p className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2">
+                <p
+                  id="product-form-error"
+                  className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2"
+                  role="alert"
+                >
                   {error}
                 </p>
               )}
 
-              <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Product"}
-              </Button>
+              <div className="sticky bottom-20 md:bottom-0 z-10 -mx-2 bg-background/95 backdrop-blur px-2 py-3 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+                <Button type="submit" size="lg" className="w-full touch-manipulation" disabled={isPending}>
+                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Product"}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
+  formatMoneyInput,
   packPriceFromUnit,
+  parseMoneyInput,
   roundMoney,
   unitPriceFromPack,
 } from "@/lib/pack-pricing";
@@ -19,25 +21,52 @@ interface PackPricingFieldsProps {
   disabled?: boolean;
 }
 
+function moneyFieldProps(disabled: boolean) {
+  return {
+    type: "text" as const,
+    inputMode: "decimal" as const,
+    autoComplete: "off",
+    disabled,
+    placeholder: "0",
+  };
+}
+
 export function PackPricingFields({
   defaultPurchasePrice = 0,
   defaultSellingPrice = 0,
   defaultUnitsPerPack = 1,
   disabled = false,
 }: PackPricingFieldsProps) {
+  const isEditing = defaultPurchasePrice > 0 || defaultSellingPrice > 0;
+  const showZero = isEditing;
+
   const initialUnits = defaultUnitsPerPack > 1 ? defaultUnitsPerPack : 10;
   const [usePacks, setUsePacks] = useState(defaultUnitsPerPack > 1);
   const [unitsPerPack, setUnitsPerPack] = useState(initialUnits);
   const [mode, setMode] = useState<PriceEntryMode>("unit");
-  const [unitCost, setUnitCost] = useState(defaultPurchasePrice);
-  const [unitPrice, setUnitPrice] = useState(defaultSellingPrice);
-  const [packCost, setPackCost] = useState(() =>
-    packPriceFromUnit(defaultPurchasePrice, initialUnits)
+  const [unitCostInput, setUnitCostInput] = useState(
+    formatMoneyInput(defaultPurchasePrice, showZero)
   );
-  const [packPrice, setPackPrice] = useState(() =>
-    packPriceFromUnit(defaultSellingPrice, initialUnits)
+  const [unitPriceInput, setUnitPriceInput] = useState(
+    formatMoneyInput(defaultSellingPrice, showZero)
+  );
+  const [packCostInput, setPackCostInput] = useState(
+    formatMoneyInput(
+      packPriceFromUnit(defaultPurchasePrice, initialUnits),
+      showZero
+    )
+  );
+  const [packPriceInput, setPackPriceInput] = useState(
+    formatMoneyInput(
+      packPriceFromUnit(defaultSellingPrice, initialUnits),
+      showZero
+    )
   );
 
+  const unitCost = parseMoneyInput(unitCostInput);
+  const unitPrice = parseMoneyInput(unitPriceInput);
+  const packCost = parseMoneyInput(packCostInput);
+  const packPrice = parseMoneyInput(packPriceInput);
   const effectiveUnits = usePacks ? Math.max(2, unitsPerPack) : 1;
 
   const summary = useMemo(() => {
@@ -51,51 +80,64 @@ export function PackPricingFields({
   }, [usePacks, unitCost, unitPrice, effectiveUnits]);
 
   function handleUnitsChange(raw: string) {
-    const next = Math.max(2, parseInt(raw, 10) || 2);
+    const parsed = parseInt(raw, 10);
+    const next = Number.isFinite(parsed) ? Math.max(2, parsed) : 2;
     setUnitsPerPack(next);
     if (mode === "pack") {
-      setUnitCost(unitPriceFromPack(packCost, next));
-      setUnitPrice(unitPriceFromPack(packPrice, next));
+      setUnitCostInput(formatMoneyInput(unitPriceFromPack(packCost, next), true));
+      setUnitPriceInput(formatMoneyInput(unitPriceFromPack(packPrice, next), true));
     } else {
-      setPackCost(packPriceFromUnit(unitCost, next));
-      setPackPrice(packPriceFromUnit(unitPrice, next));
+      setPackCostInput(formatMoneyInput(packPriceFromUnit(unitCost, next), true));
+      setPackPriceInput(formatMoneyInput(packPriceFromUnit(unitPrice, next), true));
     }
   }
 
   function handlePackCostChange(raw: string) {
-    const next = parseFloat(raw) || 0;
-    setPackCost(next);
-    setUnitCost(unitPriceFromPack(next, effectiveUnits));
+    setPackCostInput(raw);
+    const next = parseMoneyInput(raw);
+    setUnitCostInput(formatMoneyInput(unitPriceFromPack(next, effectiveUnits), raw !== ""));
   }
 
   function handlePackPriceChange(raw: string) {
-    const next = parseFloat(raw) || 0;
-    setPackPrice(next);
-    setUnitPrice(unitPriceFromPack(next, effectiveUnits));
+    setPackPriceInput(raw);
+    const next = parseMoneyInput(raw);
+    setUnitPriceInput(formatMoneyInput(unitPriceFromPack(next, effectiveUnits), raw !== ""));
   }
 
   function handleUnitCostChange(raw: string) {
-    const next = parseFloat(raw) || 0;
-    setUnitCost(next);
-    setPackCost(packPriceFromUnit(next, effectiveUnits));
+    setUnitCostInput(raw);
+    const next = parseMoneyInput(raw);
+    setPackCostInput(formatMoneyInput(packPriceFromUnit(next, effectiveUnits), raw !== ""));
   }
 
   function handleUnitPriceChange(raw: string) {
-    const next = parseFloat(raw) || 0;
-    setUnitPrice(next);
-    setPackPrice(packPriceFromUnit(next, effectiveUnits));
+    setUnitPriceInput(raw);
+    const next = parseMoneyInput(raw);
+    setPackPriceInput(formatMoneyInput(packPriceFromUnit(next, effectiveUnits), raw !== ""));
+  }
+
+  function normalizeMoneyField(
+    raw: string,
+    setter: (value: string) => void
+  ) {
+    const parsed = parseMoneyInput(raw);
+    setter(formatMoneyInput(parsed, parsed > 0));
   }
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
-      <input type="hidden" name="unitsPerPack" value={effectiveUnits} />
-      <input type="hidden" name="purchasePrice" value={roundMoney(unitCost)} />
-      <input type="hidden" name="sellingPrice" value={roundMoney(unitPrice)} />
+      {usePacks && (
+        <>
+          <input type="hidden" name="unitsPerPack" value={effectiveUnits} />
+          <input type="hidden" name="purchasePrice" value={roundMoney(unitCost)} />
+          <input type="hidden" name="sellingPrice" value={roundMoney(unitPrice)} />
+        </>
+      )}
 
-      <label className="flex items-start gap-3 cursor-pointer">
+      <label className="flex items-start gap-3 cursor-pointer touch-manipulation">
         <input
           type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-border"
+          className="mt-1 h-5 w-5 rounded border-border"
           checked={usePacks}
           disabled={disabled}
           onChange={(e) => setUsePacks(e.target.checked)}
@@ -115,9 +157,9 @@ export function PackPricingFields({
             <Label htmlFor="unitsPerPackInput">Units per pack</Label>
             <Input
               id="unitsPerPackInput"
-              type="number"
-              min={2}
-              step={1}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={unitsPerPack}
               disabled={disabled}
               onChange={(e) => handleUnitsChange(e.target.value)}
@@ -138,56 +180,48 @@ export function PackPricingFields({
           </div>
 
           {mode === "pack" ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="packCost">Pack cost (₦)</Label>
                 <Input
                   id="packCost"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={packCost}
-                  disabled={disabled}
+                  {...moneyFieldProps(disabled)}
+                  value={packCostInput}
                   onChange={(e) => handlePackCostChange(e.target.value)}
+                  onBlur={() => normalizeMoneyField(packCostInput, setPackCostInput)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="packPrice">Pack selling price (₦)</Label>
                 <Input
                   id="packPrice"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={packPrice}
-                  disabled={disabled}
+                  {...moneyFieldProps(disabled)}
+                  value={packPriceInput}
                   onChange={(e) => handlePackPriceChange(e.target.value)}
+                  onBlur={() => normalizeMoneyField(packPriceInput, setPackPriceInput)}
                 />
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="unitCost">Unit cost (₦)</Label>
                 <Input
                   id="unitCost"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={unitCost}
-                  disabled={disabled}
+                  {...moneyFieldProps(disabled)}
+                  value={unitCostInput}
                   onChange={(e) => handleUnitCostChange(e.target.value)}
+                  onBlur={() => normalizeMoneyField(unitCostInput, setUnitCostInput)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unitPrice">Unit selling price (₦)</Label>
                 <Input
                   id="unitPrice"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={unitPrice}
-                  disabled={disabled}
+                  {...moneyFieldProps(disabled)}
+                  value={unitPriceInput}
                   onChange={(e) => handleUnitPriceChange(e.target.value)}
+                  onBlur={() => normalizeMoneyField(unitPriceInput, setUnitPriceInput)}
                 />
               </div>
             </div>
@@ -223,34 +257,33 @@ export function PackPricingFields({
       )}
 
       {!usePacks && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="purchasePrice">Cost price (₦)</Label>
-            <Input
-              id="purchasePrice"
-              name="purchasePriceVisible"
-              type="number"
-              min={0}
-              step={0.01}
-              value={unitCost}
-              disabled={disabled}
-              onChange={(e) => handleUnitCostChange(e.target.value)}
-            />
+        <>
+          <input type="hidden" name="unitsPerPack" value={1} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="purchasePrice">Cost price (₦)</Label>
+              <Input
+                id="purchasePrice"
+                name="purchasePrice"
+                {...moneyFieldProps(disabled)}
+                value={unitCostInput}
+                onChange={(e) => handleUnitCostChange(e.target.value)}
+                onBlur={() => normalizeMoneyField(unitCostInput, setUnitCostInput)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sellingPrice">Selling price (₦)</Label>
+              <Input
+                id="sellingPrice"
+                name="sellingPrice"
+                {...moneyFieldProps(disabled)}
+                value={unitPriceInput}
+                onChange={(e) => handleUnitPriceChange(e.target.value)}
+                onBlur={() => normalizeMoneyField(unitPriceInput, setUnitPriceInput)}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="sellingPrice">Selling price (₦)</Label>
-            <Input
-              id="sellingPrice"
-              name="sellingPriceVisible"
-              type="number"
-              min={0}
-              step={0.01}
-              value={unitPrice}
-              disabled={disabled}
-              onChange={(e) => handleUnitPriceChange(e.target.value)}
-            />
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
