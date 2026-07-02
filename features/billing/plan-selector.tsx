@@ -67,7 +67,7 @@ export function PlanSelector({
             <CardContent className="p-5 flex flex-col h-full">
               <h3 className="font-bold text-lg">{plan.name}</h3>
               <p className="mt-1">
-                <span className="text-2xl font-bold text-biz-blue">
+                <span className="text-2xl font-bold text-brand">
                   ₦{plan.price.toLocaleString()}
                 </span>
                 <span className="text-sm text-muted-foreground">/month</span>

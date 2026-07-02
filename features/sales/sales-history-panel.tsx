@@ -48,10 +48,8 @@ export function SalesHistoryPanel({
             type="button"
             onClick={() => router.push(`/sales/history?period=${option.value}`)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              period === option.value
-                ? "bg-biz-blue text-white"
-                : "bg-slate-100 text-muted-foreground hover:bg-slate-200"
+              "pill-filter",
+              period === option.value ? "pill-filter-active" : "pill-filter-inactive"
             )}
           >
             {option.label}
@@ -74,7 +72,7 @@ export function SalesHistoryPanel({
         <Card className="bg-gradient-to-br from-biz-blue/10 to-transparent">
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Profit</p>
-            <p className="text-2xl font-bold text-biz-blue">
+            <p className="text-2xl font-bold text-brand">
               {formatCurrency(totalProfit, currency)}
             </p>
           </CardContent>
@@ -88,7 +86,7 @@ export function SalesHistoryPanel({
             <p>No sales recorded for this period.</p>
             <Link
               href="/sales"
-              className="text-biz-blue text-sm font-medium mt-2 inline-block"
+              className="text-brand text-sm font-medium mt-2 inline-block"
             >
               Go to Point of Sale
             </Link>

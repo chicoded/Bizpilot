@@ -95,10 +95,8 @@ export function ExpensesPanel({
             type="button"
             onClick={() => handlePeriodChange(option.value)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              period === option.value
-                ? "bg-biz-blue text-white"
-                : "bg-slate-100 text-muted-foreground hover:bg-slate-200"
+              "pill-filter",
+              period === option.value ? "pill-filter-active" : "pill-filter-inactive"
             )}
           >
             {option.label}
@@ -110,7 +108,7 @@ export function ExpensesPanel({
         <CardContent className="p-5 flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Total expenses</p>
-            <p className="text-2xl font-bold text-biz-blue">
+            <p className="text-2xl font-bold text-brand">
               {formatCurrency(total, currency)}
             </p>
           </div>
@@ -198,7 +196,7 @@ export function ExpensesPanel({
       )}
 
       {error && (
-        <p className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2">
+        <p className="text-sm text-red-500 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2">
           {error}
         </p>
       )}

@@ -19,8 +19,8 @@ export function SupplierSelectField({
         disabled={disabled}
         defaultValue={defaultValue ?? ""}
         className={cn(
-          "flex h-12 w-full rounded-xl border border-input bg-white/90 px-4 py-2 text-sm shadow-sm",
-          "focus:outline-none focus:ring-2 focus:ring-biz-blue/30 disabled:cursor-not-allowed disabled:opacity-50"
+          "flex h-12 w-full rounded-xl border border-input bg-background text-foreground px-4 py-2 text-sm shadow-sm",
+          "focus:outline-none focus:ring-2 focus:ring-biz-blue/30 dark:focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
         <option value="">No supplier</option>

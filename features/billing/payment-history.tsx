@@ -26,7 +26,7 @@ export function PaymentHistory({ transactions }: PaymentHistoryProps) {
             {transactions.map((tx) => (
               <div
                 key={tx.id}
-                className="flex items-center justify-between rounded-xl bg-slate-50 p-3 text-sm"
+                className="flex items-center justify-between rounded-xl surface-muted p-3 text-sm"
               >
                 <div>
                   <p className="font-medium">{tx.plan} Plan</p>

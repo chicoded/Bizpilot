@@ -22,7 +22,7 @@ const cards = [
 ];
 
 const variantStyles = {
-  default: "from-biz-blue/10 to-biz-blue/5 text-biz-blue",
+  default: "from-biz-blue/10 to-biz-blue/5 text-biz-blue dark:text-primary",
   success: "from-emerald-500/10 to-emerald-500/5 text-emerald-600",
   warning: "from-amber-500/10 to-amber-500/5 text-amber-600",
 };
@@ -94,17 +94,17 @@ export function ReportSummaryCards({
         transition={{ delay: 0.2 }}
         className="col-span-2 lg:col-span-4"
       >
-        <Card className="bg-biz-blue/5 border-biz-blue/10">
+        <Card className="bg-biz-blue/5 dark:bg-primary/10 border-biz-blue/10 dark:border-primary/20">
           <CardContent className="p-4 flex flex-wrap gap-6 justify-between">
             <div className="flex items-center gap-3">
-              <ShoppingBag className="h-5 w-5 text-biz-blue" />
+              <ShoppingBag className="h-5 w-5 text-brand" />
               <div>
                 <p className="text-xs text-muted-foreground">Sales</p>
                 <p className="font-bold">{summary.salesCount} transactions</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-biz-blue" />
+              <DollarSign className="h-5 w-5 text-brand" />
               <div>
                 <p className="text-xs text-muted-foreground">Avg Sale</p>
                 <p className="font-bold">{formatCurrency(summary.avgSaleValue, currency)}</p>

@@ -72,7 +72,7 @@ export function ProductImageField({
       <input type="hidden" name="removeImage" value={removed ? "true" : "false"} />
 
       {uploadsEnabled === false && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+        <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800 rounded-lg px-3 py-2">
           Photo uploads are not configured yet. Add{" "}
           <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> in Vercel
           environment variables, then redeploy.
@@ -80,7 +80,7 @@ export function ProductImageField({
       )}
 
       {preview ? (
-        <div className="relative overflow-hidden rounded-xl border bg-slate-50">
+        <div className="relative overflow-hidden rounded-xl border bg-muted">
           <div className="relative aspect-[4/3] w-full">
             <Image
               src={preview}
@@ -108,13 +108,13 @@ export function ProductImageField({
           disabled={uploadDisabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-slate-50/80 px-4 py-8 text-center transition-colors",
-            "hover:border-biz-blue hover:bg-biz-blue/5 touch-manipulation",
+            "flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border surface-muted px-4 py-8 text-center transition-colors",
+            "hover:border-biz-blue hover:bg-biz-blue/5 dark:hover:border-primary dark:hover:bg-primary/10 touch-manipulation",
             uploadDisabled && "opacity-50 pointer-events-none"
           )}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-            <ImagePlus className="h-6 w-6 text-biz-blue" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-card shadow-sm">
+            <ImagePlus className="h-6 w-6 text-brand" />
           </div>
           <div>
             <p className="text-sm font-medium">Add a product photo</p>

@@ -122,7 +122,7 @@ export function SaleReceiptView({
       <Card className="thermal-receipt print:shadow-none print:border-none mx-auto max-w-lg print:max-w-none">
         <CardContent className="p-6 print:p-0 space-y-4" id="sale-receipt">
           <div className="text-center border-b border-dashed pb-4 print:pb-3">
-            <p className="text-lg font-bold text-biz-blue print:text-black">
+            <p className="text-lg font-bold text-brand print:text-black">
               {business.name}
             </p>
             {business.phone && (
@@ -196,7 +196,7 @@ export function SaleReceiptView({
             )}
             <div className="flex justify-between text-base font-bold pt-1">
               <span>TOTAL</span>
-              <span className="text-biz-blue print:text-black">
+              <span className="text-brand print:text-black">
                 {formatCurrency(sale.total, business.currency)}
               </span>
             </div>

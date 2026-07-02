@@ -75,6 +75,21 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
 }
 
 @layer utilities {
@@ -89,6 +104,24 @@
   }
   .mobile-page {
     @apply pb-24 md:pb-6;
+  }
+  .text-brand {
+    @apply text-biz-blue dark:text-primary;
+  }
+  .pill-filter {
+    @apply rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
+  }
+  .pill-filter-active {
+    @apply bg-biz-blue text-white dark:bg-primary dark:text-primary-foreground;
+  }
+  .pill-filter-inactive {
+    @apply bg-muted text-muted-foreground hover:bg-accent hover:text-foreground;
+  }
+  .surface-muted {
+    @apply bg-muted/60 dark:bg-muted/50;
+  }
+  .select-native {
+    @apply w-full h-11 rounded-lg border border-border bg-background text-foreground px-3 text-sm;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

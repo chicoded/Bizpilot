@@ -15,7 +15,7 @@ export function MessageLog({ messages }: MessageLogProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-biz-blue" />
+          <MessageCircle className="h-5 w-5 text-brand" />
           Recent Messages
         </CardTitle>
       </CardHeader>
@@ -33,8 +33,8 @@ export function MessageLog({ messages }: MessageLogProps) {
                 className={cn(
                   "rounded-xl p-3 text-sm",
                   msg.direction === "INBOUND"
-                    ? "bg-slate-50 border border-border/50"
-                    : "bg-biz-blue/5 border border-biz-blue/10"
+                    ? "surface-muted border border-border/50"
+                    : "bg-biz-blue/5 dark:bg-primary/10 border border-biz-blue/10 dark:border-primary/20"
                 )}
               >
                 <div className="flex items-center justify-between mb-1.5">

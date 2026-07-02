@@ -121,7 +121,7 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}
                 disabled={isPending}
-                className="w-full h-11 rounded-lg border border-border bg-white px-3 text-sm"
+                className="select-native"
               >
                 <option value="">Select customer...</option>
                 {customers.map((c) => (
@@ -145,7 +145,7 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
               type="button"
               variant="ghost"
               size="sm"
-              className="text-biz-blue px-0 h-auto"
+              className="text-brand px-0 h-auto"
               onClick={() => setShowNewCustomer(true)}
               disabled={isPending}
             >
@@ -153,7 +153,7 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
               New customer
             </Button>
           ) : (
-            <div className="rounded-xl border bg-slate-50/80 p-3 space-y-2">
+            <div className="rounded-xl border surface-muted p-3 space-y-2">
               <p className="text-sm font-medium">New customer</p>
               <Input
                 placeholder="Name"
@@ -226,12 +226,12 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-600 bg-red-50 dark:bg-red-950/40 dark:text-red-300 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
           {success && (
-            <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg px-3 py-2">
               Debt recorded successfully.
             </p>
           )}

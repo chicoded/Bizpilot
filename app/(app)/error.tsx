@@ -17,7 +17,7 @@ export default function AppError({
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
-      <h1 className="text-xl font-bold text-biz-blue mb-2">
+      <h1 className="text-xl font-bold text-brand mb-2">
         Something went wrong
       </h1>
       <p className="text-muted-foreground max-w-md mb-6">

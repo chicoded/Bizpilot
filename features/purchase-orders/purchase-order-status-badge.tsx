@@ -5,11 +5,11 @@ import {
 } from "@/lib/purchase-orders";
 
 const STATUS_STYLES: Record<PurchaseOrderStatus, string> = {
-  requested: "bg-amber-100 text-amber-800",
-  ordered: "bg-blue-100 text-blue-800",
-  received: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-slate-100 text-slate-600",
-  pending: "bg-slate-100 text-slate-700",
+  requested: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+  ordered: "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300",
+  received: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
+  cancelled: "bg-slate-100 text-slate-600 dark:bg-muted dark:text-muted-foreground",
+  pending: "bg-slate-100 text-slate-700 dark:bg-muted dark:text-muted-foreground",
 };
 
 export function PurchaseOrderStatusBadge({

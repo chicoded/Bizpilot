@@ -61,7 +61,7 @@ export function WhatsAppSimulator({ twilioConfigured }: WhatsAppSimulatorProps) 
               type="button"
               onClick={() => runSimulation(q)}
               disabled={isPending}
-              className="rounded-full border border-biz-blue/20 bg-biz-blue/5 px-3 py-1.5 text-xs font-medium text-biz-blue hover:bg-biz-blue/10 transition-colors"
+              className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/20 transition-colors"
             >
               {q}
             </button>

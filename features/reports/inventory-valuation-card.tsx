@@ -24,19 +24,19 @@ export function InventoryValuationCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl bg-slate-50 p-3 text-center">
+          <div className="rounded-xl surface-muted p-3 text-center">
             <p className="text-xs text-muted-foreground">Products</p>
-            <p className="text-lg font-bold">{totals.productCount}</p>
+            <p className="text-lg font-bold text-foreground">{totals.productCount}</p>
           </div>
-          <div className="rounded-xl bg-biz-blue/5 p-3 text-center">
+          <div className="rounded-xl bg-biz-blue/5 dark:bg-primary/10 p-3 text-center">
             <p className="text-xs text-muted-foreground">Cost Value</p>
-            <p className="text-sm font-bold text-biz-blue">
+            <p className="text-sm font-bold text-brand">
               {formatCurrency(totals.cost, currency)}
             </p>
           </div>
-          <div className="rounded-xl bg-emerald-50 p-3 text-center">
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3 text-center">
             <p className="text-xs text-muted-foreground">Retail Value</p>
-            <p className="text-sm font-bold text-emerald-600">
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
               {formatCurrency(totals.retail, currency)}
             </p>
           </div>

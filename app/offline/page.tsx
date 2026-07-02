@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 
 export default function OfflinePage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-slate-50 to-white safe-area-pt safe-area-pb">
-      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-100 mb-6">
-        <WifiOff className="h-10 w-10 text-amber-600" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background safe-area-pt safe-area-pb">
+      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-100 dark:bg-amber-950/50 mb-6">
+        <WifiOff className="h-10 w-10 text-amber-600 dark:text-amber-400" />
       </div>
-      <h1 className="text-2xl font-bold text-biz-blue mb-2">You&apos;re offline</h1>
+      <h1 className="text-2xl font-bold text-brand mb-2">You&apos;re offline</h1>
       <p className="text-muted-foreground text-center max-w-sm mb-8">
         BizPilot needs internet for sales and sync. Check your connection and try
         again.

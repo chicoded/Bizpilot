@@ -120,7 +120,7 @@ export function LaunchQaChecklist({ businessId, appUrl }: LaunchQaChecklistProps
               href={appUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-biz-blue underline"
+              className="text-brand underline"
             >
               {appUrl.replace(/^https?:\/\//, "")}
             </a>

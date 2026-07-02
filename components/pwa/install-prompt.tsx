@@ -31,7 +31,7 @@ export function InstallPrompt() {
         exit={{ opacity: 0, y: 100 }}
         className="fixed bottom-24 left-4 right-4 z-40 md:bottom-6 md:left-auto md:right-6 md:max-w-sm safe-area-pb"
       >
-        <div className="rounded-2xl border border-biz-blue/20 bg-white/95 backdrop-blur-xl shadow-glass p-4">
+        <div className="rounded-2xl border border-biz-blue/20 dark:border-primary/30 bg-card/95 backdrop-blur-xl shadow-glass p-4">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-biz-gradient text-white">
               <Smartphone className="h-5 w-5" />
@@ -42,7 +42,7 @@ export function InstallPrompt() {
                 Add to your home screen for fast POS access — works like a native app.
               </p>
               {showIOSHelp && (
-                <p className="text-xs text-biz-blue mt-2 flex items-center gap-1">
+                <p className="text-xs text-brand mt-2 flex items-center gap-1">
                   <Share className="h-3 w-3" />
                   Tap Share → Add to Home Screen
                 </p>

@@ -104,7 +104,7 @@ export function MemberAccessEditor({
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="inline-flex items-center gap-1 text-xs font-medium text-biz-blue hover:underline"
+        className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
       >
         {expanded ? (
           <>
@@ -120,7 +120,7 @@ export function MemberAccessEditor({
       </button>
 
       {expanded && (
-        <div className="mt-3 rounded-xl border bg-slate-50/80 p-3 space-y-3">
+        <div className="mt-3 rounded-xl border surface-muted p-3 space-y-3">
           <p className="text-xs text-muted-foreground">
             Override {ROLE_LABELS[memberRole]} role defaults for this person
             only.
@@ -139,16 +139,16 @@ export function MemberAccessEditor({
                     "flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                     useCustom
                       ? checked
-                        ? "border-biz-blue bg-biz-blue/10"
-                        : "border-border bg-white hover:bg-accent"
-                      : "border-border bg-white/60 opacity-70"
+                        ? "border-biz-blue bg-biz-blue/10 dark:border-primary dark:bg-primary/15"
+                        : "border-border bg-card hover:bg-accent"
+                      : "border-border bg-card/60 opacity-70"
                   )}
                 >
                   <span>{section.label}</span>
                   <Shield
                     className={cn(
                       "h-4 w-4",
-                      checked ? "text-biz-blue" : "text-muted-foreground/40"
+                      checked ? "text-brand" : "text-muted-foreground/40"
                     )}
                   />
                 </button>

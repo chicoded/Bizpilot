@@ -28,9 +28,9 @@ export function TopProductsTable({
             {products.map((product, i) => (
               <div
                 key={product.name}
-                className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+                className="flex items-center gap-3 rounded-xl surface-muted p-3"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-biz-blue text-white text-xs font-bold">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-biz-blue text-white text-xs font-bold dark:bg-primary dark:text-primary-foreground">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">

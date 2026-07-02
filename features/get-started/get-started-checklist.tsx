@@ -73,7 +73,7 @@ export function GetStartedChecklist({
             >
               <CardContent className="p-4 flex items-start gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-biz-blue/10">
-                  <Icon className="h-5 w-5 text-biz-blue" />
+                  <Icon className="h-5 w-5 text-brand" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-muted-foreground mb-1">

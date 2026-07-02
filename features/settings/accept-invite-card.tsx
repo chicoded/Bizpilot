@@ -57,10 +57,10 @@ export function AcceptInviteCard({
     <Card className="w-full max-w-md">
       <CardContent className="py-10 px-6 text-center space-y-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-biz-blue/10 mx-auto">
-          <Users className="h-7 w-7 text-biz-blue" />
+          <Users className="h-7 w-7 text-brand" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-biz-blue">Join {businessName}</h1>
+          <h1 className="text-xl font-bold text-brand">Join {businessName}</h1>
           <p className="text-sm text-muted-foreground mt-2">
             You&apos;ve been invited as <strong>{ROLE_LABELS[role]}</strong>
           </p>

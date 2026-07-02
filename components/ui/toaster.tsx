@@ -39,7 +39,7 @@ export function Toaster() {
                 <button
                   type="button"
                   onClick={t.action.onClick}
-                  className="text-sm font-medium text-biz-blue hover:underline mt-1"
+                  className="text-sm font-medium text-brand hover:underline mt-1"
                 >
                   {t.action.label}
                 </button>

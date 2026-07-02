@@ -34,7 +34,7 @@ export default async function OnboardingPage() {
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-biz-gradient text-white font-bold text-xl mb-4">
             BP
           </div>
-          <h1 className="text-2xl font-bold text-biz-blue">
+          <h1 className="text-2xl font-bold text-brand">
             Set up your business
           </h1>
           <p className="text-muted-foreground mt-2">

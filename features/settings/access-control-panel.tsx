@@ -124,7 +124,7 @@ export function AccessControlPanel({ permissions }: AccessControlPanelProps) {
                         className={cn(
                           "inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors touch-manipulation",
                           checked
-                            ? "border-biz-blue bg-biz-blue/10 text-biz-blue"
+                            ? "border-biz-blue bg-biz-blue/10 text-brand dark:border-primary dark:bg-primary/15"
                             : "border-border bg-background text-muted-foreground hover:bg-accent"
                         )}
                         aria-label={`${checked ? "Revoke" : "Grant"} ${section.label} for ${ROLE_LABELS[role]}`}

@@ -80,9 +80,9 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
   return (
     <main className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] max-w-3xl mx-auto">
       {!providerConfigured && (
-        <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
           <p className="font-medium">Free AI setup</p>
-          <p className="mt-1 text-amber-900/90">
+          <p className="mt-1 text-amber-900/90 dark:text-amber-200/90">
             Get a free API key from{" "}
             <a
               href="https://aistudio.google.com/apikey"
@@ -111,8 +111,8 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
               className={cn(
                 "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                 msg.role === "user"
-                  ? "bg-biz-blue text-white rounded-br-md"
-                  : "bg-white border border-border/50 shadow-soft rounded-bl-md"
+                  ? "bg-biz-blue text-white rounded-br-md dark:bg-primary dark:text-primary-foreground"
+                  : "bg-card border border-border shadow-soft rounded-bl-md text-foreground"
               )}
             >
               {msg.role === "assistant" && (
@@ -124,8 +124,8 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white border rounded-2xl px-4 py-3 shadow-soft">
-              <Loader2 className="h-4 w-4 animate-spin text-biz-blue" />
+            <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-soft">
+              <Loader2 className="h-4 w-4 animate-spin text-brand" />
             </div>
           </div>
         )}
@@ -139,7 +139,7 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
               key={s}
               type="button"
               onClick={() => sendMessage(s)}
-              className="rounded-full border border-biz-blue/20 bg-biz-blue/5 px-3 py-1.5 text-xs font-medium text-biz-blue hover:bg-biz-blue/10 transition-colors"
+              className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/20 transition-colors"
             >
               {s}
             </button>
@@ -147,7 +147,7 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
         </div>
       )}
 
-      <div className="p-4 border-t bg-white/80 backdrop-blur-xl">
+      <div className="p-4 border-t border-border bg-card/95 backdrop-blur-xl">
         <form
           onSubmit={(e) => {
             e.preventDefault();

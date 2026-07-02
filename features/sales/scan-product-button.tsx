@@ -97,7 +97,7 @@ export function ScanProductButton({
         </Button>
 
         {lookupError && (
-          <p className="text-sm text-red-500 text-center rounded-lg bg-red-50 px-3 py-2">
+          <p className="text-sm text-red-500 text-center rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2">
             {lookupError}
           </p>
         )}
@@ -112,21 +112,21 @@ export function ScanProductButton({
       {notFoundBarcode && (
         <div className="md:hidden fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-4">
           <div
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl animate-in slide-in-from-bottom duration-300"
+            className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl animate-in slide-in-from-bottom duration-300"
             role="dialog"
             aria-modal="true"
             aria-labelledby="barcode-not-found-title"
           >
             <h2
               id="barcode-not-found-title"
-              className="text-lg font-semibold text-biz-blue mb-2"
+              className="text-lg font-semibold text-brand mb-2"
             >
               Product not found
             </h2>
             <p className="text-sm text-muted-foreground mb-1">
               No product matches this barcode:
             </p>
-            <p className="font-mono text-sm bg-slate-100 rounded-lg px-3 py-2 mb-6 break-all">
+            <p className="font-mono text-sm bg-muted rounded-lg px-3 py-2 mb-6 break-all">
               {notFoundBarcode}
             </p>
             <div className="flex flex-col gap-3">

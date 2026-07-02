@@ -48,7 +48,7 @@ export function WhatsAppSettingsForm({
       </CardHeader>
       <CardContent>
         {!twilioConfigured && (
-          <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+          <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
             Twilio is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
             and TWILIO_WHATSAPP_NUMBER to your .env file. You can still test with
             the simulator below.
@@ -56,7 +56,7 @@ export function WhatsAppSettingsForm({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
+          <div className="flex items-center justify-between rounded-xl surface-muted p-4">
             <div>
               <p className="font-medium text-sm">Enable WhatsApp AI</p>
               <p className="text-xs text-muted-foreground">
@@ -81,7 +81,7 @@ export function WhatsAppSettingsForm({
             <input type="hidden" name="isEnabled" value={String(enabled)} />
           </div>
 
-          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
+          <div className="flex items-center justify-between rounded-xl surface-muted p-4">
             <div>
               <p className="font-medium text-sm">Auto-reply</p>
               <p className="text-xs text-muted-foreground">
@@ -123,17 +123,17 @@ export function WhatsAppSettingsForm({
               name="greetingMessage"
               defaultValue={config.greetingMessage ?? ""}
               rows={3}
-              className="flex w-full rounded-xl border border-input bg-white/90 px-4 py-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biz-blue/30"
+              className="flex w-full rounded-xl border border-input bg-background text-foreground px-4 py-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biz-blue/30 dark:focus-visible:ring-primary/30"
               placeholder="Hello! Welcome to our shop..."
             />
           </div>
 
-          <div className="rounded-xl bg-biz-blue/5 p-4 space-y-3">
-            <p className="text-xs font-semibold text-biz-blue uppercase">
+          <div className="rounded-xl bg-biz-blue/5 dark:bg-primary/10 p-4 space-y-3">
+            <p className="text-xs font-semibold text-brand uppercase">
               Business Code (multi-shop routing)
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg bg-white px-3 py-2 text-sm font-mono font-bold">
+              <code className="flex-1 rounded-lg bg-card border px-3 py-2 text-sm font-mono font-bold">
                 {config.businessCode}
               </code>
               <Button
@@ -157,12 +157,12 @@ export function WhatsAppSettingsForm({
             </p>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 space-y-2">
+          <div className="rounded-xl surface-muted p-4 space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase">
               Twilio Webhook URL
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-mono break-all border">
+              <code className="flex-1 rounded-lg bg-card px-3 py-2 text-xs font-mono break-all border">
                 {webhookUrl}
               </code>
               <Button

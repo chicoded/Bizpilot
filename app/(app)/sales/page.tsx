@@ -209,7 +209,7 @@ export default function SalesPage() {
         actions={
           <Link
             href="/sales/history"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-biz-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg px-1"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg px-1"
           >
             <History className="h-4 w-4" aria-hidden />
             Sales history
@@ -253,7 +253,7 @@ export default function SalesPage() {
                 </Button>
               </div>
             ) : products.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center space-y-3">
+              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center space-y-3">
                 <PackageOpen className="h-10 w-10 text-muted-foreground mx-auto" />
                 <p className="font-medium">No products yet</p>
                 <p className="text-sm text-muted-foreground">
@@ -264,7 +264,7 @@ export default function SalesPage() {
                 </Button>
               </div>
             ) : filtered.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center space-y-2">
+              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center space-y-2">
                 <p className="font-medium">No products match &ldquo;{search}&rdquo;</p>
                 <p className="text-sm text-muted-foreground">
                   Try a different search or scan a barcode.
@@ -278,10 +278,10 @@ export default function SalesPage() {
                     type="button"
                     onClick={() => addToCart(product)}
                     disabled={product.quantity === 0}
-                    className="rounded-xl border border-border/50 bg-white p-3 text-left hover:border-biz-blue hover:shadow-soft transition-all disabled:opacity-40 active:scale-[0.97] touch-manipulation min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="rounded-xl border border-border bg-card p-3 text-left hover:border-primary hover:shadow-soft transition-all disabled:opacity-40 active:scale-[0.97] touch-manipulation min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <p className="font-semibold text-sm truncate">{product.name}</p>
-                    <p className="text-biz-blue font-bold mt-1">
+                    <p className="font-semibold text-sm truncate text-foreground">{product.name}</p>
+                    <p className="text-brand font-bold mt-1">
                       {formatCurrency(product.sellingPrice)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -297,8 +297,8 @@ export default function SalesPage() {
             <Card className="lg:sticky lg:top-20">
               <CardContent className="p-4 space-y-4">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-biz-blue" aria-hidden />
-                  <h2 className="font-semibold">Cart ({cartItemCount})</h2>
+                  <ShoppingCart className="h-5 w-5 text-brand" aria-hidden />
+                  <h2 className="font-semibold text-foreground">Cart ({cartItemCount})</h2>
                 </div>
 
                 {cart.length === 0 ? (
@@ -310,7 +310,7 @@ export default function SalesPage() {
                     {cart.map((item) => (
                       <div
                         key={item.product.id}
-                        className="flex items-center gap-2 rounded-lg bg-slate-50 p-2"
+                        className="flex items-center gap-2 rounded-lg surface-muted p-2"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
@@ -366,7 +366,7 @@ export default function SalesPage() {
                 <div className="border-t pt-4 space-y-3">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span className="text-biz-blue">
+                    <span className="text-brand">
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
@@ -385,8 +385,8 @@ export default function SalesPage() {
                         className={cn(
                           "rounded-xl py-3 text-sm font-semibold border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           paymentMethod === method.value
-                            ? "bg-biz-blue text-white border-biz-blue"
-                            : "bg-white border-border hover:border-biz-blue/50"
+                            ? "bg-biz-blue text-white border-biz-blue dark:bg-primary dark:text-primary-foreground dark:border-primary"
+                            : "bg-card text-foreground border-border hover:border-primary/50"
                         )}
                       >
                         {method.label}
@@ -423,7 +423,7 @@ export default function SalesPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <Link
                           href={`/sales/${lastSaleId}`}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white border border-success/30 text-success text-sm font-medium py-2 hover:bg-success/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-card border border-success/30 text-success text-sm font-medium py-2 hover:bg-success/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <FileText className="h-4 w-4" aria-hidden />
                           Receipt
@@ -465,13 +465,13 @@ export default function SalesPage() {
       </AppShell>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-[4.5rem] left-0 right-0 z-[90] md:hidden border-t border-border/40 bg-white/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(30,58,95,0.08)]">
+        <div className="fixed bottom-[4.5rem] left-0 right-0 z-[90] md:hidden border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-3 max-w-7xl mx-auto">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">
                 {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
               </p>
-              <p className="text-lg font-bold text-biz-blue">
+              <p className="text-lg font-bold text-brand">
                 {formatCurrency(subtotal)}
               </p>
             </div>

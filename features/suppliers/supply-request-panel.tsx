@@ -156,7 +156,7 @@ export function SupplyRequestPanel({
                   disabled={isPending}
                   rows={4}
                   placeholder="e.g. 10 cartons of Coke 50cl, 5 packs of Paracetamol..."
-                  className="flex w-full rounded-xl border border-input bg-white/90 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-biz-blue/30 disabled:opacity-50"
+                  className="flex w-full rounded-xl border border-input bg-background text-foreground px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-biz-blue/30 dark:focus:ring-primary/30 disabled:opacity-50"
                 />
               </div>
             )}
@@ -171,7 +171,7 @@ export function SupplyRequestPanel({
                   disabled={isPending}
                   rows={2}
                   placeholder="Any extra items not listed above..."
-                  className="flex w-full rounded-xl border border-input bg-white/90 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-biz-blue/30 disabled:opacity-50"
+                  className="flex w-full rounded-xl border border-input bg-background text-foreground px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-biz-blue/30 dark:focus:ring-primary/30 disabled:opacity-50"
                 />
               </div>
             )}
@@ -188,12 +188,12 @@ export function SupplyRequestPanel({
             </div>
 
             {error && (
-              <p className="text-sm text-red-500 rounded-lg bg-red-50 px-3 py-2">
+              <p className="text-sm text-red-500 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2">
                 {error}
               </p>
             )}
             {success && (
-              <p className="text-sm text-emerald-700 rounded-lg bg-emerald-50 px-3 py-2">
+              <p className="text-sm text-emerald-700 dark:text-emerald-300 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2">
                 {success}
               </p>
             )}

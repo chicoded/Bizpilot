@@ -24,7 +24,7 @@ export function ProductImage({
 
   if (showPlaceholder) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-100 text-muted-foreground">
+      <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
         <Package className="h-10 w-10 opacity-40" aria-hidden />
       </div>
     );

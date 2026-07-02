@@ -60,8 +60,8 @@ export function CreditCustomerPicker({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-orange-200 bg-orange-50/50 p-3">
-      <Label className="text-sm font-medium text-orange-800">
+    <div className="space-y-2 rounded-xl border border-orange-200 dark:border-orange-800/60 bg-orange-50/50 dark:bg-orange-950/30 p-3">
+      <Label className="text-sm font-medium text-orange-800 dark:text-orange-200">
         Customer (required for credit)
       </Label>
 
@@ -69,7 +69,7 @@ export function CreditCustomerPicker({
         <select
           value={selectedId}
           onChange={(e) => onSelect(e.target.value)}
-          className="w-full h-11 rounded-lg border border-border bg-white px-3 text-sm"
+          className="select-native"
         >
           <option value="">Select customer...</option>
           {customers.map((c) => (

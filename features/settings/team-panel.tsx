@@ -139,7 +139,7 @@ export function TeamPanel({
   return (
     <div className="space-y-6">
       {canManage && inviteableRoles.length > 0 && (
-        <form onSubmit={handleInvite} className="space-y-3 rounded-xl border p-4 bg-slate-50/50">
+        <form onSubmit={handleInvite} className="space-y-3 rounded-xl border p-4 surface-muted">
           <p className="text-sm font-medium">Invite team member</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
@@ -183,7 +183,7 @@ export function TeamPanel({
             </div>
           </div>
           {inviteUrl && (
-            <div className="flex flex-col gap-2 rounded-lg bg-white border p-3">
+            <div className="flex flex-col gap-2 rounded-lg bg-card border p-3">
               <p className="text-xs text-muted-foreground">
                 Share this link with your team member:
               </p>
@@ -256,7 +256,7 @@ export function TeamPanel({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <span className="text-sm font-medium text-biz-blue px-3 py-1.5 rounded-full bg-biz-blue/10">
+                  <span className="text-sm font-medium text-brand px-3 py-1.5 rounded-full bg-biz-blue/10 dark:bg-primary/15">
                     {ROLE_LABELS[member.role]}
                   </span>
                 )}

@@ -34,7 +34,7 @@ export function ProductCard({
       className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biz-blue focus-visible:ring-offset-2 touch-manipulation"
     >
       <Card className="hover:shadow-glass transition-shadow cursor-pointer h-full active:scale-[0.99] overflow-hidden">
-        <div className="relative aspect-[4/3] w-full bg-slate-100">
+        <div className="relative aspect-[4/3] w-full bg-muted">
           <ProductImage
             imageUrl={product.imageUrl}
             alt={product.name}
@@ -54,7 +54,7 @@ export function ProductCard({
           )}
           <div className="flex items-end justify-between gap-2">
             <div>
-              <p className="text-lg font-bold text-biz-blue">
+              <p className="text-lg font-bold text-brand">
                 {formatCurrency(product.sellingPrice, currency)}
               </p>
               <p
