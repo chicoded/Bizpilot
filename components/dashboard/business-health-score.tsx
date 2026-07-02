@@ -27,7 +27,7 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden border-biz-emerald/20 bg-gradient-to-br from-white via-white to-emerald-50/30">
+      <Card className="overflow-hidden border-biz-emerald/20 bg-gradient-to-br from-card via-card to-emerald-50/30 dark:to-emerald-950/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -51,7 +51,7 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="8"
-                  className="text-gray-100"
+                  className="text-muted-foreground/40 dark:text-muted-foreground/30"
                 />
                 <circle
                   cx="50"
@@ -81,7 +81,7 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
                     <span className="capitalize text-muted-foreground">
                       {key}
                     </span>
-                    <span className="font-medium">{value}</span>
+                    <span className="font-medium text-foreground">{value}</span>
                   </div>
                   <Progress value={value} className="h-1.5" />
                 </div>
@@ -92,13 +92,13 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
           {/* Strengths */}
           {health.strengths.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
                 Strengths
               </p>
               {health.strengths.map((s, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                  <span>{s}</span>
+                  <span className="text-foreground">{s}</span>
                 </div>
               ))}
             </div>
@@ -107,13 +107,13 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
           {/* Warnings */}
           {health.warnings.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                 Warnings
               </p>
               {health.warnings.map((w, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                  <span>{w}</span>
+                  <span className="text-foreground">{w}</span>
                 </div>
               ))}
             </div>
@@ -121,14 +121,14 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
 
           {/* Recommendations */}
           {health.recommendations.length > 0 && (
-            <div className="space-y-2 rounded-xl bg-biz-blue/5 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-biz-blue">
+            <div className="space-y-2 rounded-xl bg-biz-blue/5 dark:bg-primary/10 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-biz-blue dark:text-primary">
                 Recommendations
               </p>
               {health.recommendations.map((r, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-biz-blue" />
-                  <span>{r}</span>
+                  <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-biz-blue dark:text-primary" />
+                  <span className="text-foreground">{r}</span>
                 </div>
               ))}
             </div>
@@ -136,7 +136,7 @@ export function BusinessHealthScore({ health }: BusinessHealthScoreProps) {
 
           <Link
             href="/ai"
-            className="block text-center text-sm font-medium text-biz-blue hover:underline"
+            className="block text-center text-sm font-medium text-biz-blue dark:text-primary hover:underline"
           >
             Ask AI for details →
           </Link>

@@ -32,7 +32,7 @@ export function Sidebar({
     "/menu";
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30 border-r border-border/50 bg-white/80 backdrop-blur-xl pointer-events-auto">
+    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30 border-r border-border bg-card/95 backdrop-blur-xl pointer-events-auto">
       <Link
         href={homeHref}
         className="flex h-16 items-center gap-2 border-b border-border/50 px-6 hover:bg-accent/50 transition-colors touch-manipulation"
@@ -41,7 +41,7 @@ export function Sidebar({
           BP
         </div>
         <div className="min-w-0">
-          <p className="font-bold text-biz-blue truncate">BizPilot AI</p>
+          <p className="font-bold text-biz-blue dark:text-primary truncate">BizPilot AI</p>
           {businessName && (
             <p className="text-xs text-muted-foreground truncate">
               {businessName}

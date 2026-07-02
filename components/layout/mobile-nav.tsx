@@ -29,7 +29,7 @@ export function MobileNav({
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden pointer-events-auto">
-      <div className="border-t border-border/40 bg-white/95 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,58,95,0.06)] safe-area-pb">
+      <div className="border-t border-border bg-card/95 backdrop-blur-xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)] safe-area-pb">
         <div className="flex items-end justify-around px-1 pt-1 pb-1">
           {items.map((item) => {
             const isActive =
@@ -81,7 +81,7 @@ export function MobileNav({
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "relative z-10 flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 min-w-[56px] touch-manipulation active:scale-95 transition-transform",
-                  isActive ? "text-biz-blue" : "text-muted-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 <div

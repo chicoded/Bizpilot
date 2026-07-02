@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTheme } from "@/components/providers/theme-provider";
 import { formatCurrency } from "@/lib/utils";
 import type { DailyDataPoint } from "@/types";
 
@@ -19,8 +20,15 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ businessId }: RevenueChartProps) {
+  const { resolved } = useTheme();
+  const isDark = resolved === "dark";
   const [data, setData] = useState<DailyDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const gridColor = isDark ? "hsl(222 22% 22%)" : "#f0f0f0";
+  const tickColor = isDark ? "hsl(215 15% 72%)" : "#64748b";
+  const tooltipBg = isDark ? "hsl(222 35% 12%)" : "#ffffff";
+  const tooltipText = isDark ? "hsl(210 25% 96%)" : "#0f172a";
 
   useEffect(() => {
     fetch("/api/reports?period=week")
@@ -37,7 +45,7 @@ export function RevenueChart({ businessId }: RevenueChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Revenue This Week</CardTitle>
+        <CardTitle className="text-base text-foreground">Revenue This Week</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -56,19 +64,31 @@ export function RevenueChart({ businessId }: RevenueChartProps) {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: tickColor }}
+                  axisLine={{ stroke: gridColor }}
+                  tickLine={{ stroke: gridColor }}
+                />
                 <YAxis
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: tickColor }}
+                  axisLine={{ stroke: gridColor }}
+                  tickLine={{ stroke: gridColor }}
                   tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
                   formatter={(value: number) => [formatCurrency(value), "Revenue"]}
                   contentStyle={{
                     borderRadius: 12,
-                    border: "none",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    border: `1px solid ${gridColor}`,
+                    background: tooltipBg,
+                    color: tooltipText,
+                    boxShadow: isDark
+                      ? "0 4px 12px rgba(0,0,0,0.4)"
+                      : "0 4px 12px rgba(0,0,0,0.1)",
                   }}
+                  labelStyle={{ color: tickColor }}
                 />
                 <Area
                   type="monotone"

@@ -44,7 +44,7 @@ export function SettingsNav({ isOwner, canAccessBilling }: SettingsNavProps) {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
               isActive
-                ? "bg-biz-blue text-white"
+                ? "bg-biz-blue text-white dark:bg-primary dark:text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >

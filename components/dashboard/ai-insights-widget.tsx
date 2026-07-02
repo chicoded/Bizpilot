@@ -20,17 +20,17 @@ const iconMap = {
 };
 
 const styleMap = {
-  success: "border-emerald-200 bg-emerald-50/50",
-  warning: "border-amber-200 bg-amber-50/50",
-  danger: "border-red-200 bg-red-50/50",
-  info: "border-blue-200 bg-blue-50/50",
+  success: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/40",
+  warning: "border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/40",
+  danger: "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/40",
+  info: "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/40",
 };
 
 const iconColorMap = {
-  success: "text-emerald-500",
-  warning: "text-amber-500",
-  danger: "text-red-500",
-  info: "text-blue-500",
+  success: "text-emerald-500 dark:text-emerald-400",
+  warning: "text-amber-500 dark:text-amber-400",
+  danger: "text-red-500 dark:text-red-400",
+  info: "text-blue-500 dark:text-blue-400",
 };
 
 interface AIInsightsWidgetProps {
@@ -62,14 +62,14 @@ export function AIInsightsWidget({ insights }: AIInsightsWidgetProps) {
                 className={cn("mt-0.5 h-4 w-4 shrink-0", iconColorMap[insight.type])}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{insight.title}</p>
+                <p className="text-sm font-medium text-foreground">{insight.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {insight.message}
                 </p>
                 {insight.action && insight.actionHref && (
                   <Link
                     href={insight.actionHref}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-biz-blue"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-biz-blue dark:text-primary"
                   >
                     {insight.action}
                     <ChevronRight className="h-3 w-3" />

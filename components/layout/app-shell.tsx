@@ -28,7 +28,7 @@ export function AppShell({
     <>
       <Header title={title} subtitle={subtitle} />
       {actions && (
-        <div className="border-b border-border/40 bg-white/60 px-4 py-2 md:px-6">
+        <div className="border-b border-border/40 bg-card/80 px-4 py-2 md:px-6">
           <div className={cn("mx-auto flex justify-end", maxWidthClass[maxWidth])}>
             {actions}
           </div>

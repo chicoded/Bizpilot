@@ -40,10 +40,10 @@ interface KPICardProps {
 }
 
 const variantStyles = {
-  default: "from-biz-blue/10 to-biz-blue/5 text-biz-blue",
-  success: "from-emerald-500/10 to-emerald-500/5 text-emerald-600",
-  warning: "from-amber-500/10 to-amber-500/5 text-amber-600",
-  danger: "from-red-500/10 to-red-500/5 text-red-600",
+  default: "from-biz-blue/10 to-biz-blue/5 text-biz-blue dark:text-primary",
+  success: "from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+  warning: "from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400",
+  danger: "from-red-500/10 to-red-500/5 text-red-600 dark:text-red-400",
 };
 
 export function KPICard({
@@ -68,14 +68,16 @@ export function KPICard({
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {title}
               </p>
-              <p className="text-2xl font-bold tracking-tight">
+              <p className="text-2xl font-bold tracking-tight text-foreground">
                 {formatCurrency(value, currency)}
               </p>
               {trend && (
                 <p
                   className={cn(
                     "text-xs font-medium",
-                    trend.value >= 0 ? "text-emerald-600" : "text-red-500"
+                    trend.value >= 0
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-500 dark:text-red-400"
                   )}
                 >
                   {trend.value >= 0 ? "+" : ""}

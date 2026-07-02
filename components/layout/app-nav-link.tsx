@@ -26,7 +26,7 @@ export function AppNavLink({ item, variant = "menu" }: AppNavLinkProps) {
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation",
           isActive
-            ? "bg-biz-blue text-white shadow-soft"
+            ? "bg-biz-blue text-white shadow-soft dark:bg-primary dark:text-primary-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-foreground"
         )}
       >
@@ -42,10 +42,10 @@ export function AppNavLink({ item, variant = "menu" }: AppNavLinkProps) {
         href={item.href}
         prefetch
         aria-current={isActive ? "page" : undefined}
-        className="flex flex-col items-center gap-2 rounded-2xl border bg-white p-4 text-center hover:border-biz-blue hover:shadow-soft transition-all touch-manipulation active:scale-[0.98] min-h-[96px]"
+        className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 text-center hover:border-primary hover:shadow-soft transition-all touch-manipulation active:scale-[0.98] min-h-[96px]"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-biz-blue/10">
-          <Icon className="h-5 w-5 text-biz-blue" />
+          <Icon className="h-5 w-5 text-biz-blue dark:text-primary" />
         </div>
         <span className="text-sm font-semibold">{item.label}</span>
       </Link>
@@ -58,20 +58,20 @@ export function AppNavLink({ item, variant = "menu" }: AppNavLinkProps) {
       prefetch
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-4 rounded-2xl border bg-white px-4 py-3.5 hover:border-biz-blue hover:shadow-soft transition-all touch-manipulation active:scale-[0.99]",
-        isActive && "border-biz-blue bg-biz-blue/5"
+        "flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-3.5 hover:border-primary hover:shadow-soft transition-all touch-manipulation active:scale-[0.99]",
+        isActive && "border-primary bg-primary/10 dark:bg-primary/15"
       )}
     >
       <div
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-          isActive ? "bg-biz-blue text-white" : "bg-biz-blue/10 text-biz-blue"
+          isActive ? "bg-biz-blue text-white dark:bg-primary dark:text-primary-foreground" : "bg-biz-blue/10 text-biz-blue dark:bg-primary/15 dark:text-primary"
         )}
       >
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0 text-left">
-        <p className="font-semibold text-sm">{item.label}</p>
+        <p className="font-semibold text-sm text-foreground">{item.label}</p>
         {item.description && (
           <p className="text-xs text-muted-foreground truncate">
             {item.description}
