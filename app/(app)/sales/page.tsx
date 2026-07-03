@@ -11,6 +11,7 @@ import { createSale } from "@/actions/business";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { trackEvent } from "@/components/monitoring/monitoring-provider";
 import {
   CreditCustomerPicker,
   type CustomerOption,
@@ -260,6 +261,11 @@ export default function SalesPage() {
         const receiptNumber = result.sale?.receiptNumber ?? null;
         setLastSaleId(saleId);
         setLastReceiptNumber(receiptNumber);
+        trackEvent("sale_completed", {
+          item_count: cartItemCount,
+          total: subtotal,
+          payment_method: paymentMethod,
+        });
         toast({
           title: "Sale complete",
           description: receiptNumber

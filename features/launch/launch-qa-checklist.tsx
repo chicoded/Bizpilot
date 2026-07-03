@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import {
   CheckCircle2,
   Circle,
@@ -12,6 +13,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { trackEvent } from "@/components/monitoring/monitoring-provider";
+import { toast } from "@/hooks/use-toast";
 import {
   LAUNCH_QA_ITEMS,
   LAUNCH_QA_SECTIONS,
@@ -217,10 +220,40 @@ export function LaunchQaChecklist({ businessId, appUrl }: LaunchQaChecklistProps
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              throw new Error("BizPilot Sentry test error");
+                              Sentry.captureException(
+                                new Error("BizPilot launch checklist — Sentry test")
+                              );
+                              toast({
+                                title: "Sentry test sent",
+                                description:
+                                  "Check your Sentry Issues dashboard in about a minute.",
+                                variant: "success",
+                              });
+                              persist({ ...checked, "sentry-monitoring": true });
                             }}
                           >
                             Send test error
+                          </Button>
+                        )}
+                        {item.id === "posthog-analytics" && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              trackEvent("launch_checklist_test", {
+                                source: "qa_checklist",
+                              });
+                              toast({
+                                title: "PostHog event sent",
+                                description:
+                                  "Look for launch_checklist_test in PostHog Live events.",
+                                variant: "success",
+                              });
+                              persist({ ...checked, "posthog-analytics": true });
+                            }}
+                          >
+                            Send test event
                           </Button>
                         )}
                       </div>

@@ -9,6 +9,8 @@ import {
   EnvStatusPanel,
   getEnvStatus,
 } from "@/features/launch/env-status-panel";
+import { MonitoringSetupPanel } from "@/features/launch/monitoring-setup-panel";
+import { getMonitoringStatus } from "@/lib/monitoring";
 
 export default async function SettingsLaunchPage() {
   const ctx = await requirePageAccess("settings");
@@ -18,6 +20,7 @@ export default async function SettingsLaunchPage() {
   }
 
   const envStatus = getEnvStatus();
+  const monitoringStatus = getMonitoringStatus();
 
   return (
     <SettingsShell
@@ -32,6 +35,7 @@ export default async function SettingsLaunchPage() {
       )}
     >
       <EnvStatusPanel items={envStatus} />
+      <MonitoringSetupPanel services={monitoringStatus} />
       <LaunchQaChecklist
         businessId={ctx.businessId}
         appUrl={getAppUrl()}
