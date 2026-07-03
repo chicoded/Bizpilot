@@ -123,7 +123,8 @@ export function isAIProviderConfigured(): boolean {
 export async function chatWithAI(
   businessId: string,
   message: string,
-  history: ChatMessage[] = []
+  history: ChatMessage[] = [],
+  subscription: import("@prisma/client").Subscription | null = null
 ) {
   const context = await getBusinessContextForAI(businessId);
   const contextMessage = buildContextMessage(context);
@@ -133,7 +134,12 @@ export async function chatWithAI(
     contextBlock: contextMessage,
     message,
     history,
+    usageContext: { businessId, subscription },
   });
+
+  if (result && "rateLimited" in result) {
+    return result.message;
+  }
 
   if (result?.text) {
     return result.text;
@@ -186,7 +192,8 @@ function getFallbackResponse(
 
 export async function parseVoiceSale(
   businessId: string,
-  transcript: string
+  transcript: string,
+  subscription: import("@prisma/client").Subscription | null = null
 ): Promise<{ items: { productName: string; quantity: number }[]; message: string }> {
   const products = await prisma.product.findMany({
     where: { businessId, isActive: true },
@@ -197,7 +204,12 @@ export async function parseVoiceSale(
     systemPrompt: `Parse voice sale commands into JSON. Available products: ${products.map((p) => p.name).join(", ")}.
 Return JSON only: { "items": [{ "productName": string, "quantity": number }] }`,
     userPrompt: transcript,
+    usageContext: { businessId, subscription },
   });
+
+  if (raw && typeof raw === "object" && "rateLimited" in raw) {
+    return { items: [], message: raw.message };
+  }
 
   if (!raw) {
     return {

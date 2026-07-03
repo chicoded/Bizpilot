@@ -29,14 +29,21 @@ export default async function SettingsAccessPage() {
         ctx.sectionOverrides
       )}
     >
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Shield className="h-5 w-5" />
+            <Shield className="h-5 w-5 text-brand" />
             Role permissions
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Set defaults per role. Customize individual members on the{" "}
+            <a href="/settings/team" className="text-brand font-medium hover:underline">
+              Team
+            </a>{" "}
+            page.
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <AccessControlPanel permissions={rolePermissions} />
         </CardContent>
       </Card>

@@ -21,6 +21,8 @@ export function Toaster() {
           role="status"
           className={cn(
             "pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-lg animate-in slide-in-from-top-2 fade-in duration-200",
+            t.dismissed &&
+              "animate-out fade-out slide-out-to-top-2 duration-200 pointer-events-none",
             t.variant === "destructive" &&
               "border-destructive/30 bg-destructive/5 text-destructive",
             t.variant === "success" &&

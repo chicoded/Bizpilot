@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
+import { allocateReceiptNumber } from "@/lib/receipt-number";
 import { prisma } from "@/lib/db";
 import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, updateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
@@ -563,11 +564,18 @@ export async function createSale(data: {
       const tax = parsed.data.tax ?? 0;
       const total = subtotal - discount + tax;
       const profit = total - totalCost - discount;
+      const saleCreatedAt = new Date();
+      const receiptNumber = await allocateReceiptNumber(
+        tx,
+        ctx.businessId,
+        saleCreatedAt
+      );
 
       const newSale = await tx.sale.create({
         data: {
           businessId: ctx.businessId,
           customerId: parsed.data.customerId,
+          receiptNumber,
           paymentMethod: parsed.data.paymentMethod,
           subtotal,
           discount,
@@ -577,6 +585,7 @@ export async function createSale(data: {
           isCredit: parsed.data.paymentMethod === "CREDIT",
           dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
           createdBy: ctx.userId,
+          createdAt: saleCreatedAt,
           items: { create: saleItems },
         },
         include: { items: true },
@@ -743,14 +752,31 @@ export async function sendAIMessage(
   }
 
   const { chatWithAI, isAIProviderConfigured } = await import("@/ai/assistant");
+  const { getAiPromptUsage } = await import("@/lib/ai-usage-limit");
+
+  const response = await chatWithAI(
+    ctx.businessId,
+    message,
+    history,
+    subscription
+  );
+
+  const usage = await getAiPromptUsage(ctx.businessId, subscription);
+  const usagePayload = usage
+    ? {
+        dailyRemaining: usage.dailyRemaining,
+        dailyLimit: usage.dailyLimit,
+        tierLabel: usage.tierLabel,
+      }
+    : null;
+
   if (!isAIProviderConfigured()) {
-    const response = await chatWithAI(ctx.businessId, message, history);
     return {
       response,
       offline: true as const,
+      usage: usagePayload,
     };
   }
 
-  const response = await chatWithAI(ctx.businessId, message, history);
-  return { response };
+  return { response, usage: usagePayload };
 }

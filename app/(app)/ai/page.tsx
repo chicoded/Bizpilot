@@ -5,6 +5,7 @@ import { AIChat } from "@/features/ai/ai-chat";
 import { UpgradePrompt } from "@/features/billing/upgrade-prompt";
 import { canAccessFeature, getRequiredPlanForFeature } from "@/lib/subscription";
 import { isAIProviderConfigured } from "@/ai/assistant";
+import { getAiPromptUsage } from "@/lib/ai-usage-limit";
 
 export default async function AIPage() {
   const ctx = await requirePageAccess("ai");
@@ -15,13 +16,16 @@ export default async function AIPage() {
 
   const hasAccess = canAccessFeature(subscription, "ai");
   const providerConfigured = isAIProviderConfigured();
+  const aiUsage = await getAiPromptUsage(ctx.businessId, subscription);
 
   return (
     <AppShell
       title="AI Assistant"
       subtitle={
         providerConfigured
-          ? "Powered by Google Gemini (free tier)"
+          ? aiUsage
+            ? `${aiUsage.tierLabel} · ${aiUsage.dailyRemaining} of ${aiUsage.dailyLimit} AI messages left today`
+            : "Powered by Google Gemini"
           : "Offline mode — add GEMINI_API_KEY for free AI"
       }
       maxWidth="default"
@@ -35,7 +39,18 @@ export default async function AIPage() {
           />
         </div>
       ) : (
-        <AIChat providerConfigured={providerConfigured} />
+        <AIChat
+          providerConfigured={providerConfigured}
+          aiUsage={
+            aiUsage
+              ? {
+                  dailyRemaining: aiUsage.dailyRemaining,
+                  dailyLimit: aiUsage.dailyLimit,
+                  tierLabel: aiUsage.tierLabel,
+                }
+              : null
+          }
+        />
       )}
     </AppShell>
   );

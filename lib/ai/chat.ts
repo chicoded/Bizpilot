@@ -1,5 +1,9 @@
 import OpenAI from "openai";
 import { geminiGenerateText, isGeminiConfigured } from "@/lib/ai/gemini";
+import {
+  guardAiPrompt,
+  type AiUsageContext,
+} from "@/lib/ai-usage-limit";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -7,6 +11,10 @@ export type ChatMessage = {
 };
 
 export type ChatProvider = "gemini" | "openai" | "none";
+
+export type ChatCompletionResult =
+  | { text: string; provider: ChatProvider }
+  | { rateLimited: true; message: string };
 
 export function getActiveChatProvider(): ChatProvider {
   if (isGeminiConfigured()) return "gemini";
@@ -25,9 +33,21 @@ export async function completeBusinessChat(params: {
   contextBlock: string;
   message: string;
   history?: ChatMessage[];
-}): Promise<{ text: string; provider: ChatProvider } | null> {
+  usageContext?: AiUsageContext;
+}): Promise<ChatCompletionResult | null> {
   const history = params.history ?? [];
   const provider = getActiveChatProvider();
+
+  if (provider === "none") {
+    return null;
+  }
+
+  if (params.usageContext) {
+    const limit = await guardAiPrompt(params.usageContext);
+    if (!limit.allowed) {
+      return { rateLimited: true, message: limit.message! };
+    }
+  }
 
   if (provider === "gemini") {
     const contents = [
@@ -87,7 +107,15 @@ export async function completeBusinessChat(params: {
 export async function completeJsonChat(params: {
   systemPrompt: string;
   userPrompt: string;
-}): Promise<string | null> {
+  usageContext?: AiUsageContext;
+}): Promise<string | { rateLimited: true; message: string } | null> {
+  if (params.usageContext) {
+    const limit = await guardAiPrompt(params.usageContext);
+    if (!limit.allowed) {
+      return { rateLimited: true, message: limit.message! };
+    }
+  }
+
   if (isGeminiConfigured()) {
     const text = await geminiGenerateText({
       systemPrompt: params.systemPrompt,

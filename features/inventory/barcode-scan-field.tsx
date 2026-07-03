@@ -101,11 +101,22 @@ export function BarcodeScanField({
           onChange(e.target.value);
           setScanHint(null);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void applyBarcode(value);
+          }
+        }}
+        data-barcode-wedge="true"
         placeholder="Scan or type barcode"
         disabled={disabled}
         inputMode="numeric"
         autoComplete="off"
       />
+
+      <p className="hidden md:block text-xs text-muted-foreground">
+        On desktop, plug in a USB scanner and scan directly into this field.
+      </p>
 
       {scanHint && (
         <p

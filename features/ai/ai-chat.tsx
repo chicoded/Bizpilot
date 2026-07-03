@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendAIMessage } from "@/actions/business";
-import { Sparkles, Send, Loader2, Mic } from "lucide-react";
+import { Sparkles, Send, Loader2, Mic, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -20,25 +21,43 @@ const SUGGESTIONS = [
   "How is my business health?",
 ];
 
-export function AIChat({ providerConfigured }: { providerConfigured: boolean }) {
+interface AiUsageQuota {
+  dailyRemaining: number;
+  dailyLimit: number;
+  tierLabel: string;
+}
+
+export function AIChat({
+  providerConfigured,
+  aiUsage: initialAiUsage,
+}: {
+  providerConfigured: boolean;
+  aiUsage?: AiUsageQuota | null;
+}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content: providerConfigured
-        ? "Hi! I'm your BizPilot AI assistant powered by Google Gemini. Ask me about sales, inventory, debts, expenses, or business recommendations."
+        ? initialAiUsage
+          ? `Hi! I'm your BizPilot AI assistant. On your ${initialAiUsage.tierLabel} plan you have ${initialAiUsage.dailyRemaining} of ${initialAiUsage.dailyLimit} AI messages left today. Ask me about sales, inventory, debts, or business recommendations.`
+          : "Hi! I'm your BizPilot AI assistant powered by Google Gemini. Ask me about sales, inventory, debts, expenses, or business recommendations."
         : "Hi! I'm your BizPilot assistant. I'm in offline mode — add a free GEMINI_API_KEY for smarter answers. I can still answer basic questions from your business data.",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [aiUsage, setAiUsage] = useState(initialAiUsage ?? null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const quotaExhausted = aiUsage !== null && aiUsage.dailyRemaining <= 0;
+  const isTrial = aiUsage?.tierLabel === "Free trial";
+
   async function sendMessage(text: string) {
-    if (!text.trim() || loading) return;
+    if (!text.trim() || loading || quotaExhausted) return;
     const userMsg = text.trim();
     setInput("");
     const priorMessages = messages.slice(1);
@@ -53,6 +72,9 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
           content: m.content,
         }))
       );
+      if (result.usage) {
+        setAiUsage(result.usage);
+      }
       if (result.error) {
         setMessages((prev) => [
           ...prev,
@@ -98,6 +120,54 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
         </div>
       )}
 
+      {aiUsage && providerConfigured && (
+        <div
+          className={cn(
+            "mx-4 mt-3 rounded-xl border px-4 py-3 text-sm",
+            quotaExhausted
+              ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+              : "border-border bg-card"
+          )}
+        >
+          <div className="flex items-start gap-3">
+            <Gauge className="h-4 w-4 shrink-0 mt-0.5 text-brand" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">
+                {quotaExhausted
+                  ? `${aiUsage.tierLabel} AI limit reached for today`
+                  : `${aiUsage.tierLabel}: ${aiUsage.dailyRemaining} of ${aiUsage.dailyLimit} AI messages left today`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {quotaExhausted
+                  ? isTrial
+                    ? "Subscribe for higher AI limits. Offline answers still work without API calls."
+                    : "Your daily cap protects platform costs. Limits reset at midnight UTC, or upgrade for more."
+                  : "Fair-use limits apply on all plans to keep AI reliable and affordable."}
+              </p>
+              <Link
+                href="/settings/billing"
+                className="text-xs font-medium text-brand hover:underline mt-2 inline-block"
+              >
+                {isTrial ? "View plans →" : "Upgrade for more →"}
+              </Link>
+            </div>
+          </div>
+          {!quotaExhausted && (
+            <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-brand transition-all"
+                style={{
+                  width: `${Math.max(
+                    4,
+                    (aiUsage.dailyRemaining / aiUsage.dailyLimit) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, i) => (
           <div
@@ -132,7 +202,7 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
         <div ref={bottomRef} />
       </div>
 
-      {messages.length <= 1 && (
+      {messages.length <= 1 && !quotaExhausted && (
         <div className="px-4 pb-2 flex flex-wrap gap-2">
           {SUGGESTIONS.map((s) => (
             <button
@@ -161,21 +231,26 @@ export function AIChat({ providerConfigured }: { providerConfigured: boolean }) 
             size="icon"
             className="shrink-0"
             aria-label="Voice input"
+            disabled={quotaExhausted}
           >
             <Mic className="h-5 w-5" />
           </Button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your business..."
+            placeholder={
+              quotaExhausted
+                ? `Daily ${aiUsage?.tierLabel ?? ""} AI limit reached`
+                : "Ask about your business..."
+            }
             className="flex-1 h-12"
-            disabled={loading}
+            disabled={loading || quotaExhausted}
           />
           <Button
             type="submit"
             size="icon"
             className="shrink-0 h-12 w-12"
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || quotaExhausted}
           >
             <Send className="h-5 w-5" />
           </Button>

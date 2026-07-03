@@ -107,6 +107,8 @@ model Business {
   healthScores   BusinessHealthScore[]
   whatsappConfig WhatsAppConfig?
   whatsappMessages WhatsAppMessage[]
+  aiPromptLogs   AiPromptLog[]
+  receiptCounters ReceiptCounter[]
 
   @@map("businesses")
 }
@@ -216,6 +218,8 @@ model Sale {
   id            String        @id @default(cuid())
   businessId    String
   customerId    String?
+  /// Human-readable receipt number, e.g. RCP-20250703-0001 (unique per business)
+  receiptNumber String
   paymentMethod PaymentMethod @default(CASH)
   subtotal      Decimal       @default(0) @db.Decimal(12, 2)
   discount      Decimal       @default(0) @db.Decimal(12, 2)
@@ -232,9 +236,23 @@ model Sale {
   customer Customer?  @relation(fields: [customerId], references: [id])
   items    SaleItem[]
 
+  @@unique([businessId, receiptNumber])
   @@index([businessId])
   @@index([businessId, createdAt])
   @@map("sales")
+}
+
+/// Atomic daily receipt sequence per business (RCP-YYYYMMDD-NNNN)
+model ReceiptCounter {
+  businessId String
+  dateKey    String
+  sequence   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, dateKey])
+  @@map("receipt_counters")
 }
 
 model SaleItem {
@@ -449,4 +467,15 @@ model WhatsAppMessage {
   @@index([businessId, createdAt])
   @@index([customerPhone])
   @@map("whatsapp_messages")
+}
+
+model AiPromptLog {
+  id         String   @id @default(cuid())
+  businessId String   @map("business_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@map("ai_prompt_logs")
 }

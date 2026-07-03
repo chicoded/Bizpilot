@@ -178,12 +178,22 @@ function formatDebtReply(
 }
 
 async function generateAIReply(
+  businessId: string,
   message: string,
   businessName: string,
   products: WhatsAppProduct[],
   currency: string
 ): Promise<string | null> {
   if (!openai) return null;
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { businessId },
+  });
+  const { guardAiPrompt } = await import("@/lib/ai-usage-limit");
+  const limit = await guardAiPrompt({ businessId, subscription });
+  if (!limit.allowed) {
+    return limit.message ?? "AI limit reached for this shop's free trial.";
+  }
 
   const productList = products
     .slice(0, 30)
@@ -288,6 +298,7 @@ export async function generateCustomerReply(
 
   // AI fallback
   const aiReply = await generateAIReply(
+    businessId,
     message,
     business.name,
     products,

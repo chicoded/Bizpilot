@@ -21,7 +21,7 @@ export default async function SaleReceiptPage({
 
   return (
     <>
-      <Header title="Receipt" subtitle={ctx.business.name} />
+      <Header title="Receipt" subtitle={sale.receiptNumber} />
       <main className="p-4 md:p-6 max-w-lg mx-auto mobile-page">
         <SaleReceiptView
           sale={sale}

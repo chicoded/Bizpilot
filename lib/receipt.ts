@@ -1,4 +1,5 @@
 import type { SaleReceipt } from "@/lib/sales";
+import { displayReceiptNumber } from "@/lib/receipt-number";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 
@@ -13,10 +14,19 @@ export type ReceiptBusinessInfo = {
   currency: string;
 };
 
+export function formatReceiptTime(date: Date | string): string {
+  return new Intl.DateTimeFormat("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(date));
+}
+
 export function formatReceiptText(
   business: ReceiptBusinessInfo,
   sale: SaleReceipt
 ): string {
+  const receiptNo = displayReceiptNumber(sale);
   const lines: string[] = [
     business.name,
     "—".repeat(Math.min(business.name.length, 24)),
@@ -28,8 +38,9 @@ export function formatReceiptText(
 
   lines.push(
     "",
-    formatDate(sale.createdAt),
-    `Receipt #${sale.id.slice(-8).toUpperCase()}`,
+    `Receipt No: ${receiptNo}`,
+    `Date: ${formatDate(sale.createdAt)}`,
+    `Time: ${formatReceiptTime(sale.createdAt)}`,
     ""
   );
 

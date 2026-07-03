@@ -215,66 +215,69 @@ export function TeamPanel({
           {members.map((member) => (
             <li
               key={member.id}
-              className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 p-4"
             >
-              <div>
-                <p className="font-medium">{memberName(member)}</p>
-                <p className="text-sm text-muted-foreground">{member.user.email}</p>
-                {canCustomizeMemberAccess &&
-                  rolePermissions &&
-                  member.role !== Role.OWNER && (
-                    <div className="mt-2">
-                      <MemberAccessEditor
-                        membershipId={member.id}
-                        memberRole={member.role}
-                        sectionOverrides={member.sectionOverrides ?? null}
-                        rolePermissions={rolePermissions}
-                      />
-                    </div>
-                  )}
-              </div>
-              <div className="flex items-center gap-2">
-                {canChangeRoles &&
-                member.role !== Role.OWNER &&
-                member.user.id !== currentUserId ? (
-                  <Select
-                    value={member.role}
-                    onValueChange={(v) =>
-                      handleRoleChange(member.user.id, v as Role)
-                    }
-                    disabled={isPending}
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[Role.MANAGER, Role.CASHIER, Role.STAFF].map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {ROLE_LABELS[r]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="text-sm font-medium text-brand px-3 py-1.5 rounded-full bg-biz-blue/10 dark:bg-primary/15">
-                    {ROLE_LABELS[member.role]}
-                  </span>
-                )}
-                {canChangeRoles &&
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{memberName(member)}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {member.user.email}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {canChangeRoles &&
                   member.role !== Role.OWNER &&
-                  member.user.id !== currentUserId && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemove(member.user.id)}
+                  member.user.id !== currentUserId ? (
+                    <Select
+                      value={member.role}
+                      onValueChange={(v) =>
+                        handleRoleChange(member.user.id, v as Role)
+                      }
                       disabled={isPending}
-                      aria-label="Remove member"
                     >
-                      <UserMinus className="h-4 w-4 text-red-500" />
-                    </Button>
+                      <SelectTrigger className="w-[120px] h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[Role.MANAGER, Role.CASHIER, Role.STAFF].map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {ROLE_LABELS[r]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm font-medium text-brand px-3 py-1.5 rounded-full bg-biz-blue/10 dark:bg-primary/15">
+                      {ROLE_LABELS[member.role]}
+                    </span>
                   )}
+                  {canChangeRoles &&
+                    member.role !== Role.OWNER &&
+                    member.user.id !== currentUserId && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10"
+                        onClick={() => handleRemove(member.user.id)}
+                        disabled={isPending}
+                        aria-label="Remove member"
+                      >
+                        <UserMinus className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
+                </div>
               </div>
+              {canCustomizeMemberAccess &&
+                rolePermissions &&
+                member.role !== Role.OWNER && (
+                  <MemberAccessEditor
+                    membershipId={member.id}
+                    memberRole={member.role}
+                    sectionOverrides={member.sectionOverrides ?? null}
+                    rolePermissions={rolePermissions}
+                  />
+                )}
             </li>
           ))}
         </ul>
@@ -315,7 +318,7 @@ export function TeamPanel({
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+        <p className="text-sm text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950/40 rounded-lg px-3 py-2">
           {error}
         </p>
       )}

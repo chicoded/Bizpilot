@@ -6,6 +6,7 @@ export type SalePeriod = "today" | "week" | "month" | "all";
 
 export type SaleListItem = {
   id: string;
+  receiptNumber: string;
   total: number;
   profit: number;
   paymentMethod: PaymentMethod;
@@ -17,6 +18,7 @@ export type SaleListItem = {
 
 export type SaleReceipt = {
   id: string;
+  receiptNumber: string;
   subtotal: number;
   discount: number;
   tax: number;
@@ -60,6 +62,7 @@ export async function listSales(businessId: string, period: SalePeriod = "month"
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      receiptNumber: true,
       total: true,
       profit: true,
       paymentMethod: true,
@@ -73,6 +76,7 @@ export async function listSales(businessId: string, period: SalePeriod = "month"
 
   const items: SaleListItem[] = sales.map((sale) => ({
     id: sale.id,
+    receiptNumber: sale.receiptNumber,
     total: Number(sale.total),
     profit: Number(sale.profit),
     paymentMethod: sale.paymentMethod,
@@ -96,6 +100,7 @@ export async function getSaleReceipt(
     where: { id: saleId, businessId },
     select: {
       id: true,
+      receiptNumber: true,
       subtotal: true,
       discount: true,
       tax: true,
@@ -121,6 +126,7 @@ export async function getSaleReceipt(
 
   return {
     id: sale.id,
+    receiptNumber: sale.receiptNumber,
     subtotal: Number(sale.subtotal),
     discount: Number(sale.discount),
     tax: Number(sale.tax),

@@ -7,9 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { SaleReceipt } from "@/lib/sales";
 import {
   formatReceiptText,
+  formatReceiptTime,
   whatsAppShareUrl,
   type ReceiptBusinessInfo,
 } from "@/lib/receipt";
+import { displayReceiptNumber } from "@/lib/receipt-number";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 import { ArrowLeft, Copy, MessageCircle, Printer, Share2 } from "lucide-react";
@@ -33,6 +35,7 @@ export function SaleReceiptView({
 }: SaleReceiptViewProps) {
   const [copied, setCopied] = useState(false);
   const receiptText = formatReceiptText(business, sale);
+  const receiptNo = displayReceiptNumber(sale);
 
   useEffect(() => {
     if (autoPrint) {
@@ -51,7 +54,7 @@ export function SaleReceiptView({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${business.name} — Receipt`,
+          title: `${business.name} — ${receiptNo}`,
           text: receiptText,
         });
         return;
@@ -135,17 +138,30 @@ export function SaleReceiptView({
                 {business.address}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mt-2 print:text-black">
+            <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mt-3 print:text-black">
               Sales Receipt
-            </p>
-            <p className="text-xs text-muted-foreground mt-1 print:text-black">
-              {formatDate(sale.createdAt)} · #{sale.id.slice(-8).toUpperCase()}
             </p>
           </div>
 
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-center print:border-black print:bg-transparent">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground print:text-black">
+              Receipt No.
+            </p>
+            <p className="font-mono text-lg font-bold tracking-wide text-foreground mt-1 print:text-black">
+              {receiptNo}
+            </p>
+            <div className="mt-2 flex justify-center gap-4 text-xs text-muted-foreground print:text-black">
+              <span>Date: {formatDate(sale.createdAt)}</span>
+              <span>Time: {formatReceiptTime(sale.createdAt)}</span>
+            </div>
+          </div>
+
           {sale.customer && (
-            <div className="text-sm">
-              <p className="font-medium">{sale.customer.name}</p>
+            <div className="text-sm border-b border-dashed pb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground print:text-black">
+                Customer
+              </p>
+              <p className="font-medium mt-0.5">{sale.customer.name}</p>
               {sale.customer.phone && (
                 <p className="text-muted-foreground print:text-black">
                   {sale.customer.phone}
@@ -155,6 +171,9 @@ export function SaleReceiptView({
           )}
 
           <div className="space-y-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground print:text-black">
+              Items
+            </p>
             {sale.items.map((item) => (
               <div key={item.id} className="flex justify-between gap-3 text-sm">
                 <div className="min-w-0 flex-1">
@@ -211,6 +230,9 @@ export function SaleReceiptView({
 
           <p className="text-center text-xs text-muted-foreground pt-2 print:text-black">
             Thank you for your purchase!
+          </p>
+          <p className="text-center font-mono text-[10px] text-muted-foreground print:text-black">
+            {receiptNo}
           </p>
         </CardContent>
       </Card>

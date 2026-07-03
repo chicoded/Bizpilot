@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { requireBusinessDataAccess } from "@/lib/api-access";
 import { listProductsForApi } from "@/lib/products";
+import {
+  getPosQuickPickProducts,
+  searchProductsForPos,
+} from "@/lib/pos-products";
 import { getProductSchemaStatus, repairProductSchema } from "@/lib/schema";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const ctx = await requireBusinessDataAccess(["inventory", "sales"]);
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q")?.trim() ?? "";
+    const posMode = searchParams.get("pos") === "1";
 
     const schema = await getProductSchemaStatus();
     if (!schema.ok) {
@@ -16,6 +23,18 @@ export async function GET() {
         schema.missing.join(", ")
       );
       await repairProductSchema();
+    }
+
+    if (query) {
+      const products = await searchProductsForPos(ctx.businessId, query);
+      return NextResponse.json({ products, mode: "search" });
+    }
+
+    if (posMode) {
+      const { products, totalInStock } = await getPosQuickPickProducts(
+        ctx.businessId
+      );
+      return NextResponse.json({ products, mode: "quick", totalInStock });
     }
 
     const products = await listProductsForApi(ctx.businessId);

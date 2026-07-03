@@ -79,6 +79,71 @@ export interface FullReport {
   inventoryTotals: { cost: number; retail: number; productCount: number };
 }
 
+export interface MonthlySalesProductRow {
+  name: string;
+  category?: string;
+  quantitySold: number;
+  revenue: number;
+  profit: number;
+  marginPct: number;
+}
+
+export interface MonthlyPaymentMixRow {
+  method: string;
+  label: string;
+  count: number;
+  revenue: number;
+  percentage: number;
+}
+
+export interface MonthlyWeeklyRow {
+  label: string;
+  revenue: number;
+  profit: number;
+  salesCount: number;
+  expenses: number;
+}
+
+export interface MonthlySalesReport {
+  businessName: string;
+  currency: string;
+  periodLabel: string;
+  monthKey: string;
+  dateRange: { start: string; end: string };
+  summary: ReportSummary;
+  comparison: {
+    previousLabel: string;
+    previous: ReportSummary;
+    revenueChangePct: number;
+    profitChangePct: number;
+    salesCountChangePct: number;
+    expensesChangePct: number;
+  };
+  metrics: {
+    profitMarginPct: number;
+    netMarginPct: number;
+    avgDailyRevenue: number;
+    avgDailyProfit: number;
+    activeSellingDays: number;
+    totalDaysInPeriod: number;
+    sellThroughRatePct: number;
+  };
+  dailyTrend: DailyDataPoint[];
+  weeklyBreakdown: MonthlyWeeklyRow[];
+  paymentMix: MonthlyPaymentMixRow[];
+  creditSummary: {
+    creditSalesCount: number;
+    creditRevenue: number;
+    creditRevenuePct: number;
+  };
+  topProductsByRevenue: MonthlySalesProductRow[];
+  topProductsByQuantity: MonthlySalesProductRow[];
+  expenseBreakdown: ExpenseBreakdown[];
+  monthlyTrend: { label: string; revenue: number; profit: number; expenses: number }[];
+  peakDay: { date: string; label: string; revenue: number; profit: number } | null;
+  insights: string[];
+}
+
 export const REPORT_PERIODS = [
   { value: "today" as const, label: "Today" },
   { value: "week" as const, label: "This Week" },

@@ -18,7 +18,11 @@ import {
 import {
   ScanProductButton,
   type ScannableProduct,
+  lookupProductByBarcode,
 } from "@/features/sales/scan-product-button";
+import { ExternalScannerStatus } from "@/features/sales/external-scanner-status";
+import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
+import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
 import {
   Search,
   Plus,
@@ -51,7 +55,7 @@ interface CartItem {
 function ProductSkeletonGrid() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      {Array.from({ length: 9 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <Skeleton key={i} className="h-[72px]" />
       ))}
     </div>
@@ -59,8 +63,13 @@ function ProductSkeletonGrid() {
 }
 
 export default function SalesPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const [totalInStock, setTotalInStock] = useState(0);
+  const [productViewMode, setProductViewMode] = useState<"quick" | "search">(
+    "quick"
+  );
   const [productsLoading, setProductsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [productsError, setProductsError] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
@@ -71,20 +80,30 @@ export default function SalesPage() {
   const [isPending, startTransition] = useTransition();
   const [saleComplete, setSaleComplete] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const [lastReceiptNumber, setLastReceiptNumber] = useState<string | null>(null);
+  const [barcodeLookupPending, startBarcodeLookup] = useTransition();
   const cartRef = useRef<HTMLDivElement>(null);
 
-  const loadProducts = useCallback(async () => {
-    setProductsLoading(true);
+  const loadQuickPicks = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setProductsLoading(true);
+    }
     setProductsError(null);
     try {
-      const response = await fetch("/api/products");
+      const response = await fetch("/api/products?pos=1");
       if (!response.ok) throw new Error("Failed to load products");
       const data = await response.json();
-      setProducts(data.products ?? []);
+      setDisplayProducts(data.products ?? []);
+      setTotalInStock(data.totalInStock ?? data.products?.length ?? 0);
+      setProductViewMode("quick");
     } catch {
-      setProductsError("Could not load products. Check your connection and try again.");
+      setProductsError(
+        "Could not load products. Check your connection and try again."
+      );
     } finally {
-      setProductsLoading(false);
+      if (!options?.silent) {
+        setProductsLoading(false);
+      }
     }
   }, []);
 
@@ -100,15 +119,37 @@ export default function SalesPage() {
   }, []);
 
   useEffect(() => {
-    loadProducts();
+    loadQuickPicks();
     loadCustomers();
-  }, [loadProducts, loadCustomers]);
+  }, [loadQuickPicks, loadCustomers]);
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.barcode?.includes(search)
-  );
+  useEffect(() => {
+    const term = search.trim();
+    if (!term) {
+      void loadQuickPicks({ silent: true });
+      return;
+    }
+
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/products?q=${encodeURIComponent(term)}`
+        );
+        if (!response.ok) throw new Error("Search failed");
+        const data = await response.json();
+        setDisplayProducts(data.products ?? []);
+        setProductViewMode("search");
+        setProductsError(null);
+      } catch {
+        setProductsError("Could not search products. Try again.");
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [search, loadQuickPicks]);
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -131,6 +172,52 @@ export default function SalesPage() {
       return [...prev, { product, quantity: 1 }];
     });
   }
+
+  const handleBarcodeScan = useCallback(
+    (rawCode: string) => {
+      const code = rawCode.trim();
+      if (!code || !looksLikeBarcode(code)) return;
+
+      startBarcodeLookup(async () => {
+        const result = await lookupProductByBarcode(code);
+        if (result.ok) {
+          addToCart(result.product);
+          setSearch("");
+          toast({
+            title: "Added to cart",
+            description: result.product.name,
+            variant: "success",
+          });
+          return;
+        }
+        if (result.reason === "not_found") {
+          toast({
+            title: "Product not found",
+            description: `No product matches barcode ${code}.`,
+            variant: "destructive",
+            action: {
+              label: "Add product",
+              onClick: () => {
+                window.location.href = `/inventory/new?barcode=${encodeURIComponent(code)}`;
+              },
+            },
+          });
+          return;
+        }
+        toast({
+          title: "Scan failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      });
+    },
+    [startBarcodeLookup]
+  );
+
+  useBarcodeScannerWedge({
+    enabled: !isPending && !barcodeLookupPending,
+    onScan: handleBarcodeScan,
+  });
 
   function updateQty(productId: string, delta: number) {
     setCart((prev) =>
@@ -170,10 +257,14 @@ export default function SalesPage() {
         setCustomerId("");
         setSaleComplete(true);
         const saleId = result.sale?.id ?? null;
+        const receiptNumber = result.sale?.receiptNumber ?? null;
         setLastSaleId(saleId);
+        setLastReceiptNumber(receiptNumber);
         toast({
           title: "Sale complete",
-          description: formatCurrency(subtotal) + " recorded successfully.",
+          description: receiptNumber
+            ? `${receiptNumber} · ${formatCurrency(subtotal)} recorded.`
+            : `${formatCurrency(subtotal)} recorded successfully.`,
           variant: "success",
           action: saleId
             ? {
@@ -185,7 +276,7 @@ export default function SalesPage() {
             : undefined,
         });
         setTimeout(() => setSaleComplete(false), 8000);
-        loadProducts();
+        loadQuickPicks({ silent: true });
         loadCustomers();
       } else if (result.error) {
         const message =
@@ -219,6 +310,7 @@ export default function SalesPage() {
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-3 space-y-4">
             <ScanProductButton onProductFound={addToCart} disabled={isPending} />
+            <ExternalScannerStatus />
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
@@ -228,11 +320,40 @@ export default function SalesPage() {
                 placeholder="Search products or scan barcode..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && looksLikeBarcode(search)) {
+                    e.preventDefault();
+                    handleBarcodeScan(search);
+                  }
+                }}
+                data-barcode-wedge="true"
                 className="pl-10 h-14 text-base"
                 autoFocus
-                aria-label="Search products"
+                aria-label="Search products or scan barcode"
+                disabled={barcodeLookupPending}
               />
+              {(barcodeLookupPending || searchLoading) && (
+                <Loader2
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground"
+                  aria-hidden
+                />
+              )}
             </div>
+
+            {!productsLoading && !productsError && displayProducts.length > 0 && (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {productViewMode === "quick" ? "Frequently sold" : "Search results"}
+                </p>
+                <p className="text-xs text-muted-foreground text-right">
+                  {productViewMode === "quick" && totalInStock > displayProducts.length
+                    ? `${displayProducts.length} of ${totalInStock} · search for more`
+                    : productViewMode === "search"
+                      ? `${displayProducts.length} match${displayProducts.length === 1 ? "" : "es"}`
+                      : null}
+                </p>
+              </div>
+            )}
 
             {productsLoading ? (
               <ProductSkeletonGrid />
@@ -246,13 +367,13 @@ export default function SalesPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={loadProducts}
+                  onClick={() => loadQuickPicks()}
                 >
                   <RefreshCw className="h-4 w-4" aria-hidden />
                   Retry
                 </Button>
               </div>
-            ) : products.length === 0 ? (
+            ) : totalInStock === 0 && productViewMode === "quick" ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center space-y-3">
                 <PackageOpen className="h-10 w-10 text-muted-foreground mx-auto" />
                 <p className="font-medium">No products yet</p>
@@ -263,7 +384,7 @@ export default function SalesPage() {
                   <Link href="/inventory/new">Add product</Link>
                 </Button>
               </div>
-            ) : filtered.length === 0 ? (
+            ) : displayProducts.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center space-y-2">
                 <p className="font-medium">No products match &ldquo;{search}&rdquo;</p>
                 <p className="text-sm text-muted-foreground">
@@ -271,8 +392,13 @@ export default function SalesPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
-                {filtered.map((product) => (
+              <div
+                className={cn(
+                  "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2",
+                  productViewMode === "search" && "max-h-[50vh] overflow-y-auto"
+                )}
+              >
+                {displayProducts.map((product) => (
                   <button
                     key={product.id}
                     type="button"
@@ -420,6 +546,11 @@ export default function SalesPage() {
                       <p className="text-sm font-medium text-success text-center">
                         Sale complete
                       </p>
+                      {lastReceiptNumber && (
+                        <p className="text-center font-mono text-xs text-muted-foreground">
+                          {lastReceiptNumber}
+                        </p>
+                      )}
                       <div className="grid grid-cols-2 gap-2">
                         <Link
                           href={`/sales/${lastSaleId}`}

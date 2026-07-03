@@ -99,6 +99,9 @@ export function SalesHistoryPanel({
               <Card className="hover:shadow-glass transition-shadow">
                 <CardContent className="p-4 flex items-center justify-between gap-3">
                   <div className="min-w-0">
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {sale.receiptNumber}
+                    </p>
                     <p className="font-semibold">
                       {formatCurrency(sale.total, currency)}
                     </p>

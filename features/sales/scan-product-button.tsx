@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Loader2, ScanBarcode } from "lucide-react";
-import { normalizeBarcode } from "@/lib/barcode";
+import { lookupProductByBarcode } from "@/lib/barcode-product-lookup";
 
 const MobileBarcodeScanner = dynamic(
   () =>
@@ -37,40 +37,21 @@ export function ScanProductButton({
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [isLookingUp, startLookup] = useTransition();
 
-  function handleScan(barcode: string) {
-    const normalized = normalizeBarcode(barcode);
-    setScannerOpen(false);
+  function runLookup(barcode: string) {
     setLookupError(null);
     setNotFoundBarcode(null);
 
     startLookup(async () => {
-      try {
-        const response = await fetch(
-          `/api/products/barcode?code=${encodeURIComponent(normalized)}`
-        );
-
-        if (!response.ok) {
-          setLookupError("Could not look up product. Try again.");
-          return;
-        }
-
-        const data = (await response.json()) as {
-          product: ScannableProduct | null;
-        };
-
-        if (data.product) {
-          if (data.product.quantity <= 0) {
-            setLookupError(`${data.product.name} is out of stock.`);
-            return;
-          }
-          onProductFound(data.product);
-          return;
-        }
-
-        setNotFoundBarcode(normalized);
-      } catch {
-        setLookupError("Network error. Check your connection and try again.");
+      const result = await lookupProductByBarcode(barcode);
+      if (result.ok) {
+        onProductFound(result.product);
+        return;
       }
+      if (result.reason === "not_found") {
+        setNotFoundBarcode(barcode);
+        return;
+      }
+      setLookupError(result.message);
     });
   }
 
@@ -106,11 +87,11 @@ export function ScanProductButton({
       <MobileBarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onScan={handleScan}
+        onScan={runLookup}
       />
 
       {notFoundBarcode && (
-        <div className="md:hidden fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-4 md:items-center">
           <div
             className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl animate-in slide-in-from-bottom duration-300"
             role="dialog"
@@ -153,3 +134,6 @@ export function ScanProductButton({
     </>
   );
 }
+
+/** Shared barcode lookup for POS wedge / search Enter */
+export { lookupProductByBarcode };
