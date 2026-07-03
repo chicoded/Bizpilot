@@ -16,7 +16,12 @@ export default async function AIPage() {
 
   const hasAccess = canAccessFeature(subscription, "ai");
   const providerConfigured = isAIProviderConfigured();
-  const aiUsage = await getAiPromptUsage(ctx.businessId, subscription);
+  let aiUsage = null;
+  try {
+    aiUsage = await getAiPromptUsage(ctx.businessId, subscription);
+  } catch {
+    // Table may not exist yet — page still loads; limits apply after schema repair
+  }
 
   return (
     <AppShell

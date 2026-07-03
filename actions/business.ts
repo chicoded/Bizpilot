@@ -751,32 +751,46 @@ export async function sendAIMessage(
     };
   }
 
-  const { chatWithAI, isAIProviderConfigured } = await import("@/ai/assistant");
-  const { getAiPromptUsage } = await import("@/lib/ai-usage-limit");
+  try {
+    const { chatWithAI, isAIProviderConfigured } = await import("@/ai/assistant");
+    const { getAiPromptUsage } = await import("@/lib/ai-usage-limit");
 
-  const response = await chatWithAI(
-    ctx.businessId,
-    message,
-    history,
-    subscription
-  );
+    const response = await chatWithAI(
+      ctx.businessId,
+      message,
+      history,
+      subscription
+    );
 
-  const usage = await getAiPromptUsage(ctx.businessId, subscription);
-  const usagePayload = usage
-    ? {
-        dailyRemaining: usage.dailyRemaining,
-        dailyLimit: usage.dailyLimit,
-        tierLabel: usage.tierLabel,
-      }
-    : null;
+    const usage = await getAiPromptUsage(ctx.businessId, subscription);
+    const usagePayload = usage
+      ? {
+          dailyRemaining: usage.dailyRemaining,
+          dailyLimit: usage.dailyLimit,
+          tierLabel: usage.tierLabel,
+        }
+      : null;
 
-  if (!isAIProviderConfigured()) {
+    if (!isAIProviderConfigured()) {
+      return {
+        response,
+        offline: true as const,
+        usage: usagePayload,
+      };
+    }
+
+    return { response, usage: usagePayload };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "";
+    if (/ai_prompt_logs|receiptNumber|schema|column|does not exist/i.test(detail)) {
+      return {
+        error:
+          "Database schema needs a quick update. In Supabase SQL Editor, run the script database/repair-app-schema.sql (or redeploy with RUN_PRISMA_MIGRATE=true).",
+      };
+    }
+    console.error("[sendAIMessage]", error);
     return {
-      response,
-      offline: true as const,
-      usage: usagePayload,
+      error: "Sorry, the AI assistant could not respond. Please try again.",
     };
   }
-
-  return { response, usage: usagePayload };
 }

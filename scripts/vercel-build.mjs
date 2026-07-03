@@ -20,6 +20,13 @@ if (process.env.DATABASE_URL) {
   } catch {
     console.warn("Team schema ensure step failed.");
   }
+  try {
+    run("node scripts/ensure-app-schema.mjs");
+  } catch {
+    console.warn(
+      "App schema ensure step failed — AI limits and receipt numbers may need manual SQL."
+    );
+  }
 }
 
 if (process.env.RUN_PRISMA_MIGRATE === "true") {

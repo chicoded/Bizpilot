@@ -30,6 +30,22 @@ const TIER_LABELS: Record<AiLimitTier, string> = {
   ai_pro: "AI Pro",
 };
 
+let aiPromptLogTableReady: boolean | null = null;
+
+async function canUseAiPromptLogTable(): Promise<boolean> {
+  if (aiPromptLogTableReady !== null) return aiPromptLogTableReady;
+  try {
+    await prisma.$queryRaw`SELECT 1 FROM "ai_prompt_logs" LIMIT 0`;
+    aiPromptLogTableReady = true;
+  } catch {
+    aiPromptLogTableReady = false;
+    console.warn(
+      "[ai] ai_prompt_logs table missing — AI works without rate limits until schema is updated."
+    );
+  }
+  return aiPromptLogTableReady;
+}
+
 const DEFAULT_LIMITS: Record<AiLimitTier, { daily: number; hourly: number }> = {
   trial: { daily: 25, hourly: 8 },
   starter: { daily: 60, hourly: 15 },
@@ -87,14 +103,23 @@ export async function getAiPromptUsage(
   const dayStart = startOfUtcDay(now);
   const hourStart = subHours(now, 1);
 
-  const [dailyUsed, hourlyUsed] = await Promise.all([
-    prisma.aiPromptLog.count({
-      where: { businessId, createdAt: { gte: dayStart } },
-    }),
-    prisma.aiPromptLog.count({
-      where: { businessId, createdAt: { gte: hourStart } },
-    }),
-  ]);
+  let dailyUsed = 0;
+  let hourlyUsed = 0;
+
+  if (await canUseAiPromptLogTable()) {
+    try {
+      [dailyUsed, hourlyUsed] = await Promise.all([
+        prisma.aiPromptLog.count({
+          where: { businessId, createdAt: { gte: dayStart } },
+        }),
+        prisma.aiPromptLog.count({
+          where: { businessId, createdAt: { gte: hourStart } },
+        }),
+      ]);
+    } catch {
+      aiPromptLogTableReady = false;
+    }
+  }
 
   return {
     tier,
@@ -190,16 +215,22 @@ export async function assertAiPromptAllowed(
 export const assertTrialAiPromptAllowed = assertAiPromptAllowed;
 
 export async function recordAiPromptUse(businessId: string): Promise<void> {
-  await prisma.aiPromptLog.create({
-    data: { businessId },
-  });
+  if (!(await canUseAiPromptLogTable())) return;
 
-  if (Math.random() < 0.01) {
-    void prisma.aiPromptLog
-      .deleteMany({
-        where: { createdAt: { lt: subDays(new Date(), 8) } },
-      })
-      .catch(() => {});
+  try {
+    await prisma.aiPromptLog.create({
+      data: { businessId },
+    });
+
+    if (Math.random() < 0.01) {
+      void prisma.aiPromptLog
+        .deleteMany({
+          where: { createdAt: { lt: subDays(new Date(), 8) } },
+        })
+        .catch(() => {});
+    }
+  } catch {
+    aiPromptLogTableReady = false;
   }
 }
 
