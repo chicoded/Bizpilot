@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 import { allocateReceiptNumber } from "@/lib/receipt-number";
 import { prisma } from "@/lib/db";
-import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, updateInventoryProduct } from "@/lib/products";
+import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, updateInventoryProduct, deactivateInventoryProduct } from "@/lib/products";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
-import { syncClerkUser, requireBusinessContext, requireSectionAccess } from "@/lib/auth";
+import { syncClerkUser, requireBusinessContext, requireSectionAccess, hasPermission } from "@/lib/auth";
 import { setActiveBusinessId } from "@/lib/active-business";
 import {
   deleteProductImage,
@@ -339,6 +339,38 @@ export async function updateProduct(productId: string, formData: FormData) {
   } catch (error) {
     console.error("updateProduct failed:", error);
     return { error: formatActionError(error, "Could not update product") };
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  try {
+    const ctx = await requireSectionAccess("inventory");
+
+    if (!hasPermission(ctx.role, [Role.OWNER, Role.MANAGER])) {
+      return { error: "Only owners and managers can remove products" };
+    }
+
+    const deactivated = await deactivateInventoryProduct(
+      ctx.businessId,
+      productId
+    );
+
+    if (!deactivated) {
+      return { error: "Product not found" };
+    }
+
+    if (deactivated.imageUrl) {
+      await deleteProductImage(deactivated.imageUrl);
+    }
+
+    revalidatePath("/inventory");
+    revalidatePath("/pos");
+    revalidatePath("/dashboard");
+    revalidatePath("/reports");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteProduct failed:", error);
+    return { error: formatActionError(error, "Could not remove product") };
   }
 }
 

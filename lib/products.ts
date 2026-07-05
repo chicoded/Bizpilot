@@ -299,6 +299,42 @@ export async function updateInventoryProduct(
   });
 }
 
+export async function deactivateInventoryProduct(
+  businessId: string,
+  productId: string
+): Promise<{ id: string; imageUrl: string | null } | null> {
+  const withImages = await checkProductColumn("imageUrl");
+
+  const product = await prisma.product.findFirst({
+    where: { id: productId, businessId, isActive: true },
+    select: withImages
+      ? { id: true, imageUrl: true }
+      : { id: true },
+  });
+
+  if (!product) return null;
+
+  const data: Parameters<typeof prisma.product.update>[0]["data"] = {
+    isActive: false,
+    sku: null,
+    barcode: null,
+  };
+
+  if (withImages) {
+    data.imageUrl = null;
+  }
+
+  await updateInventoryProduct(productId, data);
+
+  return {
+    id: product.id,
+    imageUrl:
+      withImages && "imageUrl" in product
+        ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
+        : null,
+  };
+}
+
 function omitMissingProductColumns<T extends Record<string, unknown>>(
   payload: T,
   missing: ProductColumnName[]

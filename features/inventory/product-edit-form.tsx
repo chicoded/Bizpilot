@@ -3,13 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProduct } from "@/actions/business";
+import { updateProduct, deleteProduct } from "@/actions/business";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import { ProductImageField } from "@/features/inventory/product-image-field";
 import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
@@ -44,6 +44,7 @@ export function ProductEditForm({
   const [warning, setWarning] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [barcode, setBarcode] = useState(product.barcode ?? "");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,6 +79,34 @@ export function ProductEditForm({
       document
         .getElementById("product-form-error")
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  function handleDelete() {
+    if (
+      !window.confirm(
+        `Remove "${product.name}" from inventory? Past sales stay in your records.`
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+    setWarning(null);
+    setIsDeleting(true);
+
+    startTransition(async () => {
+      const result = await deleteProduct(product.id);
+      if (result.error) {
+        setIsDeleting(false);
+        setError(result.error);
+        document
+          .getElementById("product-form-error")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      router.push("/inventory");
+      router.refresh();
     });
   }
 
@@ -193,17 +222,34 @@ export function ProductEditForm({
                 </p>
               )}
 
-              <div className="sticky bottom-20 md:bottom-0 z-10 -mx-2 bg-background/95 backdrop-blur px-2 py-3 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+              <div className="sticky bottom-20 md:bottom-0 z-10 -mx-2 bg-background/95 backdrop-blur px-2 py-3 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none space-y-3">
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full touch-manipulation"
-                  disabled={isPending}
+                  disabled={isPending || isDeleting}
                 >
                   {isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     "Save Changes"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full touch-manipulation text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  disabled={isPending || isDeleting}
+                  onClick={handleDelete}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Remove from inventory
+                    </>
                   )}
                 </Button>
               </div>
