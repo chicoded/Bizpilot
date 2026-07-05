@@ -85,7 +85,7 @@ function formatActionError(error: unknown, fallback: string): string {
       return "A product with this SKU already exists";
     }
     if (error.code === "P2022") {
-      return "Database schema is out of date. In Supabase SQL Editor run: ALTER TABLE \"products\" ADD COLUMN IF NOT EXISTS \"imageUrl\" TEXT;";
+      return "Database update required. Tap Fix Database on the inventory screen, or run database/repair-product-schema.sql in Supabase.";
     }
   }
   if (error instanceof Error) {
@@ -230,14 +230,13 @@ export async function createProduct(formData: FormData) {
     if (error instanceof Error && error.message.includes("access")) {
       return { error: error.message };
     }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return { error: "A product with this SKU already exists" };
-    }
     console.error("createProduct failed:", error);
-    return { error: "Could not save product. Check your connection and try again." };
+    return {
+      error: formatActionError(
+        error,
+        "Could not save product. Check your connection and try again."
+      ),
+    };
   }
 }
 

@@ -6,15 +6,10 @@
 import { PrismaClient } from "@prisma/client";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { PRODUCT_SCHEMA_REPAIR_STATEMENTS } from "./product-schema-repair-statements.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const envPath = resolve(root, ".env.local");
-
-const REPAIR_STATEMENTS = [
-  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;',
-  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "barcode" TEXT;',
-  'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;',
-];
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
@@ -57,10 +52,12 @@ const prisma = new PrismaClient(
 );
 
 try {
-  for (const sql of REPAIR_STATEMENTS) {
+  for (const sql of PRODUCT_SCHEMA_REPAIR_STATEMENTS) {
     await prisma.$executeRawUnsafe(sql);
   }
-  console.log("✓ Ensured products.imageUrl, barcode, and sku columns exist");
+  console.log(
+    "✓ Ensured products.imageUrl, barcode, sku, and unitsPerPack columns exist"
+  );
 } catch (error) {
   console.warn(
     "Could not ensure product schema:",

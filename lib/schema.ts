@@ -104,6 +104,23 @@ export async function getProductSchemaStatus(): Promise<ProductSchemaStatus> {
  * Idempotent repair for optional product columns.
  * Uses DIRECT_URL when available because DDL via PgBouncer can fail.
  */
+/**
+ * Ensures product columns exist before inventory reads/writes.
+ * Never throws — returns false if repair could not complete.
+ */
+export async function ensureProductSchemaReady(): Promise<boolean> {
+  try {
+    const status = await getProductSchemaStatus();
+    if (status.ok) return true;
+
+    const result = await repairProductSchema();
+    return result.ok;
+  } catch (error) {
+    console.error("[schema] ensureProductSchemaReady failed:", error);
+    return false;
+  }
+}
+
 export async function repairProductSchema(): Promise<ProductSchemaRepairResult> {
   const statusBefore = await getProductSchemaStatus();
   if (statusBefore.ok) {

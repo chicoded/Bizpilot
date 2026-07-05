@@ -89,6 +89,13 @@ export const LAUNCH_QA_ITEMS: LaunchQaItem[] = [
     critical: true,
   },
   {
+    id: "automated-tests",
+    section: "environment",
+    title: "Automated tests pass",
+    description:
+      "Run npm test locally — validates receipts, sales rules, subscriptions, and AI limits.",
+  },
+  {
     id: "sign-up-in",
     section: "auth",
     title: "Sign up and sign in",

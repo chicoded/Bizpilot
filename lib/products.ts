@@ -1,8 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
   getProductSchemaStatus,
-  repairProductSchema,
+  ensureProductSchemaReady,
   checkProductColumn,
+  type ProductColumnName,
 } from "@/lib/schema";
 import type {
   InventoryDetailProduct,
@@ -105,32 +107,32 @@ async function fetchInventoryList(
 export async function listInventoryProducts(
   businessId: string
 ): Promise<InventoryListProduct[]> {
-  const schema = await getProductSchemaStatus();
-  if (!schema.ok) {
-    console.warn(
-      "[inventory] Missing product columns:",
-      schema.missing.join(", ")
-    );
-    await repairProductSchema();
-  }
-
-  const withImages = await checkProductColumn("imageUrl");
-
   try {
-    const products = await fetchInventoryList(businessId, withImages);
-    return products.map((product) => normalizeListProduct(product, withImages));
-  } catch (error) {
-    console.error("listInventoryProducts failed:", error);
+    await ensureProductSchemaReady();
 
-    if (withImages) {
-      try {
-        const products = await fetchInventoryList(businessId, false);
-        return products.map((product) => normalizeListProduct(product, false));
-      } catch (retryError) {
-        console.error("listInventoryProducts retry failed:", retryError);
+    const withImages = await checkProductColumn("imageUrl");
+
+    try {
+      const products = await fetchInventoryList(businessId, withImages);
+      return products.map((product) =>
+        normalizeListProduct(product, withImages)
+      );
+    } catch (error) {
+      console.error("listInventoryProducts failed:", error);
+
+      if (withImages) {
+        try {
+          const products = await fetchInventoryList(businessId, false);
+          return products.map((product) => normalizeListProduct(product, false));
+        } catch (retryError) {
+          console.error("listInventoryProducts retry failed:", retryError);
+        }
       }
     }
 
+    return [];
+  } catch (error) {
+    console.error("listInventoryProducts unexpected failure:", error);
     return [];
   }
 }
@@ -139,6 +141,8 @@ export async function getInventoryProduct(
   businessId: string,
   productId: string
 ): Promise<InventoryDetailProduct | null> {
+  await ensureProductSchemaReady();
+
   const withImages = await checkProductColumn("imageUrl");
 
   try {
@@ -280,18 +284,73 @@ export async function updateInventoryProduct(
   data: Parameters<typeof prisma.product.update>[0]["data"],
   tx: Pick<typeof prisma, "product"> = prisma
 ) {
+  await ensureProductSchemaReady();
+
+  const status = await getProductSchemaStatus();
+  const safeData = omitMissingProductColumns(
+    data as Record<string, unknown>,
+    status.missing
+  ) as Parameters<typeof prisma.product.update>[0]["data"];
+
   return tx.product.update({
     where: { id: productId },
-    data,
+    data: safeData,
     select: productMutationSelect,
   });
+}
+
+function omitMissingProductColumns<T extends Record<string, unknown>>(
+  payload: T,
+  missing: ProductColumnName[]
+): T {
+  if (missing.length === 0) return payload;
+
+  const next = { ...payload };
+  for (const column of missing) {
+    delete next[column];
+  }
+  return next;
 }
 
 export async function createInventoryProduct(
   data: Parameters<typeof prisma.product.create>[0]["data"]
 ) {
-  return prisma.product.create({
-    data,
-    select: productCreateSelect,
-  });
+  await ensureProductSchemaReady();
+
+  const status = await getProductSchemaStatus();
+  const safeData = omitMissingProductColumns(
+    data as Record<string, unknown>,
+    status.missing
+  ) as Parameters<typeof prisma.product.create>[0]["data"];
+  const safeSelect = omitMissingProductColumns(
+    { ...productCreateSelect },
+    status.missing
+  );
+
+  try {
+    return await prisma.product.create({
+      data: safeData,
+      select: safeSelect,
+    });
+  } catch (error) {
+    const isMissingColumn =
+      (error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2022") ||
+      (error instanceof Error &&
+        /column [`"]?(\w+)[`"]? .*does not exist|P2022/i.test(error.message));
+
+    if (!isMissingColumn) {
+      throw error;
+    }
+
+    const repaired = await ensureProductSchemaReady();
+    if (!repaired) {
+      throw error;
+    }
+
+    return prisma.product.create({
+      data,
+      select: productCreateSelect,
+    });
+  }
 }

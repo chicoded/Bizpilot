@@ -1,5 +1,11 @@
--- Run in Supabase SQL Editor if AI assistant or receipts fail after an update.
+-- Run in Supabase SQL Editor if inventory, AI assistant, or receipts fail after an update.
 -- Safe to run multiple times (idempotent).
+
+-- Product columns (inventory save/load)
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "barcode" TEXT;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "unitsPerPack" INTEGER NOT NULL DEFAULT 1;
 
 -- AI prompt usage tracking (rate limits)
 CREATE TABLE IF NOT EXISTS "ai_prompt_logs" (

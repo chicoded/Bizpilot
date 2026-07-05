@@ -18,7 +18,9 @@ export default function InventoryError({
 
   const detail = error.message || error.digest || "Unknown error";
   const schemaMismatch =
-    /imageUrl|schema|column|products table/i.test(detail);
+    /imageUrl|unitsPerPack|schema|column|products table|P2022|digest/i.test(
+      detail
+    ) || Boolean(error.digest);
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
@@ -32,8 +34,8 @@ export default function InventoryError({
       </p>
       {schemaMismatch && (
         <p className="text-sm text-muted-foreground max-w-lg mb-4 font-mono bg-muted px-3 py-2 rounded-lg break-all text-left">
-          ALTER TABLE &quot;products&quot; ADD COLUMN IF NOT EXISTS
-          &quot;imageUrl&quot; TEXT;
+          Run database/repair-product-schema.sql in Supabase, or tap Fix Database
+          below (owner only).
         </p>
       )}
       <p className="text-xs text-muted-foreground max-w-lg mb-6 font-mono bg-muted px-3 py-2 rounded-lg break-all">
