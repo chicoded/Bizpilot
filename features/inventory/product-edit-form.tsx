@@ -41,16 +41,17 @@ export function ProductEditForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [barcode, setBarcode] = useState(product.barcode ?? "");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  function returnToInventory() {
+    router.replace("/inventory");
+    router.refresh();
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setWarning(null);
-    setSaved(false);
     const form = e.currentTarget;
     const formData = new FormData(form);
 
@@ -64,11 +65,7 @@ export function ProductEditForm({
     startTransition(async () => {
       const result = await updateProduct(product.id, formData);
       if (result.success) {
-        setSaved(true);
-        if ("warning" in result && typeof result.warning === "string") {
-          setWarning(result.warning);
-        }
-        router.refresh();
+        returnToInventory();
         return;
       }
       setError(
@@ -92,7 +89,6 @@ export function ProductEditForm({
     }
 
     setError(null);
-    setWarning(null);
     setIsDeleting(true);
 
     startTransition(async () => {
@@ -105,8 +101,7 @@ export function ProductEditForm({
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
-      router.push("/inventory");
-      router.refresh();
+      returnToInventory();
     });
   }
 
@@ -209,16 +204,6 @@ export function ProductEditForm({
                   role="alert"
                 >
                   {error}
-                </p>
-              )}
-              {warning && (
-                <p className="text-sm text-amber-700 rounded-lg bg-amber-50 px-3 py-2">
-                  {warning}
-                </p>
-              )}
-              {saved && !warning && (
-                <p className="text-sm text-emerald-600 rounded-lg bg-emerald-50 px-3 py-2">
-                  Product updated successfully
                 </p>
               )}
 
