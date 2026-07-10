@@ -1,0 +1,118 @@
+import { getLocalDB } from "@/lib/local-db/database";
+import type { LocalSale } from "@/lib/local-db/types";
+import { localId } from "@/lib/local-data/id";
+import { nextLocalReceiptNumber } from "@/lib/local-data/receipt";
+import { getLocalProduct } from "@/lib/local-data/products";
+
+export type CreateLocalSaleInput = {
+  items: { productId: string; quantity: number }[];
+  paymentMethod: string;
+  customerId?: string;
+  discount?: number;
+  tax?: number;
+  isCredit?: boolean;
+};
+
+export async function createLocalSale(
+  businessId: string,
+  input: CreateLocalSaleInput
+): Promise<{ sale: LocalSale } | { error: string }> {
+  if (input.items.length === 0) {
+    return { error: "Add at least one product" };
+  }
+
+  const db = getLocalDB();
+  let subtotal = 0;
+  let totalCost = 0;
+  const saleItems: LocalSale["items"] = [];
+
+  for (const item of input.items) {
+    const product = await getLocalProduct(businessId, item.productId);
+    if (!product) {
+      return { error: "One or more products were not found" };
+    }
+    if (product.quantity < item.quantity) {
+      return { error: `Insufficient stock for ${product.name}` };
+    }
+
+    const lineTotal = product.sellingPrice * item.quantity;
+    subtotal += lineTotal;
+    totalCost += product.purchasePrice * item.quantity;
+
+    saleItems.push({
+      productId: product.id,
+      productName: product.name,
+      quantity: item.quantity,
+      cost: product.purchasePrice,
+      sellingPrice: product.sellingPrice,
+      total: lineTotal,
+    });
+  }
+
+  const discount = input.discount ?? 0;
+  const tax = input.tax ?? 0;
+  const total = subtotal - discount + tax;
+  const profit = total - totalCost;
+  const timestamp = new Date().toISOString();
+
+  const sale: LocalSale = {
+    id: localId("sale"),
+    businessId,
+    receiptNumber: nextLocalReceiptNumber(),
+    items: saleItems,
+    subtotal,
+    discount,
+    tax,
+    total,
+    totalCost,
+    profit,
+    paymentMethod: input.paymentMethod,
+    customerId: input.customerId ?? null,
+    isCredit: input.isCredit ?? false,
+    createdAt: timestamp,
+    syncedAt: null,
+  };
+
+  await db.transaction("rw", db.sales, db.products, db.customers, async () => {
+    for (const item of input.items) {
+      const product = await db.products.get(item.productId);
+      if (!product || product.businessId !== businessId) {
+        throw new Error("Product missing during sale");
+      }
+      if (product.quantity < item.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}`);
+      }
+      await db.products.put({
+        ...product,
+        quantity: product.quantity - item.quantity,
+        updatedAt: timestamp,
+        syncedAt: null,
+      });
+    }
+
+    if (input.isCredit && input.customerId) {
+      const customer = await db.customers.get(input.customerId);
+      if (customer && customer.businessId === businessId) {
+        await db.customers.put({
+          ...customer,
+          debt: customer.debt + total,
+          lifetimeValue: customer.lifetimeValue + total,
+          updatedAt: timestamp,
+          syncedAt: null,
+        });
+      }
+    }
+
+    await db.sales.put(sale);
+  });
+
+  return { sale };
+}
+
+export async function listLocalSales(businessId: string): Promise<LocalSale[]> {
+  const db = getLocalDB();
+  const sales = await db.sales.where({ businessId }).toArray();
+  return sales.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}

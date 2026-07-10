@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { WifiOff, RefreshCw } from "lucide-react";
+import { WifiOff, RefreshCw, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function OfflinePage() {
@@ -11,9 +11,13 @@ export default function OfflinePage() {
         <WifiOff className="h-10 w-10 text-amber-600 dark:text-amber-400" />
       </div>
       <h1 className="text-2xl font-bold text-brand mb-2">You&apos;re offline</h1>
-      <p className="text-muted-foreground text-center max-w-sm mb-8">
-        BizPilot needs internet for sales and sync. Check your connection and try
-        again.
+      <p className="text-muted-foreground text-center max-w-sm mb-4">
+        Your shop data is saved on this device. Open the installed BizPilot app
+        to keep selling and managing inventory without internet.
+      </p>
+      <p className="text-xs text-muted-foreground text-center max-w-sm mb-8 flex items-center justify-center gap-2">
+        <HardDrive className="h-4 w-4" />
+        POS and inventory work offline. Gmail backup runs when you&apos;re back online.
       </p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <Button
@@ -24,9 +28,14 @@ export default function OfflinePage() {
           <RefreshCw className="h-5 w-5" />
           Try Again
         </Button>
-        <Link href="/dashboard" className="w-full">
+        <Link href="/sales" className="w-full">
           <Button variant="outline" size="lg" className="w-full h-14">
-            Go to Dashboard
+            Open POS
+          </Button>
+        </Link>
+        <Link href="/inventory" className="w-full">
+          <Button variant="outline" size="lg" className="w-full h-14">
+            Open Inventory
           </Button>
         </Link>
       </div>

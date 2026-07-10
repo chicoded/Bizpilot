@@ -5,10 +5,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "BizPilot AI",
     short_name: "BizPilot",
     description:
-      "AI operating system for African SMEs — inventory, POS, reports, and business insights.",
-    start_url: "/dashboard",
+      "Shop app for African SMEs — inventory, POS, and backups saved on your device.",
+    start_url: "/sales",
     scope: "/",
     display: "standalone",
+    display_override: ["standalone", "fullscreen"],
     orientation: "portrait",
     background_color: "#f8fafc",
     theme_color: "#1e3a5f",

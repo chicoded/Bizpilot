@@ -1,9 +1,7 @@
-import { notFound } from "next/navigation";
 import { requirePageAccess } from "@/lib/auth";
-import { getInventoryProduct } from "@/lib/products";
+import { Role } from "@prisma/client";
 import { listSuppliersForBusiness } from "@/lib/suppliers";
-import { ProductEditForm } from "@/features/inventory/product-edit-form";
-import { format } from "date-fns";
+import { ProductEditPageClient } from "@/features/inventory/product-edit-page-client";
 
 export default async function ProductDetailPage({
   params,
@@ -11,35 +9,16 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const ctx = await requirePageAccess("inventory");
-
   const { id } = await params;
-
-  const [product, suppliers] = await Promise.all([
-    getInventoryProduct(ctx.businessId, id),
-    listSuppliersForBusiness(ctx.businessId),
-  ]);
-
-  if (!product) notFound();
+  const suppliers = await listSuppliersForBusiness(ctx.businessId);
+  const canDelete =
+    ctx.role === Role.OWNER || ctx.role === Role.MANAGER;
 
   return (
-    <ProductEditForm
+    <ProductEditPageClient
+      productId={id}
       suppliers={suppliers}
-      product={{
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        barcode: product.barcode,
-        purchasePrice: product.purchasePrice,
-        sellingPrice: product.sellingPrice,
-        unitsPerPack: product.unitsPerPack,
-        quantity: product.quantity,
-        reorderLevel: product.reorderLevel,
-        expiryDate: product.expiryDate
-          ? format(product.expiryDate, "yyyy-MM-dd")
-          : null,
-        imageUrl: product.imageUrl,
-        supplierId: product.supplierId,
-      }}
+      canDelete={canDelete}
     />
   );
 }

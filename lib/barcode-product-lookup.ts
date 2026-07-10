@@ -1,4 +1,6 @@
 import { normalizeBarcode } from "@/lib/barcode";
+import { getActiveBusinessId } from "@/lib/local-data/business";
+import { getLocalProductByBarcode } from "@/lib/local-data/products";
 
 export interface BarcodeProductHit {
   id: string;
@@ -25,6 +27,30 @@ export async function lookupProductByBarcode(
   }
 
   try {
+    const businessId = await getActiveBusinessId();
+    if (businessId) {
+      const local = await getLocalProductByBarcode(businessId, normalized);
+      if (local) {
+        if (local.quantity <= 0) {
+          return {
+            ok: false,
+            reason: "out_of_stock",
+            message: `${local.name} is out of stock.`,
+          };
+        }
+        return {
+          ok: true,
+          product: {
+            id: local.id,
+            name: local.name,
+            sellingPrice: local.sellingPrice,
+            quantity: local.quantity,
+            barcode: local.barcode,
+          },
+        };
+      }
+    }
+
     const response = await fetch(
       `/api/products/barcode?code=${encodeURIComponent(normalized)}`
     );

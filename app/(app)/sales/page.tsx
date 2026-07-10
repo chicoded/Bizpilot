@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createSale } from "@/actions/business";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import { listLocalProducts, searchLocalProducts } from "@/lib/local-data/products";
+import { listLocalCustomers } from "@/lib/local-data/customers";
+import { createLocalSale } from "@/lib/local-data/sales";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 import { toast } from "@/hooks/use-toast";
@@ -64,6 +67,7 @@ function ProductSkeletonGrid() {
 }
 
 export default function SalesPage() {
+  const { businessId, status } = useLocalData();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [totalInStock, setTotalInStock] = useState(0);
   const [productViewMode, setProductViewMode] = useState<"quick" | "search">(
@@ -86,46 +90,68 @@ export default function SalesPage() {
   const cartRef = useRef<HTMLDivElement>(null);
 
   const loadQuickPicks = useCallback(async (options?: { silent?: boolean }) => {
+    if (!businessId) {
+      setProductsError("Local shop data is still loading…");
+      setProductsLoading(false);
+      return;
+    }
+
     if (!options?.silent) {
       setProductsLoading(true);
     }
     setProductsError(null);
     try {
-      const response = await fetch("/api/products?pos=1");
-      if (!response.ok) throw new Error("Failed to load products");
-      const data = await response.json();
-      setDisplayProducts(data.products ?? []);
-      setTotalInStock(data.totalInStock ?? data.products?.length ?? 0);
+      const products = await listLocalProducts(businessId);
+      const inStock = products.filter((p) => p.quantity > 0);
+      const quick = inStock
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 8)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          sellingPrice: p.sellingPrice,
+          quantity: p.quantity,
+          barcode: p.barcode,
+        }));
+      setDisplayProducts(quick);
+      setTotalInStock(inStock.length);
       setProductViewMode("quick");
     } catch {
-      setProductsError(
-        "Could not load products. Check your connection and try again."
-      );
+      setProductsError("Could not load local products.");
     } finally {
       if (!options?.silent) {
         setProductsLoading(false);
       }
     }
-  }, []);
+  }, [businessId]);
 
   const loadCustomers = useCallback(async () => {
+    if (!businessId) return;
     try {
-      const response = await fetch("/api/customers");
-      if (!response.ok) return;
-      const data = await response.json();
-      setCustomers(data.customers ?? []);
+      const rows = await listLocalCustomers(businessId);
+      setCustomers(
+        rows.map((c) => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          debt: c.debt,
+        }))
+      );
     } catch {
       // Non-blocking for POS
     }
-  }, []);
+  }, [businessId]);
 
   useEffect(() => {
+    if (status !== "ready" || !businessId) return;
     loadQuickPicks();
     loadCustomers();
-  }, [loadQuickPicks, loadCustomers]);
+  }, [loadQuickPicks, loadCustomers, status, businessId]);
 
   useEffect(() => {
     const term = search.trim();
+    if (!businessId) return;
+
     if (!term) {
       void loadQuickPicks({ silent: true });
       return;
@@ -134,23 +160,29 @@ export default function SalesPage() {
     setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `/api/products?q=${encodeURIComponent(term)}`
+        const products = await searchLocalProducts(businessId, term);
+        setDisplayProducts(
+          products
+            .filter((p) => p.quantity > 0)
+            .map((p) => ({
+              id: p.id,
+              name: p.name,
+              sellingPrice: p.sellingPrice,
+              quantity: p.quantity,
+              barcode: p.barcode,
+            }))
         );
-        if (!response.ok) throw new Error("Search failed");
-        const data = await response.json();
-        setDisplayProducts(data.products ?? []);
         setProductViewMode("search");
         setProductsError(null);
       } catch {
-        setProductsError("Could not search products. Try again.");
+        setProductsError("Could not search local products.");
       } finally {
         setSearchLoading(false);
       }
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [search, loadQuickPicks]);
+  }, [search, loadQuickPicks, businessId]);
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -244,7 +276,12 @@ export default function SalesPage() {
     }
     setSaleError(null);
     startTransition(async () => {
-      const result = await createSale({
+      if (!businessId) {
+        setSaleError("Local shop data is not ready yet.");
+        return;
+      }
+
+      const result = await createLocalSale(businessId, {
         items: cart.map((i) => ({
           productId: i.product.id,
           quantity: i.quantity,
@@ -253,12 +290,13 @@ export default function SalesPage() {
         customerId: paymentMethod === "CREDIT" ? customerId : undefined,
         isCredit: paymentMethod === "CREDIT",
       });
-      if (result.success) {
+
+      if ("sale" in result) {
         setCart([]);
         setCustomerId("");
         setSaleComplete(true);
-        const saleId = result.sale?.id ?? null;
-        const receiptNumber = result.sale?.receiptNumber ?? null;
+        const saleId = result.sale.id;
+        const receiptNumber = result.sale.receiptNumber;
         setLastSaleId(saleId);
         setLastReceiptNumber(receiptNumber);
         trackEvent("sale_completed", {
@@ -268,18 +306,8 @@ export default function SalesPage() {
         });
         toast({
           title: "Sale complete",
-          description: receiptNumber
-            ? `${receiptNumber} · ${formatCurrency(subtotal)} recorded.`
-            : `${formatCurrency(subtotal)} recorded successfully.`,
+          description: `${receiptNumber} · ${formatCurrency(subtotal)} saved on this device.`,
           variant: "success",
-          action: saleId
-            ? {
-                label: "View receipt",
-                onClick: () => {
-                  window.location.href = `/sales/${saleId}`;
-                },
-              }
-            : undefined,
         });
         setTimeout(() => setSaleComplete(false), 8000);
         loadQuickPicks({ silent: true });

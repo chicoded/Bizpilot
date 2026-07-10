@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProduct, deleteProduct } from "@/actions/business";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,12 @@ import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { parseMoneyInput } from "@/lib/pack-pricing";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import {
+  deleteLocalProduct,
+  updateLocalProduct,
+} from "@/lib/local-data/products";
+import { parseProductFormData } from "@/lib/local-data/form";
 
 interface ProductEditFormProps {
   product: {
@@ -32,13 +37,16 @@ interface ProductEditFormProps {
     supplierId: string | null;
   };
   suppliers?: { id: string; name: string }[];
+  canDelete?: boolean;
 }
 
 export function ProductEditForm({
   product,
   suppliers = [],
+  canDelete = false,
 }: ProductEditFormProps) {
   const router = useRouter();
+  const { businessId, refresh } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(product.barcode ?? "");
@@ -63,19 +71,29 @@ export function ProductEditForm({
     }
 
     startTransition(async () => {
-      const result = await updateProduct(product.id, formData);
-      if (result.success) {
-        returnToInventory();
+      if (!businessId) {
+        setError("Shop not ready yet. Wait a moment and try again.");
         return;
       }
-      setError(
-        typeof result.error === "string"
-          ? result.error
-          : "Could not update product"
+
+      const parsed = await parseProductFormData(formData);
+      if ("error" in parsed) {
+        setError(parsed.error);
+        return;
+      }
+
+      const updated = await updateLocalProduct(
+        businessId,
+        product.id,
+        parsed.data
       );
-      document
-        .getElementById("product-form-error")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!updated) {
+        setError("Product not found on this device");
+        return;
+      }
+
+      await refresh();
+      returnToInventory();
     });
   }
 
@@ -92,15 +110,26 @@ export function ProductEditForm({
     setIsDeleting(true);
 
     startTransition(async () => {
-      const result = await deleteProduct(product.id);
-      if (result.error) {
+      if (!businessId) {
         setIsDeleting(false);
-        setError(result.error);
-        document
-          .getElementById("product-form-error")
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setError("Shop not ready yet. Wait a moment and try again.");
         return;
       }
+
+      if (!canDelete) {
+        setIsDeleting(false);
+        setError("Only owners and managers can remove products");
+        return;
+      }
+
+      const removed = await deleteLocalProduct(businessId, product.id);
+      if (!removed) {
+        setIsDeleting(false);
+        setError("Product not found on this device");
+        return;
+      }
+
+      await refresh();
       returnToInventory();
     });
   }
@@ -225,7 +254,7 @@ export function ProductEditForm({
                   variant="outline"
                   size="lg"
                   className="w-full touch-manipulation text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                  disabled={isPending || isDeleting}
+                  disabled={isPending || isDeleting || !canDelete}
                   onClick={handleDelete}
                 >
                   {isDeleting ? (

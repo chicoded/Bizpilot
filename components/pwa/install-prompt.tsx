@@ -39,7 +39,8 @@ export function InstallPrompt() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm">Install BizPilot</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Add to your home screen for fast POS access — works like a native app.
+                Install for a full-screen app experience — inventory and POS work
+                from your phone, even when the database is down.
               </p>
               {showIOSHelp && (
                 <p className="text-xs text-brand mt-2 flex items-center gap-1">

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createProduct } from "@/actions/business";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,9 @@ import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { parseMoneyInput } from "@/lib/pack-pricing";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import { createLocalProduct } from "@/lib/local-data/products";
+import { parseProductFormData } from "@/lib/local-data/form";
 
 interface NewProductFormProps {
   initialBarcode?: string;
@@ -26,15 +28,14 @@ export function NewProductForm({
   suppliers = [],
 }: NewProductFormProps) {
   const router = useRouter();
+  const { businessId, refresh } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(initialBarcode);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setWarning(null);
     const form = e.currentTarget;
     const formData = new FormData(form);
 
@@ -53,23 +54,21 @@ export function NewProductForm({
     }
 
     startTransition(async () => {
-      const result = await createProduct(formData);
-      if (result.success) {
-        if ("warning" in result && typeof result.warning === "string") {
-          setWarning(result.warning);
-        }
-        router.push("/inventory");
-        router.refresh();
+      if (!businessId) {
+        setError("Shop not ready yet. Wait a moment and try again.");
         return;
       }
-      setError(
-        typeof result.error === "string"
-          ? result.error
-          : "Could not save product. Please try again."
-      );
-      document
-        .getElementById("product-form-error")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const parsed = await parseProductFormData(formData);
+      if ("error" in parsed) {
+        setError(parsed.error);
+        return;
+      }
+
+      await createLocalProduct(businessId, parsed.data);
+      await refresh();
+      router.replace("/inventory");
+      router.refresh();
     });
   }
 
@@ -145,12 +144,6 @@ export function NewProductForm({
                   <Input id="expiryDate" name="expiryDate" type="date" />
                 </div>
               </div>
-
-              {warning && (
-                <p className="text-sm text-amber-700 rounded-lg bg-amber-50 px-3 py-2">
-                  {warning}
-                </p>
-              )}
 
               {error && (
                 <p
