@@ -3,8 +3,8 @@ import {
   isBackupDue,
   saveBackupConfig,
 } from "@/lib/local-db/backup-config";
-import { exportBackupJson, saveBackupSnapshot, shareBackupFile } from "@/lib/backup/export";
-import { sendBackupToGmail } from "@/lib/backup/gmail";
+import { exportBackupJson, saveBackupSnapshot } from "@/lib/backup/export";
+import { deliverBackupToGmail } from "@/lib/backup/gmail";
 import { getLocalBusinessMeta } from "@/lib/local-data/business";
 
 export async function runScheduledBackup(
@@ -16,52 +16,28 @@ export async function runScheduledBackup(
     return { ok: true, message: "Backup not due yet." };
   }
 
+  if (!config.gmailEmail && !options?.force) {
+    return {
+      ok: false,
+      message: "Add your Gmail address in Settings → Backup & storage first.",
+    };
+  }
+
   try {
     const json = await exportBackupJson(businessId);
     await saveBackupSnapshot(businessId);
     const business = await getLocalBusinessMeta();
     const businessName = business?.name ?? "My shop";
 
-    if (config.gmailAccessToken && config.gmailEmail) {
-      const emailed = await sendBackupToGmail(json, businessName);
-      if (emailed.ok) {
-        saveBackupConfig({
-          lastBackupAt: new Date().toISOString(),
-          lastBackupStatus: "success",
-          lastBackupMessage: `Emailed to ${config.gmailEmail}`,
-        });
-        return { ok: true, message: `Backup emailed to ${config.gmailEmail}` };
-      }
+    const result = await deliverBackupToGmail(json, businessName);
 
-      const shared = await shareBackupFile(json, businessName);
-      saveBackupConfig({
-        lastBackupAt: new Date().toISOString(),
-        lastBackupStatus: "error",
-        lastBackupMessage: emailed.error,
-      });
-      return {
-        ok: false,
-        message: `${emailed.error} Used ${shared.method} fallback instead.`,
-      };
-    }
-
-    const shared = await shareBackupFile(json, businessName);
     saveBackupConfig({
       lastBackupAt: new Date().toISOString(),
-      lastBackupStatus: "success",
-      lastBackupMessage:
-        shared.method === "share"
-          ? "Opened share sheet for Gmail or Drive"
-          : "Downloaded backup file",
+      lastBackupStatus: result.ok ? "success" : "error",
+      lastBackupMessage: result.message,
     });
 
-    return {
-      ok: true,
-      message:
-        shared.method === "share"
-          ? "Backup ready — choose Gmail from the share menu"
-          : "Backup downloaded to your device",
-    };
+    return result;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Backup failed unexpectedly";

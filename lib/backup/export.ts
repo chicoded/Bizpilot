@@ -86,7 +86,11 @@ export function downloadBackupFile(json: string, businessName: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function shareBackupFile(json: string, businessName: string) {
+export async function shareBackupFile(
+  json: string,
+  businessName: string,
+  shareText?: string
+) {
   const date = new Date().toISOString().slice(0, 10);
   const filename = `bizpilot-backup-${businessName.replace(/[^a-z0-9-_]+/gi, "-") || "shop"}-${date}.json`;
   const file = new File([json], filename, { type: "application/json" });
@@ -94,7 +98,7 @@ export async function shareBackupFile(json: string, businessName: string) {
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     await navigator.share({
       title: "BizPilot backup",
-      text: "BizPilot shop data backup",
+      text: shareText ?? "BizPilot shop data backup",
       files: [file],
     });
     return { method: "share" as const };

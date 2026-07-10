@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { requirePageAccess } from "@/lib/auth";
 import { canAccessSection } from "@/lib/permissions";
 import { SettingsShell } from "@/components/layout/settings-shell";
@@ -28,7 +29,9 @@ export default async function SettingsBackupPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <BackupSettingsPanel />
+          <Suspense fallback={<p className="text-sm text-muted-foreground">Loading backup settings…</p>}>
+            <BackupSettingsPanel />
+          </Suspense>
         </CardContent>
       </Card>
     </SettingsShell>
