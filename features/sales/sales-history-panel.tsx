@@ -3,13 +3,13 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import type { SaleListItem, SalePeriod } from "@/lib/sales";
+import type { LocalSaleListItem, LocalSalePeriod } from "@/lib/local-data/sales";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/types";
 import { ChevronRight, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PERIOD_OPTIONS: { value: SalePeriod; label: string }[] = [
+const PERIOD_OPTIONS: { value: LocalSalePeriod; label: string }[] = [
   { value: "today", label: "Today" },
   { value: "week", label: "This week" },
   { value: "month", label: "This month" },
@@ -21,12 +21,12 @@ const paymentLabel = Object.fromEntries(
 );
 
 interface SalesHistoryPanelProps {
-  sales: SaleListItem[];
+  sales: LocalSaleListItem[];
   totalRevenue: number;
   totalProfit: number;
   count: number;
   currency: string;
-  period: SalePeriod;
+  period: LocalSalePeriod;
 }
 
 export function SalesHistoryPanel({

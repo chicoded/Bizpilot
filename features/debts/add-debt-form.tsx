@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { addCustomerDebt, createCustomer } from "@/actions/business";
+import { useEffect, useState, useTransition } from "react";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import {
+  addLocalCustomerDebt,
+  createLocalCustomer,
+} from "@/lib/local-data/customers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +23,15 @@ export type DebtCustomerOption = {
 interface AddDebtFormProps {
   customers: DebtCustomerOption[];
   currency: string;
+  onChanged?: () => void;
 }
 
-export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFormProps) {
-  const router = useRouter();
+export function AddDebtForm({
+  customers: initialCustomers,
+  currency,
+  onChanged,
+}: AddDebtFormProps) {
+  const { businessId } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [customers, setCustomers] = useState(initialCustomers);
   const [customerId, setCustomerId] = useState("");
@@ -34,10 +42,19 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
 
+  useEffect(() => {
+    setCustomers(initialCustomers);
+  }, [initialCustomers]);
+
   function handleAddDebt(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+
+    if (!businessId) {
+      setError("Shop data not loaded yet.");
+      return;
+    }
 
     if (!customerId) {
       setError("Select a customer");
@@ -51,43 +68,38 @@ export function AddDebtForm({ customers: initialCustomers, currency }: AddDebtFo
     }
 
     startTransition(async () => {
-      const result = await addCustomerDebt({
+      const result = await addLocalCustomerDebt(
+        businessId,
         customerId,
-        amount: parsedAmount,
-      });
-      if (result.error) {
+        parsedAmount
+      );
+      if (!result.ok) {
         setError(result.error);
         return;
       }
       setAmount("");
       setSuccess(true);
-      router.refresh();
+      onChanged?.();
       setTimeout(() => setSuccess(false), 3000);
     });
   }
 
   function handleCreateCustomer() {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !businessId) return;
     setError(null);
     startTransition(async () => {
-      const result = await createCustomer({
+      const created = await createLocalCustomer(businessId, {
         name: newName.trim(),
         phone: newPhone.trim() || undefined,
       });
-      if (result.error || !result.customer) {
-        setError(
-          typeof result.error === "string" ? result.error : "Could not create customer"
-        );
-        return;
-      }
-      const created: DebtCustomerOption = {
-        id: result.customer.id,
-        name: result.customer.name,
-        phone: result.customer.phone,
-        debt: Number(result.customer.debt),
+      const option: DebtCustomerOption = {
+        id: created.id,
+        name: created.name,
+        phone: created.phone,
+        debt: created.debt,
       };
       setCustomers((prev) =>
-        [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+        [...prev, option].sort((a, b) => a.name.localeCompare(b.name))
       );
       setCustomerId(created.id);
       setNewName("");

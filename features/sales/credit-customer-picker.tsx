@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createCustomer } from "@/actions/business";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import { createLocalCustomer } from "@/lib/local-data/customers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ export function CreditCustomerPicker({
   onSelect,
   onCustomerCreated,
 }: CreditCustomerPickerProps) {
+  const { businessId } = useLocalData();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -34,24 +36,20 @@ export function CreditCustomerPicker({
   const [isPending, startTransition] = useTransition();
 
   function handleCreate() {
-    if (!name.trim()) return;
+    if (!name.trim() || !businessId) return;
     setError(null);
     startTransition(async () => {
-      const result = await createCustomer({
+      const created = await createLocalCustomer(businessId, {
         name: name.trim(),
         phone: phone.trim() || undefined,
       });
-      if (result.error || !result.customer) {
-        setError(typeof result.error === "string" ? result.error : "Could not create customer");
-        return;
-      }
-      const created: CustomerOption = {
-        id: result.customer.id,
-        name: result.customer.name,
-        phone: result.customer.phone,
-        debt: Number(result.customer.debt),
+      const option: CustomerOption = {
+        id: created.id,
+        name: created.name,
+        phone: created.phone,
+        debt: created.debt,
       };
-      onCustomerCreated(created);
+      onCustomerCreated(option);
       onSelect(created.id);
       setName("");
       setPhone("");

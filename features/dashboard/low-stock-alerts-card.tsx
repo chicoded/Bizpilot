@@ -1,19 +1,28 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { listLowStockProducts } from "@/lib/low-stock";
+import { listLocalLowStockProducts } from "@/lib/local-data/low-stock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 
-export async function LowStockAlertsCard({
+export function LowStockAlertsCard({
   businessId,
 }: {
   businessId: string;
 }) {
-  const products = await listLowStockProducts(businessId);
+  const [products, setProducts] = useState<
+    Awaited<ReturnType<typeof listLocalLowStockProducts>>
+  >([]);
+
+  useEffect(() => {
+    void listLocalLowStockProducts(businessId).then(setProducts);
+  }, [businessId]);
+
   if (products.length === 0) return null;
 
   const preview = products.slice(0, 4);
-  const withSupplier = products.filter((product) => product.supplierId).length;
 
   return (
     <Card className="border-amber-200 bg-amber-50/40">
@@ -27,8 +36,6 @@ export async function LowStockAlertsCard({
         <p className="text-sm text-muted-foreground">
           {products.length} product{products.length === 1 ? "" : "s"} at or below
           reorder level.
-          {withSupplier > 0 &&
-            ` ${withSupplier} can be reordered from suppliers.`}
         </p>
         <ul className="space-y-1.5">
           {preview.map((product) => (
@@ -50,7 +57,7 @@ export async function LowStockAlertsCard({
         )}
         <Button asChild size="sm" className="w-full">
           <Link href="/inventory/low-stock">
-            Review & reorder
+            Review & restock
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>

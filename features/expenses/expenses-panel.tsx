@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createExpense, deleteExpense } from "@/actions/business";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,22 +14,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EXPENSE_CATEGORIES } from "@/types";
-import type { ExpenseListItem, ExpensePeriod } from "@/lib/expenses";
+import type { LocalExpenseListItem, LocalExpensePeriod } from "@/lib/local-data/expenses";
+import { createLocalExpense, deleteLocalExpense } from "@/lib/local-data/expenses";
+import { useLocalData } from "@/components/providers/local-data-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
 import { Loader2, Plus, Trash2, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PERIOD_OPTIONS: { value: ExpensePeriod; label: string }[] = [
+const PERIOD_OPTIONS: { value: LocalExpensePeriod; label: string }[] = [
   { value: "week", label: "This week" },
   { value: "month", label: "This month" },
   { value: "all", label: "All time" },
 ];
 
 interface ExpensesPanelProps {
-  expenses: ExpenseListItem[];
+  expenses: LocalExpenseListItem[];
   total: number;
   currency: string;
-  period: ExpensePeriod;
+  period: LocalExpensePeriod;
+  onChanged?: () => void;
 }
 
 export function ExpensesPanel({
@@ -38,8 +41,10 @@ export function ExpensesPanel({
   total,
   currency,
   period,
+  onChanged,
 }: ExpensesPanelProps) {
   const router = useRouter();
+  const { businessId } = useLocalData();
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [category, setCategory] = useState("FUEL");
@@ -49,7 +54,7 @@ export function ExpensesPanel({
     EXPENSE_CATEGORIES.map((cat) => [cat.value, cat.label])
   );
 
-  function handlePeriodChange(next: ExpensePeriod) {
+  function handlePeriodChange(next: LocalExpensePeriod) {
     router.push(`/expenses?period=${next}`);
   }
 
@@ -58,31 +63,33 @@ export function ExpensesPanel({
     setError(null);
     const formData = new FormData(e.currentTarget);
     formData.set("category", category);
+    if (!businessId) {
+      setError("Shop data not loaded yet.");
+      return;
+    }
+
     startTransition(async () => {
-      const result = await createExpense(formData);
-      if (result.error) {
-        setError(
-          typeof result.error === "string"
-            ? result.error
-            : "Could not save expense"
-        );
-        return;
-      }
+      await createLocalExpense(businessId, {
+        category,
+        amount: Number(formData.get("amount")),
+        description: String(formData.get("description") ?? "") || undefined,
+        date: String(formData.get("date") ?? ""),
+      });
       setShowForm(false);
       e.currentTarget.reset();
-      router.refresh();
+      onChanged?.();
     });
   }
 
   function handleDelete(expenseId: string) {
-    if (!confirm("Delete this expense?")) return;
+    if (!confirm("Delete this expense?") || !businessId) return;
     startTransition(async () => {
-      const result = await deleteExpense(expenseId);
-      if (result.error) {
-        setError(result.error);
+      const deleted = await deleteLocalExpense(businessId, expenseId);
+      if (!deleted) {
+        setError("Could not delete expense");
         return;
       }
-      router.refresh();
+      onChanged?.();
     });
   }
 

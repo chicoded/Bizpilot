@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   AreaChart,
   Area,
@@ -12,8 +13,8 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "@/components/providers/theme-provider";
+import { getLocalWeeklyRevenue } from "@/lib/local-data/sales";
 import { formatCurrency } from "@/lib/utils";
-import type { DailyDataPoint } from "@/types";
 
 interface RevenueChartProps {
   businessId: string;
@@ -22,7 +23,9 @@ interface RevenueChartProps {
 export function RevenueChart({ businessId }: RevenueChartProps) {
   const { resolved } = useTheme();
   const isDark = resolved === "dark";
-  const [data, setData] = useState<DailyDataPoint[]>([]);
+  const [data, setData] = useState<
+    Awaited<ReturnType<typeof getLocalWeeklyRevenue>>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   const gridColor = isDark ? "hsl(222 22% 22%)" : "#f0f0f0";
@@ -31,11 +34,8 @@ export function RevenueChart({ businessId }: RevenueChartProps) {
   const tooltipText = isDark ? "hsl(210 25% 96%)" : "#0f172a";
 
   useEffect(() => {
-    fetch("/api/reports?period=week")
-      .then((r) => r.json())
-      .then((report) => {
-        setData(report.dailyTrend ?? []);
-      })
+    void getLocalWeeklyRevenue(businessId)
+      .then(setData)
       .catch(() => setData([]))
       .finally(() => setLoading(false));
   }, [businessId]);

@@ -1,42 +1,50 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import { recordLocalDebtPayment } from "@/lib/local-data/customers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { recordDebtPayment } from "@/actions/business";
 import { Loader2 } from "lucide-react";
 
 interface RecordPaymentButtonProps {
   customerId: string;
   maxAmount: number;
   currency: string;
+  onChanged?: () => void;
 }
 
 export function RecordPaymentButton({
   customerId,
   maxAmount,
   currency,
+  onChanged,
 }: RecordPaymentButtonProps) {
+  const { businessId } = useLocalData();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(maxAmount.toString());
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   function handlePay() {
     setError(null);
+    if (!businessId) {
+      setError("Shop data not loaded yet.");
+      return;
+    }
+
     startTransition(async () => {
-      const result = await recordDebtPayment({
+      const result = await recordLocalDebtPayment(
+        businessId,
         customerId,
-        amount: Number(amount),
-      });
-      if (result.error) {
+        Number(amount)
+      );
+      if (!result.ok) {
         setError(result.error);
         return;
       }
       setOpen(false);
-      router.refresh();
+      onChanged?.();
     });
   }
 

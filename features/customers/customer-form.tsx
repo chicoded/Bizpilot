@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createCustomer, updateCustomer } from "@/actions/business";
+import { useLocalData } from "@/components/providers/local-data-provider";
+import {
+  createLocalCustomer,
+  getLocalCustomer,
+  updateLocalCustomer,
+} from "@/lib/local-data/customers";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, ArrowLeft } from "lucide-react";
 
 export function CustomerForm({
@@ -21,35 +27,74 @@ export function CustomerForm({
   defaultValues?: { name: string; phone: string; email: string };
 }) {
   const router = useRouter();
+  const { businessId, status, refresh } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(mode === "edit");
+  const [values, setValues] = useState({
+    name: defaultValues?.name ?? "",
+    phone: defaultValues?.phone ?? "",
+    email: defaultValues?.email ?? "",
+  });
+
+  useEffect(() => {
+    if (mode !== "edit" || !customerId || !businessId || status !== "ready") {
+      return;
+    }
+    void (async () => {
+      setLoading(true);
+      const customer = await getLocalCustomer(businessId, customerId);
+      if (customer) {
+        setValues({
+          name: customer.name,
+          phone: customer.phone ?? "",
+          email: customer.email ?? "",
+        });
+      }
+      setLoading(false);
+    })();
+  }, [mode, customerId, businessId, status]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    const formData = new FormData(e.currentTarget);
+
+    if (!businessId) {
+      setError("Shop data not loaded yet. Try again in a moment.");
+      return;
+    }
+
     const payload = {
-      name: String(formData.get("name") ?? ""),
-      phone: String(formData.get("phone") ?? "") || undefined,
-      email: String(formData.get("email") ?? "") || undefined,
+      name: values.name,
+      phone: values.phone || undefined,
+      email: values.email || undefined,
     };
 
     startTransition(async () => {
       const result =
         mode === "create"
-          ? await createCustomer(payload)
-          : await updateCustomer(customerId!, payload);
+          ? await createLocalCustomer(businessId, payload)
+          : await updateLocalCustomer(businessId, customerId!, payload);
 
-      if (result.error) {
-        setError(
-          typeof result.error === "string" ? result.error : "Could not save customer"
-        );
+      if (!result) {
+        setError("Could not save customer");
         return;
       }
 
+      await refresh();
       router.push("/customers");
-      router.refresh();
     });
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Header title={mode === "create" ? "Add Customer" : "Edit Customer"} />
+        <main className="p-4 md:p-6 max-w-lg mx-auto mobile-page">
+          <Skeleton className="h-64 rounded-2xl" />
+        </main>
+      </>
+    );
   }
 
   return (
@@ -74,7 +119,10 @@ export function CustomerForm({
                   id="name"
                   name="name"
                   required
-                  defaultValue={defaultValues?.name}
+                  value={values.name}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="Customer name"
                 />
               </div>
@@ -84,7 +132,10 @@ export function CustomerForm({
                   id="phone"
                   name="phone"
                   type="tel"
-                  defaultValue={defaultValues?.phone}
+                  value={values.phone}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, phone: e.target.value }))
+                  }
                   placeholder="08012345678"
                 />
               </div>
@@ -94,7 +145,10 @@ export function CustomerForm({
                   id="email"
                   name="email"
                   type="email"
-                  defaultValue={defaultValues?.email}
+                  value={values.email}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, email: e.target.value }))
+                  }
                   placeholder="customer@email.com"
                 />
               </div>

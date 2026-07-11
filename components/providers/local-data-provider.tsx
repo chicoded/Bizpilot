@@ -45,7 +45,16 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
       setCurrency(meta?.currency ?? "NGN");
       setStatus("ready");
     } catch {
-      setStatus("error");
+      const meta = await getLocalBusinessMeta();
+      const id = meta?.businessId ?? (await getActiveBusinessId());
+      if (id) {
+        setBusinessId(id);
+        setBusinessName(meta?.name ?? "My shop");
+        setCurrency(meta?.currency ?? "NGN");
+        setStatus("ready");
+      } else {
+        setStatus("error");
+      }
     }
   }, []);
 
