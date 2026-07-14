@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import {
 } from "@/lib/backup/gmail";
 import { deliverBackupToDrive } from "@/lib/backup/drive";
 import { downloadBackupFile, exportBackupJson } from "@/lib/backup/export";
+import { restoreBackupFromFile } from "@/lib/backup/restore";
 import { useLocalData } from "@/components/providers/local-data-provider";
 import {
   CloudUpload,
@@ -38,12 +39,14 @@ import {
   Loader2,
   Mail,
   Send,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BackupSettingsPanel() {
-  const { businessId, businessName, runBackupNow } = useLocalData();
+  const { businessId, businessName, runBackupNow, refresh } = useLocalData();
   const searchParams = useSearchParams();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [config, setConfig] = useState(getBackupConfig());
@@ -136,6 +139,35 @@ export function BackupSettingsPanel() {
       const json = await exportBackupJson(businessId);
       downloadBackupFile(json, businessName);
       setMessage("Backup downloaded to your device.");
+    });
+  }
+
+  function handleRestoreClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleRestoreFile(file: File | undefined) {
+    if (!file) return;
+    const confirmed = window.confirm(
+      "Restore this backup? It will replace inventory, customers, sales, and expenses on THIS device with the backup file."
+    );
+    if (!confirmed) return;
+
+    setMessage(null);
+    startTransition(async () => {
+      try {
+        const summary = await restoreBackupFromFile(file);
+        await refresh();
+        setMessage(
+          `Restored ${summary.businessName}: ${summary.products} products, ${summary.customers} customers, ${summary.sales} sales, ${summary.expenses} expenses.`
+        );
+      } catch (error) {
+        setMessage(
+          error instanceof Error ? error.message : "Could not restore backup."
+        );
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     });
   }
 
@@ -432,6 +464,46 @@ export function BackupSettingsPanel() {
               <Download className="h-4 w-4" />
               Download backup
             </Button>
+          </div>
+
+          <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+            <div>
+              <p className="font-medium text-sm flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Restore / update this device
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Open a backup .json from Gmail, Drive, WhatsApp, or Downloads.
+                This replaces shop data on this phone only — it does not sync live
+                across the team.
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => handleRestoreFile(e.target.files?.[0])}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full h-12"
+              onClick={handleRestoreClick}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              Choose backup file to restore
+            </Button>
+            <ol className="text-xs text-muted-foreground list-decimal pl-4 space-y-1">
+              <li>On the main phone: Send to Gmail / Save to Drive / Download.</li>
+              <li>On your phone or a staff phone: open that file (or download it).</li>
+              <li>Here: tap Restore and pick the .json backup file.</li>
+            </ol>
           </div>
 
           {message && (

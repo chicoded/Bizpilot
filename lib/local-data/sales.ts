@@ -162,6 +162,24 @@ export async function listLocalSales(businessId: string): Promise<LocalSale[]> {
   );
 }
 
+export async function replaceLocalSales(
+  businessId: string,
+  sales: LocalSale[]
+): Promise<void> {
+  const db = getLocalDB();
+  await db.transaction("rw", db.sales, async () => {
+    const existing = await db.sales.where("businessId").equals(businessId).toArray();
+    const incomingIds = new Set(sales.map((s) => s.id));
+    const toDelete = existing.filter((s) => !incomingIds.has(s.id));
+    if (toDelete.length > 0) {
+      await db.sales.bulkDelete(toDelete.map((s) => s.id));
+    }
+    if (sales.length > 0) {
+      await db.sales.bulkPut(sales);
+    }
+  });
+}
+
 function filterSalesByPeriod(sales: LocalSale[], period: LocalSalePeriod) {
   const now = new Date();
   return sales.filter((sale) => {
