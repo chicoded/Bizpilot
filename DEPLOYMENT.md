@@ -142,7 +142,7 @@ After deploy, configure webhooks with your production URL:
 
 | Service | URL |
 |---------|-----|
-| Paystack | `https://your-domain.com/api/webhooks/paystack` |
+| Flutterwave | `https://your-domain.com/api/webhooks/flutterwave` |
 | Twilio WhatsApp | `https://your-domain.com/api/webhooks/whatsapp` |
 | Clerk | `https://your-domain.com/api/webhooks/clerk` (if using) |
 
@@ -171,7 +171,7 @@ Expected response:
 - [ ] Onboarding creates business
 - [ ] Dashboard loads KPIs
 - [ ] POS sale completes
-- [ ] Paystack test payment (then switch to live keys)
+- [ ] Flutterwave test payment (then switch to live keys)
 - [ ] PWA install on mobile
 - [ ] Sentry receives test error (optional)
 - [ ] PostHog captures pageviews (optional)
@@ -207,7 +207,7 @@ Expected response:
 ## Security notes
 
 - Never commit `.env` files
-- Use **live** Paystack keys only in production
+- Use **live** Flutterwave keys only in production
 - Rotate secrets if exposed
 - Enable Supabase RLS policies
 - Clerk protects all routes except public pages and webhooks
