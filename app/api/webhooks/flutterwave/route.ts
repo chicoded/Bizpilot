@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifyFlutterwaveWebhookSignature } from "@/services/flutterwave";
 import { handleFlutterwaveWebhookEvent } from "@/services/subscription";
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIp(request);
   const limit = rateLimit(`flutterwave-webhook:${ip}`, 60, 60_000);
-  if (!limit.allowed) {
+  if (!limit.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
