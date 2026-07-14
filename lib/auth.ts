@@ -225,7 +225,8 @@ export async function syncClerkUser(clerkUser: {
   lastName: string | null;
   imageUrl: string;
 }) {
-  const email = clerkUser.emailAddresses[0]?.emailAddress?.toLowerCase();
+  const rawEmail = clerkUser.emailAddresses[0]?.emailAddress;
+  const email = rawEmail?.trim().toLowerCase();
   if (!email) return null;
 
   const profile = {
@@ -235,37 +236,42 @@ export async function syncClerkUser(clerkUser: {
     imageUrl: clerkUser.imageUrl,
   };
 
-  try {
-    return await prisma.user.upsert({
+  const byId = await prisma.user.findUnique({ where: { id: clerkUser.id } });
+  if (byId) {
+    return prisma.user.update({
       where: { id: clerkUser.id },
-      update: profile,
-      create: { id: clerkUser.id, ...profile },
+      data: profile,
     });
-  } catch (error) {
-    // After Clerk domain/instance changes, the same email can exist under an old id.
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (!existing || existing.id === clerkUser.id) {
-      throw error;
-    }
+  }
 
+  // After Clerk domain moves, the same email may exist under an old user id.
+  const byEmail = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
+
+  if (byEmail && byEmail.id !== clerkUser.id) {
     return prisma.$transaction(async (tx) => {
       await tx.user.create({
         data: { id: clerkUser.id, ...profile },
       });
       await tx.membership.updateMany({
-        where: { userId: existing.id },
+        where: { userId: byEmail.id },
         data: { userId: clerkUser.id },
       });
       await tx.teamInvite.updateMany({
-        where: { invitedBy: existing.id },
+        where: { invitedBy: byEmail.id },
         data: { invitedBy: clerkUser.id },
       });
       await tx.auditLog.updateMany({
-        where: { userId: existing.id },
+        where: { userId: byEmail.id },
         data: { userId: clerkUser.id },
       });
-      await tx.user.delete({ where: { id: existing.id } });
+      await tx.user.delete({ where: { id: byEmail.id } });
       return tx.user.findUniqueOrThrow({ where: { id: clerkUser.id } });
     });
   }
+
+  return prisma.user.create({
+    data: { id: clerkUser.id, ...profile },
+  });
 }

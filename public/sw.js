@@ -1,4 +1,4 @@
-const CACHE_NAME = "bizpilot-v7";
+const CACHE_NAME = "bizpilot-v8";
 const OFFLINE_URL = "/offline";
 const SHELL_PATHS = [
   OFFLINE_URL,

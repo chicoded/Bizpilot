@@ -4,9 +4,17 @@ import { getBusinessContext, syncClerkUser } from "@/lib/auth";
 import { getPendingInviteForEmail } from "@/lib/team";
 import { OnboardingForm } from "@/features/onboarding/onboarding-form";
 
+function isNextNavigationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const digest = "digest" in error ? String((error as { digest?: unknown }).digest) : "";
+  return digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND");
+}
+
 export default async function OnboardingPage() {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
+
+  let syncWarning: string | null = null;
 
   try {
     await syncClerkUser({
@@ -18,11 +26,19 @@ export default async function OnboardingPage() {
     });
   } catch (error) {
     console.error("[onboarding] syncClerkUser failed:", error);
-    throw error;
+    syncWarning =
+      error instanceof Error
+        ? error.message
+        : "Could not sync your account to the database.";
   }
 
-  const ctx = await getBusinessContext();
-  if (ctx) redirect("/dashboard");
+  try {
+    const ctx = await getBusinessContext();
+    if (ctx) redirect("/dashboard");
+  } catch (error) {
+    if (isNextNavigationError(error)) throw error;
+    console.error("[onboarding] getBusinessContext failed:", error);
+  }
 
   const email = user.emailAddresses[0]?.emailAddress;
   if (email) {
@@ -32,6 +48,7 @@ export default async function OnboardingPage() {
         redirect(`/invite/${pendingInvite.token}`);
       }
     } catch (error) {
+      if (isNextNavigationError(error)) throw error;
       console.error("[onboarding] invite lookup failed:", error);
     }
   }
@@ -50,6 +67,18 @@ export default async function OnboardingPage() {
             Takes less than 2 minutes. You can add team members later.
           </p>
         </div>
+
+        {syncWarning && (
+          <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-left">
+            <p className="font-medium">Account sync warning</p>
+            <p className="mt-1 text-muted-foreground break-words">{syncWarning}</p>
+            <p className="mt-2 text-muted-foreground">
+              You can still try setting up. If it fails, check Vercel{" "}
+              <code className="text-xs">DATABASE_URL</code> and Clerk keys.
+            </p>
+          </div>
+        )}
+
         <OnboardingForm />
       </div>
     </div>
