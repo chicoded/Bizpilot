@@ -61,6 +61,8 @@ export interface InitializeTransactionParams {
   reference: string;
   callbackUrl: string;
   metadata: Record<string, string>;
+  /** Paystack plan code (PLN_...) — enables recurring subscription after first charge */
+  planCode?: string;
 }
 
 export interface InitializeTransactionResult {
@@ -80,7 +82,11 @@ export async function initializeTransaction(
       reference: params.reference,
       callback_url: params.callbackUrl,
       metadata: params.metadata,
-      channels: ["card", "bank", "ussd", "bank_transfer"],
+      ...(params.planCode ? { plan: params.planCode } : {}),
+      // Card is required for reliable recurring; keep bank options for one-off.
+      channels: params.planCode
+        ? ["card"]
+        : ["card", "bank", "ussd", "bank_transfer"],
     }),
   });
 }
@@ -91,8 +97,14 @@ export interface VerifyTransactionResult {
   amount: number;
   paid_at: string;
   channel: string;
-  customer: { email: string; customer_code?: string };
+  customer: { email: string; customer_code?: string; id?: number };
+  authorization?: {
+    authorization_code?: string;
+    reusable?: boolean;
+    channel?: string;
+  };
   metadata: Record<string, string>;
+  plan?: string | null;
 }
 
 export async function verifyTransaction(
@@ -131,13 +143,15 @@ export interface CreateSubscriptionResult {
 
 export async function createPaystackSubscription(
   customerCode: string,
-  planCode: string
+  planCode: string,
+  authorizationCode?: string
 ): Promise<CreateSubscriptionResult> {
   return paystackRequest<CreateSubscriptionResult>("/subscription", {
     method: "POST",
     body: JSON.stringify({
       customer: customerCode,
       plan: planCode,
+      ...(authorizationCode ? { authorization: authorizationCode } : {}),
     }),
   });
 }

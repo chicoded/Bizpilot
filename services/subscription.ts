@@ -107,31 +107,17 @@ export async function initializePlanCheckout(
 
   const paystackPlanCode = getPaystackPlanCode(planId);
 
-  // Use Paystack subscription if plan code configured
-  if (paystackPlanCode && subscription?.paystackCustomerCode) {
-    try {
-      const sub = await createPaystackSubscription(
-        subscription.paystackCustomerCode,
-        paystackPlanCode
-      );
-      await prisma.subscription.update({
-        where: { businessId },
-        data: { paystackSubCode: sub.subscription_code },
-      });
-    } catch {
-      // Fall through to one-time payment
-    }
-  }
-
   const result = await initializeTransaction({
     email,
     amountKobo,
     reference,
     callbackUrl: `${appUrl}/settings/billing/callback`,
+    planCode: paystackPlanCode,
     metadata: {
       businessId,
       plan: planId,
       transactionId: transaction.id,
+      ...(paystackPlanCode ? { paystackPlanCode } : {}),
     },
   });
 
@@ -182,13 +168,37 @@ export async function verifyAndActivatePayment(reference: string) {
     }
   }
 
+  let paystackSubCode: string | undefined;
+  const planCode =
+    getPaystackPlanCode(plan as SubscriptionPlanId) ||
+    metadata.paystackPlanCode;
+  const authorizationCode = verified.authorization?.authorization_code;
+
+  // After first charge, register recurring subscription when plan codes are set.
+  if (planCode && customerCode && authorizationCode) {
+    try {
+      const sub = await createPaystackSubscription(
+        customerCode,
+        planCode,
+        authorizationCode
+      );
+      paystackSubCode = sub.subscription_code;
+    } catch (error) {
+      console.warn(
+        "[billing] Could not create Paystack subscription (payment still counted):",
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
   const subscription = await activateSubscription(
     businessId,
     plan,
     reference,
     ngnFromKobo(verified.amount),
     verified.channel,
-    customerCode
+    customerCode,
+    paystackSubCode
   );
 
   await prisma.auditLog.create({
@@ -243,6 +253,30 @@ export async function handlePaystackWebhookEvent(event: string, data: Record<str
           where: { paystackSubCode: subscriptionCode.subscription_code },
         });
         if (sub) await markSubscriptionPastDue(sub.businessId);
+      }
+      break;
+    }
+    case "invoice.update":
+    case "invoice.create": {
+      // Successful recurring invoice — extend access window.
+      const paid = data.status === "success" || data.paid === true || data.paid === 1;
+      const subscriptionCode =
+        (data.subscription as { subscription_code?: string } | undefined)
+          ?.subscription_code ??
+        (typeof data.subscription === "string" ? data.subscription : undefined);
+      if (paid && subscriptionCode) {
+        const sub = await prisma.subscription.findFirst({
+          where: { paystackSubCode: subscriptionCode },
+        });
+        if (sub) {
+          await prisma.subscription.update({
+            where: { id: sub.id },
+            data: {
+              status: "ACTIVE",
+              currentPeriodEnd: addDays(new Date(), BILLING_PERIOD_DAYS),
+            },
+          });
+        }
       }
       break;
     }

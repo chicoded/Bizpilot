@@ -5,8 +5,8 @@ import { replaceLocalExpenses } from "@/lib/local-data/expenses";
 import { listLocalProducts, replaceLocalProducts } from "@/lib/local-data/products";
 
 export type AppContextResponse = {
-  businessId: string;
-  businessName: string;
+  businessId: string | null;
+  businessName: string | null;
   currency: string;
 };
 

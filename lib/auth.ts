@@ -225,23 +225,47 @@ export async function syncClerkUser(clerkUser: {
   lastName: string | null;
   imageUrl: string;
 }) {
-  const email = clerkUser.emailAddresses[0]?.emailAddress;
+  const email = clerkUser.emailAddresses[0]?.emailAddress?.toLowerCase();
   if (!email) return null;
 
-  return prisma.user.upsert({
-    where: { id: clerkUser.id },
-    update: {
-      email,
-      firstName: clerkUser.firstName,
-      lastName: clerkUser.lastName,
-      imageUrl: clerkUser.imageUrl,
-    },
-    create: {
-      id: clerkUser.id,
-      email,
-      firstName: clerkUser.firstName,
-      lastName: clerkUser.lastName,
-      imageUrl: clerkUser.imageUrl,
-    },
-  });
+  const profile = {
+    email,
+    firstName: clerkUser.firstName,
+    lastName: clerkUser.lastName,
+    imageUrl: clerkUser.imageUrl,
+  };
+
+  try {
+    return await prisma.user.upsert({
+      where: { id: clerkUser.id },
+      update: profile,
+      create: { id: clerkUser.id, ...profile },
+    });
+  } catch (error) {
+    // After Clerk domain/instance changes, the same email can exist under an old id.
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (!existing || existing.id === clerkUser.id) {
+      throw error;
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.user.create({
+        data: { id: clerkUser.id, ...profile },
+      });
+      await tx.membership.updateMany({
+        where: { userId: existing.id },
+        data: { userId: clerkUser.id },
+      });
+      await tx.teamInvite.updateMany({
+        where: { invitedBy: existing.id },
+        data: { invitedBy: clerkUser.id },
+      });
+      await tx.auditLog.updateMany({
+        where: { userId: existing.id },
+        data: { userId: clerkUser.id },
+      });
+      await tx.user.delete({ where: { id: existing.id } });
+      return tx.user.findUniqueOrThrow({ where: { id: clerkUser.id } });
+    });
+  }
 }

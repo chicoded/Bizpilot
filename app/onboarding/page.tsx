@@ -8,22 +8,31 @@ export default async function OnboardingPage() {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
-  await syncClerkUser({
-    id: user.id,
-    emailAddresses: user.emailAddresses,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    imageUrl: user.imageUrl,
-  });
+  try {
+    await syncClerkUser({
+      id: user.id,
+      emailAddresses: user.emailAddresses,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+    });
+  } catch (error) {
+    console.error("[onboarding] syncClerkUser failed:", error);
+    throw error;
+  }
 
   const ctx = await getBusinessContext();
   if (ctx) redirect("/dashboard");
 
   const email = user.emailAddresses[0]?.emailAddress;
   if (email) {
-    const pendingInvite = await getPendingInviteForEmail(email);
-    if (pendingInvite) {
-      redirect(`/invite/${pendingInvite.token}`);
+    try {
+      const pendingInvite = await getPendingInviteForEmail(email);
+      if (pendingInvite) {
+        redirect(`/invite/${pendingInvite.token}`);
+      }
+    } catch (error) {
+      console.error("[onboarding] invite lookup failed:", error);
     }
   }
 

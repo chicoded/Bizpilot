@@ -8,6 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { hydrateLocalStoreFromServer } from "@/lib/local-data/hydrate";
 import { getActiveBusinessId, getLocalBusinessMeta } from "@/lib/local-data/business";
 import { runScheduledBackup } from "@/lib/backup/scheduler";
@@ -40,7 +42,19 @@ function applyMeta(
   return id;
 }
 
+function isAuthOnlyPath(pathname: string | null) {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/invite")
+  );
+}
+
 export function LocalDataProvider({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const pathname = usePathname();
   const [status, setStatus] = useState<LocalDataStatus>("loading");
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("My shop");
@@ -92,9 +106,8 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (!existingId) {
-        setStatus("error");
-      }
+      // No shop yet (onboarding) — not an error.
+      setStatus("ready");
     } catch {
       const meta = await getLocalBusinessMeta();
       const id = meta?.businessId ?? (await getActiveBusinessId());
@@ -112,7 +125,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
         );
         setStatus("ready");
       } else {
-        setStatus("error");
+        setStatus("ready");
       }
     }
   }, []);
@@ -126,8 +139,15 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   }, [businessId]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn || isAuthOnlyPath(pathname)) {
+      setStatus("ready");
+      return;
+    }
+
     void refresh();
-  }, [refresh]);
+  }, [isLoaded, isSignedIn, pathname, refresh]);
 
   useEffect(() => {
     if (!businessId || status !== "ready") return;
