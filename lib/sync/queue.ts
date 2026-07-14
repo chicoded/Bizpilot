@@ -1,6 +1,6 @@
 import { getLocalDB } from "@/lib/local-db/database";
 import { localId } from "@/lib/local-data/id";
-import type { SyncQueueItem, SyncQueueStatus } from "@/lib/local-db/types";
+import type { SyncQueueItem } from "@/lib/local-db/types";
 
 export type SaleSyncPayload = {
   clientSaleId: string;
