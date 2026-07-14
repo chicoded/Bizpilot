@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Role, type Business, type Membership, type Prisma } from "@prisma/client";
+import { Role, Prisma, type Business, type Membership } from "@prisma/client";
 import {
   canAccessSection,
   type AppSectionId,
@@ -252,10 +252,17 @@ export async function syncClerkUser(clerkUser: {
     }));
 
   if (byEmail && byEmail.id !== clerkUser.id) {
+    // Free the unique email before creating the new Clerk id row.
     return prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: byEmail.id },
+        data: { email: `legacy+${byEmail.id}@migrated.local` },
+      });
+
       await tx.user.create({
         data: { id: clerkUser.id, ...profile },
       });
+
       await tx.membership.updateMany({
         where: { userId: byEmail.id },
         data: { userId: clerkUser.id },
@@ -268,12 +275,29 @@ export async function syncClerkUser(clerkUser: {
         where: { userId: byEmail.id },
         data: { userId: clerkUser.id },
       });
+
       await tx.user.delete({ where: { id: byEmail.id } });
       return tx.user.findUniqueOrThrow({ where: { id: clerkUser.id } });
     });
   }
 
-  return prisma.user.create({
-    data: { id: clerkUser.id, ...profile },
-  });
+  try {
+    return await prisma.user.create({
+      data: { id: clerkUser.id, ...profile },
+    });
+  } catch (error) {
+    // Race / case mismatch: email already taken — re-run remap once.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const existing = await prisma.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+      });
+      if (existing && existing.id !== clerkUser.id) {
+        return syncClerkUser(clerkUser);
+      }
+    }
+    throw error;
+  }
 }
