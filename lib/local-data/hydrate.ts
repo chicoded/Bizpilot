@@ -40,7 +40,7 @@ export async function hydrateLocalStoreFromServer(): Promise<{
 
   await setLocalBusinessMeta({
     businessId: context.businessId,
-    name: context.businessName,
+    name: context.businessName ?? "My shop",
     currency: context.currency,
     updatedAt: new Date().toISOString(),
   });
