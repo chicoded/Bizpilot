@@ -131,6 +131,19 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!businessId || status !== "ready") return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
+    void (async () => {
+      const { flushSaleSyncQueue, pullCloudProducts } = await import(
+        "@/lib/sync/sales-sync"
+      );
+      await flushSaleSyncQueue(businessId);
+      await pullCloudProducts(businessId);
+    })();
+  }, [businessId, status]);
+
+  useEffect(() => {
+    if (!businessId || status !== "ready") return;
 
     const checkBackup = () => {
       void runScheduledBackup(businessId);

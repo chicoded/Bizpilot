@@ -74,6 +74,9 @@ const REPAIR_STATEMENTS = [
        "updatedAt" = CURRENT_TIMESTAMP;`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "sales_businessId_receiptNumber_key"
     ON "sales"("businessId", "receiptNumber");`,
+  `ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "clientSaleId" TEXT;`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "sales_businessId_clientSaleId_key"
+    ON "sales"("businessId", "clientSaleId");`,
 ];
 
 function loadEnvFile(path) {

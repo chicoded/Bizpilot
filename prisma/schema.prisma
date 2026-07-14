@@ -218,6 +218,8 @@ model Sale {
   id            String        @id @default(cuid())
   businessId    String
   customerId    String?
+  /// Client-generated id for idempotent offline sync (unique per business)
+  clientSaleId  String?
   /// Human-readable receipt number, e.g. RCP-20250703-0001 (unique per business)
   receiptNumber String
   paymentMethod PaymentMethod @default(CASH)
@@ -237,6 +239,7 @@ model Sale {
   items    SaleItem[]
 
   @@unique([businessId, receiptNumber])
+  @@unique([businessId, clientSaleId])
   @@index([businessId])
   @@index([businessId, createdAt])
   @@map("sales")

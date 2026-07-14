@@ -102,3 +102,24 @@ export type LocalBackupSnapshot = {
   sizeBytes: number;
   payload: string;
 };
+
+export type SyncQueueStatus =
+  | "pending"
+  | "syncing"
+  | "synced"
+  | "conflict"
+  | "error";
+
+export type SyncQueueItem = {
+  id: string;
+  businessId: string;
+  type: "sale";
+  /** Local sale id / clientSaleId */
+  entityId: string;
+  payload: string;
+  status: SyncQueueStatus;
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

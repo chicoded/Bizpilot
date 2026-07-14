@@ -6,6 +6,7 @@ import type {
   LocalExpense,
   LocalProduct,
   LocalSale,
+  SyncQueueItem,
 } from "@/lib/local-db/types";
 
 export class BizPilotLocalDB extends Dexie {
@@ -15,6 +16,7 @@ export class BizPilotLocalDB extends Dexie {
   expenses!: Table<LocalExpense, string>;
   businessMeta!: Table<LocalBusinessMeta, string>;
   backupSnapshots!: Table<LocalBackupSnapshot, string>;
+  syncQueue!: Table<SyncQueueItem, string>;
 
   constructor() {
     super("bizpilot_local");
@@ -26,6 +28,16 @@ export class BizPilotLocalDB extends Dexie {
       expenses: "id, businessId, date, createdAt",
       businessMeta: "businessId",
       backupSnapshots: "id, businessId, createdAt",
+    });
+
+    this.version(2).stores({
+      products: "id, businessId, name, barcode, isActive, updatedAt",
+      customers: "id, businessId, name, updatedAt",
+      sales: "id, businessId, receiptNumber, createdAt, syncedAt",
+      expenses: "id, businessId, date, createdAt",
+      businessMeta: "businessId",
+      backupSnapshots: "id, businessId, createdAt",
+      syncQueue: "id, businessId, type, entityId, status, updatedAt",
     });
   }
 }

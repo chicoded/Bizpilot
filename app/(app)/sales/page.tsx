@@ -25,6 +25,7 @@ import {
   lookupProductByBarcode,
 } from "@/features/sales/scan-product-button";
 import { ExternalScannerStatus } from "@/features/sales/external-scanner-status";
+import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
 import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
 import {
@@ -357,6 +358,7 @@ export default function SalesPage() {
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-3 space-y-4">
             <ScanProductButton onProductFound={addToCart} disabled={isPending} />
+            <TeamSyncStatus />
             <ExternalScannerStatus />
             <div className="relative">
               <Search

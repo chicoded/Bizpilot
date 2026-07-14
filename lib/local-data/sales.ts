@@ -113,7 +113,7 @@ export async function createLocalSale(
     profit,
     paymentMethod: input.paymentMethod,
     customerId: input.customerId ?? null,
-    isCredit: input.isCredit ?? false,
+    isCredit: input.isCredit ?? input.paymentMethod === "CREDIT",
     createdAt: timestamp,
     syncedAt: null,
   };
@@ -135,7 +135,7 @@ export async function createLocalSale(
       });
     }
 
-    if (input.isCredit && input.customerId) {
+    if ((input.isCredit || input.paymentMethod === "CREDIT") && input.customerId) {
       const customer = await db.customers.get(input.customerId);
       if (customer && customer.businessId === businessId) {
         await db.customers.put({
@@ -150,6 +150,19 @@ export async function createLocalSale(
 
     await db.sales.put(sale);
   });
+
+  // Hybrid sync: keep working offline, queue for shared team database.
+  try {
+    const { queueLocalSaleForSync, flushSaleSyncQueue } = await import(
+      "@/lib/sync/sales-sync"
+    );
+    await queueLocalSaleForSync(businessId, sale);
+    if (typeof navigator === "undefined" || navigator.onLine) {
+      void flushSaleSyncQueue(businessId);
+    }
+  } catch {
+    // Local sale already saved — sync can retry later.
+  }
 
   return { sale };
 }
