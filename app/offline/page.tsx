@@ -12,7 +12,7 @@ export default function OfflinePage() {
       </div>
       <h1 className="text-2xl font-bold text-brand mb-2">You&apos;re offline</h1>
       <p className="text-muted-foreground text-center max-w-sm mb-4">
-        Shop data stays on this device. If you already opened BizPilot while
+        Shop data stays on this device. If you already opened Zaplex while
         online, try POS or Inventory below. First install still needs a short
         online open.
       </p>

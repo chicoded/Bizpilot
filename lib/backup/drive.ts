@@ -16,12 +16,12 @@ function getGoogleAccessToken(): string | null {
 function backupFilename(businessName: string) {
   const date = new Date().toISOString().slice(0, 10);
   const safeName = businessName.replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
-  return `bizpilot-backup-${safeName || "shop"}-${date}.json`;
+  return `zaplex-backup-${safeName || "shop"}-${date}.json`;
 }
 
 async function findOrCreateBackupFolder(accessToken: string): Promise<string> {
   const query = encodeURIComponent(
-    "name = 'BizPilot Backups' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    "(name = 'Zaplex Backups' or name = 'BizPilot Backups') and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
   );
   const listRes = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name)`,
@@ -42,7 +42,7 @@ async function findOrCreateBackupFolder(accessToken: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: "BizPilot Backups",
+      name: "Zaplex Backups",
       mimeType: "application/vnd.google-apps.folder",
     }),
   });
@@ -136,7 +136,7 @@ export async function shareBackupToDrive(
     const result = await shareBackupFile(
       json,
       businessName,
-      "Save this BizPilot backup to Google Drive"
+      "Save this Zaplex backup to Google Drive"
     );
     return { ok: true, method: result.method };
   } catch (error) {
@@ -158,7 +158,7 @@ export async function deliverBackupToDrive(
   if (uploaded.ok) {
     return {
       ok: true,
-      message: "Backup saved to Google Drive → BizPilot Backups folder",
+      message: "Backup saved to Google Drive → Zaplex Backups folder",
     };
   }
 

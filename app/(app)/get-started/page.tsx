@@ -10,7 +10,7 @@ export default async function GetStartedPage() {
   return (
     <AppShell
       title="Get started"
-      subtitle={`Welcome to BizPilot, ${ctx.business.name}`}
+      subtitle={`Welcome to Zaplex, ${ctx.business.name}`}
       maxWidth="default"
     >
       <GetStartedChecklist progress={progress} />

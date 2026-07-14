@@ -216,12 +216,12 @@ export async function sendBackupToGmail(
   }
 
   const date = new Date().toISOString().slice(0, 10);
-  const attachmentName = `bizpilot-backup-${date}.json`;
+  const attachmentName = `zaplex-backup-${date}.json`;
   const mime = buildMimeEmail({
     to: config.gmailEmail,
-    subject: `BizPilot backup — ${businessName} (${date})`,
+    subject: `Zaplex backup — ${businessName} (${date})`,
     body:
-      "Attached is your BizPilot shop backup. Keep this file safe — you can restore your inventory, sales, and expenses from it.",
+      "Attached is your Zaplex shop backup. Keep this file safe — you can restore your inventory, sales, and expenses from it.",
     attachmentName,
     attachmentContent: json,
   });
@@ -261,8 +261,8 @@ export async function shareBackupToGmail(
       json,
       businessName,
       gmailEmail
-        ? `Send this BizPilot backup to ${gmailEmail}`
-        : "BizPilot shop backup — send to your Gmail"
+        ? `Send this Zaplex backup to ${gmailEmail}`
+        : "Zaplex shop backup — send to your Gmail"
     );
     return { ok: true, method: result.method };
   } catch (error) {

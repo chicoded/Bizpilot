@@ -278,7 +278,7 @@ export function BackupSettingsPanel() {
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {backupToDrive
-                  ? "On — save to BizPilot Backups folder"
+                  ? "On — save to Zaplex Backups folder"
                   : "Off"}
               </p>
             </button>
@@ -327,7 +327,7 @@ export function BackupSettingsPanel() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {hasGoogle
                     ? `Connected as ${config.gmailEmail} — Gmail send + Drive upload`
-                    : "Allow BizPilot to email and save backups to your Google account"}
+                    : "Allow Zaplex to email and save backups to your Google account"}
                 </p>
               </div>
               {hasGoogle ? (

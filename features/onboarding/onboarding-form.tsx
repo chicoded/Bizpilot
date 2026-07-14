@@ -118,7 +118,7 @@ export function OnboardingForm() {
                 Setting up...
               </>
             ) : (
-              "Launch BizPilot"
+              "Launch Zaplex"
             )}
           </Button>
         </form>

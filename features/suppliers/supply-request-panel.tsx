@@ -143,7 +143,7 @@ export function SupplyRequestPanel({
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-xs text-muted-foreground">
               Opens WhatsApp on this device with your order message ready — then
-              tap Send in WhatsApp. A purchase order is saved in BizPilot too.
+              tap Send in WhatsApp. A purchase order is saved in Zaplex too.
             </p>
 
             {products.length > 0 ? (

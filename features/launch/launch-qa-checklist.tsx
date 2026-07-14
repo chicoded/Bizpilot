@@ -221,7 +221,7 @@ export function LaunchQaChecklist({ businessId, appUrl }: LaunchQaChecklistProps
                             size="sm"
                             onClick={() => {
                               Sentry.captureException(
-                                new Error("BizPilot launch checklist — Sentry test")
+                                new Error("Zaplex launch checklist — Sentry test")
                               );
                               toast({
                                 title: "Sentry test sent",

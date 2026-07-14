@@ -7,5 +7,5 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="108" fill="url(#bg)"/>
-  <text x="256" y="300" font-family="system-ui,sans-serif" font-size="180" font-weight="800" fill="white" text-anchor="middle">BP</text>
+  <text x="256" y="300" font-family="system-ui,sans-serif" font-size="220" font-weight="800" fill="white" text-anchor="middle">Z</text>
 </svg>

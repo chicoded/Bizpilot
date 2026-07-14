@@ -64,7 +64,7 @@ export default function LandingPage() {
           <span className="text-biz-emerald">Nigerian business</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-          Not bookkeeping. Not just inventory. BizPilot is your accountant,
+          Not bookkeeping. Not just inventory. Zaplex is your accountant,
           inventory manager, sales analyst, and business advisor — in one app.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -118,7 +118,7 @@ export default function LandingPage() {
             <div className="h-3 w-3 rounded-full bg-destructive/80" />
             <div className="h-3 w-3 rounded-full bg-warning/80" />
             <div className="h-3 w-3 rounded-full bg-success/80" />
-            <span className="text-xs text-muted-foreground ml-2">BizPilot Dashboard</span>
+            <span className="text-xs text-muted-foreground ml-2">Zaplex Dashboard</span>
           </div>
           <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-3">
             {["Sales Today", "Profit", "Expenses", "Debt"].map((label) => (
@@ -160,11 +160,11 @@ export default function LandingPage() {
       <section className="px-4 py-16 max-w-6xl mx-auto text-center">
         <div className="rounded-3xl bg-biz-gradient p-8 md:p-12 text-white">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Ready to pilot your business?
+            Ready to run your business smarter?
           </h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto">
             Join pharmacies, retail shops, and supermarkets across Nigeria using
-            BizPilot AI.
+            Zaplex.
           </p>
           <SignedOut>
             <Link href="/sign-up">
@@ -181,7 +181,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="px-4 py-8 text-center text-sm text-muted-foreground border-t">
-        <p>© {new Date().getFullYear()} BizPilot AI. Built for African SMEs.</p>
+        <p>© {new Date().getFullYear()} Zaplex. Built for African SMEs.</p>
       </footer>
     </div>
   );

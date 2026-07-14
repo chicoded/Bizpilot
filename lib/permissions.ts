@@ -89,7 +89,7 @@ export const APP_SECTIONS: {
   {
     id: "ai",
     label: "AI Assistant",
-    description: "Chat with BizPilot AI",
+    description: "Chat with Zaplex AI",
     pathPrefix: "/ai",
   },
   {

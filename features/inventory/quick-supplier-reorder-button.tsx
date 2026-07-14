@@ -29,7 +29,7 @@ export function QuickSupplierReorderButton({
       const result = await sendSupplyRequest({
         supplierId,
         items,
-        notes: "Low stock reorder from BizPilot",
+        notes: "Low stock reorder from Zaplex",
       });
 
       if (result.error) {

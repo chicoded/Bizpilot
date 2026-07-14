@@ -9,11 +9,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BizPilot AI — The AI Operating System for African SMEs",
+  title: "Zaplex — The AI Operating System for African SMEs",
   description:
     "AI-powered business management for pharmacies, retail shops, supermarkets and more. Inventory, POS, expenses, debt tracking, and AI insights.",
-  keywords: ["SME", "Nigeria", "POS", "inventory", "AI", "business"],
-  applicationName: "BizPilot AI",
+  keywords: ["SME", "Nigeria", "POS", "inventory", "AI", "business", "Zaplex"],
+  applicationName: "Zaplex",
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BizPilot",
+    title: "Zaplex",
   },
   formatDetection: {
     telephone: false,

@@ -39,9 +39,9 @@ export function AIChat({
       role: "assistant",
       content: providerConfigured
         ? initialAiUsage
-          ? `Hi! I'm your BizPilot AI assistant. On your ${initialAiUsage.tierLabel} plan you have ${initialAiUsage.dailyRemaining} of ${initialAiUsage.dailyLimit} AI messages left today. Ask me about sales, inventory, debts, or business recommendations.`
-          : "Hi! I'm your BizPilot AI assistant powered by Google Gemini. Ask me about sales, inventory, debts, expenses, or business recommendations."
-        : "Hi! I'm your BizPilot assistant. I'm in offline mode — add a free GEMINI_API_KEY for smarter answers. I can still answer basic questions from your business data.",
+          ? `Hi! I'm your Zaplex AI assistant. On your ${initialAiUsage.tierLabel} plan you have ${initialAiUsage.dailyRemaining} of ${initialAiUsage.dailyLimit} AI messages left today. Ask me about sales, inventory, debts, or business recommendations.`
+          : "Hi! I'm your Zaplex AI assistant powered by Google Gemini. Ask me about sales, inventory, debts, expenses, or business recommendations."
+        : "Hi! I'm your Zaplex assistant. I'm in offline mode — add a free GEMINI_API_KEY for smarter answers. I can still answer basic questions from your business data.",
     },
   ]);
   const [input, setInput] = useState("");

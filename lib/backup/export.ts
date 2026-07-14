@@ -75,7 +75,7 @@ export async function saveBackupSnapshot(businessId: string): Promise<LocalBacku
 export function downloadBackupFile(json: string, businessName: string) {
   const date = new Date().toISOString().slice(0, 10);
   const safeName = businessName.replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
-  const filename = `bizpilot-backup-${safeName || "shop"}-${date}.json`;
+  const filename = `zaplex-backup-${safeName || "shop"}-${date}.json`;
 
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -92,13 +92,13 @@ export async function shareBackupFile(
   shareText?: string
 ) {
   const date = new Date().toISOString().slice(0, 10);
-  const filename = `bizpilot-backup-${businessName.replace(/[^a-z0-9-_]+/gi, "-") || "shop"}-${date}.json`;
+  const filename = `zaplex-backup-${businessName.replace(/[^a-z0-9-_]+/gi, "-") || "shop"}-${date}.json`;
   const file = new File([json], filename, { type: "application/json" });
 
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     await navigator.share({
-      title: "BizPilot backup",
-      text: shareText ?? "BizPilot shop data backup",
+      title: "Zaplex backup",
+      text: shareText ?? "Zaplex shop data backup",
       files: [file],
     });
     return { method: "share" as const };

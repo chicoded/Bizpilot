@@ -14,10 +14,10 @@ export function LandingNav() {
       <nav className="flex items-center justify-between px-4 py-4 md:px-8 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-biz-gradient text-white font-bold">
-            BP
+            Z
           </div>
           <span className="text-xl font-bold text-biz-blue dark:text-foreground">
-            BizPilot AI
+            Zaplex
           </span>
         </div>
         <div className="hidden md:flex items-center gap-3">

@@ -36,5 +36,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", service: "BizPilot Paystack Webhook" });
+  return NextResponse.json({ status: "ok", service: "Zaplex Paystack Webhook" });
 }

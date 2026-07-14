@@ -59,6 +59,6 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    service: "BizPilot WhatsApp AI",
+    service: "Zaplex WhatsApp AI",
   });
 }

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "BizPilot AI",
-    short_name: "BizPilot",
+    name: "Zaplex",
+    short_name: "Zaplex",
     description:
       "Shop app for African SMEs — inventory, POS, and backups saved on your device.",
     start_url: "/sales",

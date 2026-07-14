@@ -38,10 +38,10 @@ export function Sidebar({
         className="flex h-16 items-center gap-2 border-b border-border/50 px-6 hover:bg-accent/50 transition-colors touch-manipulation"
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-biz-gradient text-white font-bold text-sm">
-          BP
+          Z
         </div>
         <div className="min-w-0">
-          <p className="font-bold text-biz-blue dark:text-primary truncate">BizPilot AI</p>
+          <p className="font-bold text-biz-blue dark:text-primary truncate">Zaplex</p>
           {businessName && (
             <p className="text-xs text-muted-foreground truncate">
               {businessName}

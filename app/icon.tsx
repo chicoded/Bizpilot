@@ -17,7 +17,7 @@ export default function Icon() {
           borderRadius: 8,
         }}
       >
-        <span style={{ color: "white", fontSize: 18, fontWeight: 700 }}>B</span>
+        <span style={{ color: "white", fontSize: 18, fontWeight: 700 }}>Z</span>
       </div>
     ),
     { ...size }

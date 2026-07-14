@@ -69,7 +69,7 @@ export default async function OnboardingPage() {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-biz-gradient text-white font-bold text-xl mb-4">
-            BP
+            Z
           </div>
           <h1 className="text-2xl font-bold text-brand">
             Set up your business

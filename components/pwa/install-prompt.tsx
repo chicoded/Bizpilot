@@ -37,7 +37,7 @@ export function InstallPrompt() {
               <Smartphone className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">Install BizPilot</p>
+              <p className="font-semibold text-sm">Install Zaplex</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Install for a full-screen app experience — inventory and POS work
                 from your phone, even when the database is down.

@@ -32,11 +32,11 @@ export function parseBackupJson(raw: string): BackupExportPayload {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error("This file is not a valid BizPilot backup (bad JSON).");
+    throw new Error("This file is not a valid Zaplex backup (bad JSON).");
   }
 
   if (!isRecord(parsed)) {
-    throw new Error("This file is not a valid BizPilot backup.");
+    throw new Error("This file is not a valid Zaplex backup.");
   }
 
   if (parsed.version !== 1) {
@@ -49,7 +49,7 @@ export function parseBackupJson(raw: string): BackupExportPayload {
 
   const business = isRecord(parsed.business) ? parsed.business : null;
   if (!business?.businessId || typeof business.businessId !== "string") {
-    throw new Error("Backup is missing shop id. Use a file exported from BizPilot.");
+    throw new Error("Backup is missing shop id. Use a file exported from Zaplex.");
   }
 
   return {
@@ -141,7 +141,7 @@ export async function restoreBackupFromJson(
 
 export async function restoreBackupFromFile(file: File): Promise<RestoreSummary> {
   if (!file.name.toLowerCase().endsWith(".json") && file.type && !file.type.includes("json")) {
-    throw new Error("Choose a BizPilot backup .json file.");
+    throw new Error("Choose a Zaplex backup .json file.");
   }
   const raw = await file.text();
   return restoreBackupFromJson(raw);

@@ -21,7 +21,7 @@ export function MonitoringSetupPanel({ services }: MonitoringSetupPanelProps) {
   const allConfigured = services.every((s) => s.configured);
 
   function sendSentryTest() {
-    const error = new Error("BizPilot launch checklist — Sentry test error");
+    const error = new Error("Zaplex launch checklist — Sentry test error");
     Sentry.captureException(error);
     setSentrySent(true);
     toast({
@@ -52,7 +52,7 @@ export function MonitoringSetupPanel({ services }: MonitoringSetupPanelProps) {
             <CardTitle className="text-base">Monitoring & analytics</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Phase 2 after manual QA — catch production errors and see how
-              shops use BizPilot.
+              shops use Zaplex.
             </p>
           </div>
           {allConfigured && (

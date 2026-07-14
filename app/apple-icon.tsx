@@ -17,7 +17,7 @@ export default function AppleIcon() {
           borderRadius: 36,
         }}
       >
-        <span style={{ color: "white", fontSize: 72, fontWeight: 800 }}>BP</span>
+        <span style={{ color: "white", fontSize: 72, fontWeight: 800 }}>Z</span>
       </div>
     ),
     { ...size }

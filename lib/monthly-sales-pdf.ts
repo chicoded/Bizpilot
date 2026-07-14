@@ -17,7 +17,7 @@ function addHeader(doc: jsPDF, title: string, subtitle: string) {
   doc.rect(0, 0, pageWidth, 32, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(15);
-  doc.text("BizPilot AI", MARGIN.left, 13);
+  doc.text("Zaplex", MARGIN.left, 13);
   doc.setFontSize(9);
   doc.text("Monthly Sales Intelligence Report", MARGIN.left, 21);
   doc.setFontSize(11);
@@ -31,7 +31,7 @@ function addFooter(doc: jsPDF, page: number, total: number) {
   doc.setFontSize(7);
   doc.setTextColor(140, 140, 140);
   doc.text(
-    `BizPilot AI · Confidential business report · Page ${page} of ${total}`,
+    `Zaplex · Confidential business report · Page ${page} of ${total}`,
     MARGIN.left,
     h - 8
   );
