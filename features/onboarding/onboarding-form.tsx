@@ -34,7 +34,8 @@ export function OnboardingForm() {
     startTransition(async () => {
       const result = await createBusiness(formData);
       if (result.error) {
-        const formErrors = result.error._form;
+        const formErrors =
+          "_form" in result.error ? result.error._form : undefined;
         setError(
           Array.isArray(formErrors) && formErrors[0]
             ? formErrors[0]
