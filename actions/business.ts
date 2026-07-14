@@ -16,61 +16,86 @@ import {
 import { Role, Prisma } from "@prisma/client";
 
 export async function createBusiness(formData: FormData) {
-  const user = await currentUser();
-  if (!user) throw new Error("Unauthorized");
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return { error: { _form: ["Please sign in again and retry."] } };
+    }
 
-  await syncClerkUser({
-    id: user.id,
-    emailAddresses: user.emailAddresses,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    imageUrl: user.imageUrl,
-  });
+    await syncClerkUser({
+      id: user.id,
+      emailAddresses: user.emailAddresses,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+    });
 
-  const parsed = businessSchema.safeParse({
-    name: formData.get("name"),
-    industry: formData.get("industry"),
-    currency: formData.get("currency") || "NGN",
-    address: formData.get("address") || undefined,
-  });
+    const existing = await prisma.membership.findFirst({
+      where: { userId: user.id },
+      select: { businessId: true },
+    });
+    if (existing) {
+      await setActiveBusinessId(existing.businessId);
+      revalidatePath("/dashboard");
+      return { success: true, businessId: existing.businessId };
+    }
 
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const parsed = businessSchema.safeParse({
+      name: formData.get("name"),
+      industry: formData.get("industry"),
+      currency: formData.get("currency") || "NGN",
+      address: formData.get("address") || undefined,
+    });
+
+    if (!parsed.success) {
+      return { error: parsed.error.flatten().fieldErrors };
+    }
+
+    const business = await prisma.business.create({
+      data: {
+        ...parsed.data,
+        memberships: {
+          create: {
+            userId: user.id,
+            role: Role.OWNER,
+          },
+        },
+        subscription: {
+          create: {
+            plan: "STARTER",
+            status: "TRIAL",
+            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          },
+        },
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        businessId: business.id,
+        userId: user.id,
+        action: "business.created",
+        entity: "business",
+        entityId: business.id,
+      },
+    });
+
+    await setActiveBusinessId(business.id);
+
+    revalidatePath("/dashboard");
+    return { success: true, businessId: business.id };
+  } catch (error) {
+    console.error("[createBusiness] failed:", error);
+    return {
+      error: {
+        _form: [
+          error instanceof Error
+            ? error.message
+            : "Could not create business. Check DATABASE_URL and Clerk keys on Vercel.",
+        ],
+      },
+    };
   }
-
-  const business = await prisma.business.create({
-    data: {
-      ...parsed.data,
-      memberships: {
-        create: {
-          userId: user.id,
-          role: Role.OWNER,
-        },
-      },
-      subscription: {
-        create: {
-          plan: "STARTER",
-          status: "TRIAL",
-          currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        },
-      },
-    },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      businessId: business.id,
-      userId: user.id,
-      action: "business.created",
-      entity: "business",
-      entityId: business.id,
-    },
-  });
-
-  await setActiveBusinessId(business.id);
-
-  revalidatePath("/dashboard");
-  return { success: true, businessId: business.id };
 }
 
 function formValue(value: FormDataEntryValue | null): string | undefined {

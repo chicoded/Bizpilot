@@ -34,7 +34,12 @@ export function OnboardingForm() {
     startTransition(async () => {
       const result = await createBusiness(formData);
       if (result.error) {
-        setError("Please check your inputs and try again.");
+        const formErrors = result.error._form;
+        setError(
+          Array.isArray(formErrors) && formErrors[0]
+            ? formErrors[0]
+            : "Please check your inputs and try again."
+        );
         return;
       }
       router.push("/get-started");
