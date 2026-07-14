@@ -26,12 +26,20 @@ export default async function BillingCallbackPage({
   const reference =
     params.tx_ref ?? params.reference ?? params.trxref;
   const transactionId = params.transaction_id;
+  const providerStatus = String(params.status ?? "").toLowerCase();
 
   if (!reference) {
     redirect("/settings/billing");
   }
 
-  const result = await verifyCheckout(reference, transactionId);
+  const cancelled =
+    providerStatus === "cancelled" ||
+    providerStatus === "canceled" ||
+    providerStatus === "failed";
+
+  const result = await verifyCheckout(reference, transactionId, {
+    forceFail: cancelled,
+  });
 
   return (
     <>

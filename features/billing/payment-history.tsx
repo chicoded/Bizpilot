@@ -45,7 +45,11 @@ export function PaymentHistory({ transactions }: PaymentHistoryProps) {
                           : "text-red-500"
                     }`}
                   >
-                    {tx.status}
+                    {tx.status === "success"
+                      ? "Paid"
+                      : tx.status === "pending"
+                        ? "Pending"
+                        : "Failed"}
                   </p>
                 </div>
               </div>

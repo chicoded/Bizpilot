@@ -78,12 +78,40 @@ export async function markSubscriptionPastDue(businessId: string) {
   });
 }
 
+export async function markPaymentFailed(reference: string) {
+  await prisma.paymentTransaction.updateMany({
+    where: { reference, status: "pending" },
+    data: { status: "failed" },
+  });
+}
+
+export async function expireStalePendingPayments(
+  businessId: string,
+  olderThanMinutes = 45
+) {
+  const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
+  await prisma.paymentTransaction.updateMany({
+    where: {
+      businessId,
+      status: "pending",
+      createdAt: { lt: cutoff },
+    },
+    data: { status: "failed" },
+  });
+}
+
 export async function initializePlanCheckout(
   businessId: string,
   planId: SubscriptionPlanId,
   email: string,
   userName?: string
 ) {
+  // Any previous unfinished checkouts should not stay "pending" forever.
+  await prisma.paymentTransaction.updateMany({
+    where: { businessId, status: "pending" },
+    data: { status: "failed" },
+  });
+
   const reference = generatePaymentReference(businessId);
   const amountNgn = getPlanAmountNgn(planId);
   const appUrl = getAppUrl();
@@ -134,7 +162,8 @@ export async function initializePlanCheckout(
 
 export async function verifyAndActivatePayment(
   reference: string,
-  transactionId?: string
+  transactionId?: string,
+  options?: { forceFail?: boolean }
 ) {
   const existing = await prisma.paymentTransaction.findUnique({
     where: { reference },
@@ -151,17 +180,39 @@ export async function verifyAndActivatePayment(
     return { success: true, alreadyProcessed: true, subscription: sub };
   }
 
+  if (options?.forceFail) {
+    await markPaymentFailed(reference);
+    return { success: false, error: "Payment was cancelled or failed" };
+  }
+
   let verified;
   try {
     verified = transactionId
       ? await verifyFlutterwaveById(transactionId)
       : await verifyFlutterwaveByReference(reference);
   } catch (error) {
-    // Fallback: if callback only has tx_ref, try reference verify once more.
     if (transactionId) {
-      verified = await verifyFlutterwaveByReference(reference);
+      try {
+        verified = await verifyFlutterwaveByReference(reference);
+      } catch {
+        await markPaymentFailed(reference);
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Could not verify payment with Flutterwave",
+        };
+      }
     } else {
-      throw error;
+      await markPaymentFailed(reference);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not verify payment with Flutterwave",
+      };
     }
   }
 
@@ -171,10 +222,7 @@ export async function verifyAndActivatePayment(
     String(verified.status).toLowerCase() === "successful";
 
   if (!ok || verified.tx_ref !== reference) {
-    await prisma.paymentTransaction.update({
-      where: { reference },
-      data: { status: "failed" },
-    });
+    await markPaymentFailed(reference);
     return { success: false, error: "Payment not successful" };
   }
 
@@ -222,14 +270,15 @@ export async function handleFlutterwaveWebhookEvent(
   switch (event) {
     case "charge.completed": {
       const status = String(data.status ?? "").toLowerCase();
-      if (status !== "successful" && status !== "success") {
-        break;
-      }
       const reference = String(data.tx_ref ?? "");
       const transactionId = data.id != null ? String(data.id) : undefined;
-      if (reference) {
+      if (!reference) break;
+
+      if (status === "successful" || status === "success") {
         return verifyAndActivatePayment(reference, transactionId);
       }
+
+      await markPaymentFailed(reference);
       break;
     }
     case "subscription.cancelled": {

@@ -5,12 +5,12 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { requireSectionAccess } from "@/lib/auth";
 import {
+  expireStalePendingPayments,
   getBusinessSubscription,
   initializePlanCheckout,
   verifyAndActivatePayment,
 } from "@/services/subscription";
 import { isFlutterwaveConfigured } from "@/services/flutterwave";
-import { getAppUrl } from "@/lib/env";
 import type { SubscriptionPlanId } from "@/types";
 import { z } from "zod";
 
@@ -19,12 +19,12 @@ const planSchema = z.enum(["STARTER", "BUSINESS", "AI_PRO"]);
 export async function getBillingData() {
   const ctx = await requireSectionAccess("billing");
   const user = await currentUser();
+  await expireStalePendingPayments(ctx.businessId);
   const subscription = await getBusinessSubscription(ctx.businessId);
 
   return {
     subscription,
     paymentsConfigured: isFlutterwaveConfigured(),
-    webhookUrl: `${getAppUrl()}/api/webhooks/flutterwave`,
     email: user?.emailAddresses[0]?.emailAddress ?? "",
     businessName: ctx.business.name,
   };
@@ -38,8 +38,7 @@ export async function startCheckout(planId: string) {
 
   if (!isFlutterwaveConfigured()) {
     return {
-      error:
-        "Flutterwave is not configured. Add FLUTTERWAVE_SECRET_KEY and NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY to your environment.",
+      error: "Online payments are temporarily unavailable. Please try again later.",
     };
   }
 
@@ -77,14 +76,19 @@ export async function startCheckout(planId: string) {
 
 export async function verifyCheckout(
   reference: string,
-  transactionId?: string
+  transactionId?: string,
+  options?: { forceFail?: boolean }
 ) {
   if (!reference) {
     return { success: false, error: "Missing payment reference" };
   }
 
   try {
-    const result = await verifyAndActivatePayment(reference, transactionId);
+    const result = await verifyAndActivatePayment(
+      reference,
+      transactionId,
+      options
+    );
     revalidatePath("/settings");
     revalidatePath("/settings/billing");
     return result;

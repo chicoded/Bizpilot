@@ -1,19 +1,15 @@
 import { requirePageAccess } from "@/lib/auth";
 import { getBillingData } from "@/actions/billing";
-import { getAppUrl } from "@/lib/env";
 import { SettingsShell } from "@/components/layout/settings-shell";
 import { SubscriptionStatusCard } from "@/features/billing/subscription-status-card";
 import { PlanSelector } from "@/features/billing/plan-selector";
 import { PaymentHistory } from "@/features/billing/payment-history";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
 
 export default async function BillingPage() {
   const ctx = await requirePageAccess("billing");
 
   const { subscription, paymentsConfigured } = await getBillingData();
-  const appUrl = getAppUrl();
 
   return (
     <SettingsShell
@@ -26,13 +22,8 @@ export default async function BillingPage() {
         {!paymentsConfigured && (
           <Card className="border-warning/30 bg-warning/10">
             <CardContent className="p-4 text-sm">
-              Flutterwave is not configured. Add{" "}
-              <code className="bg-background px-1 rounded">FLUTTERWAVE_SECRET_KEY</code>{" "}
-              and{" "}
-              <code className="bg-background px-1 rounded">
-                NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY
-              </code>{" "}
-              to enable payments.
+              Online payments are temporarily unavailable. Please try again later
+              or contact support.
             </CardContent>
           </Card>
         )}
@@ -51,32 +42,6 @@ export default async function BillingPage() {
         {subscription?.transactions && (
           <PaymentHistory transactions={subscription.transactions} />
         )}
-
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Flutterwave Webhook URL
-            </p>
-            <code className="block text-xs bg-muted p-3 rounded-lg break-all">
-              {appUrl}/api/webhooks/flutterwave
-            </code>
-            <p className="text-xs text-muted-foreground">
-              In Flutterwave Dashboard → Settings → Webhooks, paste this URL and
-              set your Secret Hash to match{" "}
-              <code className="text-[10px]">FLUTTERWAVE_SECRET_HASH</code>.
-            </p>
-            <a
-              href="https://dashboard.flutterwave.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="sm" className="mt-2">
-                <ExternalLink className="h-4 w-4" />
-                Open Flutterwave Dashboard
-              </Button>
-            </a>
-          </CardContent>
-        </Card>
       </div>
     </SettingsShell>
   );
