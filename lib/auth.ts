@@ -245,9 +245,11 @@ export async function syncClerkUser(clerkUser: {
   }
 
   // After Clerk domain moves, the same email may exist under an old user id.
-  const byEmail = await prisma.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
-  });
+  const byEmail =
+    (await prisma.user.findUnique({ where: { email } })) ??
+    (await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    }));
 
   if (byEmail && byEmail.id !== clerkUser.id) {
     return prisma.$transaction(async (tx) => {

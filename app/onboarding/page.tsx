@@ -1,57 +1,91 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { getBusinessContext, syncClerkUser } from "@/lib/auth";
 import { getPendingInviteForEmail } from "@/lib/team";
 import { OnboardingForm } from "@/features/onboarding/onboarding-form";
 
-function isNextNavigationError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const digest = "digest" in error ? String((error as { digest?: unknown }).digest) : "";
-  return digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND");
-}
+export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
-  const user = await currentUser();
-  if (!user) redirect("/sign-in");
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   let syncWarning: string | null = null;
+  let email: string | undefined;
+  let inviteToken: string | null = null;
+  let hasBusiness = false;
+  let clerkUser:
+    | {
+        id: string;
+        emailAddresses: { emailAddress: string }[];
+        firstName: string | null;
+        lastName: string | null;
+        imageUrl: string;
+      }
+    | null = null;
 
   try {
-    await syncClerkUser({
-      id: user.id,
-      emailAddresses: user.emailAddresses,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      imageUrl: user.imageUrl,
-    });
+    clerkUser = await currentUser();
   } catch (error) {
-    console.error("[onboarding] syncClerkUser failed:", error);
+    console.error("[onboarding] currentUser failed:", error);
     syncWarning =
-      error instanceof Error
-        ? error.message
-        : "Could not sync your account to the database.";
+      "Clerk could not load your profile. Confirm NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY match the zaplex.site instance, then redeploy.";
+  }
+
+  if (!clerkUser) {
+    if (syncWarning) {
+      // Session cookie present but Clerk Backend API failed — show setup UI with warning.
+    } else {
+      redirect("/sign-in");
+    }
+  }
+
+  if (clerkUser) {
+    email = clerkUser.emailAddresses[0]?.emailAddress;
+
+    try {
+      await syncClerkUser({
+        id: clerkUser.id,
+        emailAddresses: clerkUser.emailAddresses,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        imageUrl: clerkUser.imageUrl,
+      });
+    } catch (error) {
+      console.error("[onboarding] syncClerkUser failed:", error);
+      syncWarning =
+        error instanceof Error
+          ? error.message
+          : "Could not sync your account to the database.";
+    }
   }
 
   try {
     const ctx = await getBusinessContext();
-    if (ctx) redirect("/dashboard");
+    hasBusiness = Boolean(ctx);
   } catch (error) {
-    if (isNextNavigationError(error)) throw error;
     console.error("[onboarding] getBusinessContext failed:", error);
+    if (!syncWarning) {
+      syncWarning =
+        error instanceof Error
+          ? error.message
+          : "Could not check existing business membership.";
+    }
   }
 
-  const email = user.emailAddresses[0]?.emailAddress;
+  // Redirects must stay outside try/catch — catching NEXT_REDIRECT causes 500s.
+  if (hasBusiness) redirect("/dashboard");
+
   if (email) {
     try {
       const pendingInvite = await getPendingInviteForEmail(email);
-      if (pendingInvite) {
-        redirect(`/invite/${pendingInvite.token}`);
-      }
+      inviteToken = pendingInvite?.token ?? null;
     } catch (error) {
-      if (isNextNavigationError(error)) throw error;
       console.error("[onboarding] invite lookup failed:", error);
     }
   }
+
+  if (inviteToken) redirect(`/invite/${inviteToken}`);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 flex items-center justify-center p-4">
@@ -69,13 +103,9 @@ export default async function OnboardingPage() {
         </div>
 
         {syncWarning && (
-          <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-left">
-            <p className="font-medium">Account sync warning</p>
-            <p className="mt-1 text-muted-foreground break-words">{syncWarning}</p>
-            <p className="mt-2 text-muted-foreground">
-              You can still try setting up. If it fails, check Vercel{" "}
-              <code className="text-xs">DATABASE_URL</code> and Clerk keys.
-            </p>
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-left">
+            <p className="font-medium text-amber-900">Account sync warning</p>
+            <p className="mt-1 text-amber-800/80 break-words">{syncWarning}</p>
           </div>
         )}
 
