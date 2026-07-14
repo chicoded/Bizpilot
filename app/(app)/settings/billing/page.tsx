@@ -12,7 +12,7 @@ import { ExternalLink } from "lucide-react";
 export default async function BillingPage() {
   const ctx = await requirePageAccess("billing");
 
-  const { subscription, paystackConfigured } = await getBillingData();
+  const { subscription, paymentsConfigured } = await getBillingData();
   const appUrl = getAppUrl();
 
   return (
@@ -23,13 +23,14 @@ export default async function BillingPage() {
       canAccessBilling
     >
       <div className="space-y-6">
-        {!paystackConfigured && (
+        {!paymentsConfigured && (
           <Card className="border-warning/30 bg-warning/10">
             <CardContent className="p-4 text-sm">
-              Paystack is not configured. Add{" "}
-              <code className="bg-background px-1 rounded">PAYSTACK_SECRET_KEY</code> and{" "}
+              Flutterwave is not configured. Add{" "}
+              <code className="bg-background px-1 rounded">FLUTTERWAVE_SECRET_KEY</code>{" "}
+              and{" "}
               <code className="bg-background px-1 rounded">
-                NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+                NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY
               </code>{" "}
               to enable payments.
             </CardContent>
@@ -43,7 +44,7 @@ export default async function BillingPage() {
           <PlanSelector
             currentPlan={subscription?.plan ?? "STARTER"}
             status={subscription?.status ?? "TRIAL"}
-            paystackConfigured={paystackConfigured}
+            paymentsConfigured={paymentsConfigured}
           />
         </div>
 
@@ -54,23 +55,24 @@ export default async function BillingPage() {
         <Card>
           <CardContent className="p-4 space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Paystack Webhook URL
+              Flutterwave Webhook URL
             </p>
             <code className="block text-xs bg-muted p-3 rounded-lg break-all">
-              {appUrl}/api/webhooks/paystack
+              {appUrl}/api/webhooks/flutterwave
             </code>
             <p className="text-xs text-muted-foreground">
-              Add this in Paystack Dashboard → Settings → Webhooks for automatic
-              renewal handling.
+              In Flutterwave Dashboard → Settings → Webhooks, paste this URL and
+              set your Secret Hash to match{" "}
+              <code className="text-[10px]">FLUTTERWAVE_SECRET_HASH</code>.
             </p>
             <a
-              href="https://dashboard.paystack.com"
+              href="https://dashboard.flutterwave.com"
               target="_blank"
               rel="noopener noreferrer"
             >
               <Button variant="outline" size="sm" className="mt-2">
                 <ExternalLink className="h-4 w-4" />
-                Open Paystack Dashboard
+                Open Flutterwave Dashboard
               </Button>
             </a>
           </CardContent>

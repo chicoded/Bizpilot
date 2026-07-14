@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
 
 interface CallbackPageProps {
-  searchParams: Promise<{ reference?: string; trxref?: string }>;
+  searchParams: Promise<{
+    reference?: string;
+    trxref?: string;
+    tx_ref?: string;
+    transaction_id?: string;
+    status?: string;
+  }>;
 }
 
 export default async function BillingCallbackPage({
@@ -17,13 +23,15 @@ export default async function BillingCallbackPage({
   await requirePageAccess("billing");
 
   const params = await searchParams;
-  const reference = params.reference ?? params.trxref;
+  const reference =
+    params.tx_ref ?? params.reference ?? params.trxref;
+  const transactionId = params.transaction_id;
 
   if (!reference) {
     redirect("/settings/billing");
   }
 
-  const result = await verifyCheckout(reference);
+  const result = await verifyCheckout(reference, transactionId);
 
   return (
     <>

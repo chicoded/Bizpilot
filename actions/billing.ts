@@ -9,7 +9,7 @@ import {
   initializePlanCheckout,
   verifyAndActivatePayment,
 } from "@/services/subscription";
-import { isPaystackConfigured } from "@/services/paystack";
+import { isFlutterwaveConfigured } from "@/services/flutterwave";
 import { getAppUrl } from "@/lib/env";
 import type { SubscriptionPlanId } from "@/types";
 import { z } from "zod";
@@ -23,8 +23,10 @@ export async function getBillingData() {
 
   return {
     subscription,
-    paystackConfigured: isPaystackConfigured(),
-    webhookUrl: `${getAppUrl()}/api/webhooks/paystack`,
+    paymentsConfigured: isFlutterwaveConfigured(),
+    /** @deprecated use paymentsConfigured */
+    paystackConfigured: isFlutterwaveConfigured(),
+    webhookUrl: `${getAppUrl()}/api/webhooks/flutterwave`,
     email: user?.emailAddresses[0]?.emailAddress ?? "",
     businessName: ctx.business.name,
   };
@@ -36,10 +38,10 @@ export async function startCheckout(planId: string) {
     return { error: "Invalid plan selected" };
   }
 
-  if (!isPaystackConfigured()) {
+  if (!isFlutterwaveConfigured()) {
     return {
       error:
-        "Paystack is not configured. Add PAYSTACK_SECRET_KEY and NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY to your environment.",
+        "Flutterwave is not configured. Add FLUTTERWAVE_SECRET_KEY and NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY to your environment.",
     };
   }
 
@@ -61,18 +63,30 @@ export async function startCheckout(planId: string) {
 
     redirect(authorizationUrl);
   } catch (err) {
+    // Next.js redirect() throws; must rethrow or checkout "fails" after payment URL is ready.
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      String((err as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw err;
+    }
     const message = err instanceof Error ? err.message : "Checkout failed";
     return { error: message };
   }
 }
 
-export async function verifyCheckout(reference: string) {
+export async function verifyCheckout(
+  reference: string,
+  transactionId?: string
+) {
   if (!reference) {
     return { success: false, error: "Missing payment reference" };
   }
 
   try {
-    const result = await verifyAndActivatePayment(reference);
+    const result = await verifyAndActivatePayment(reference, transactionId);
     revalidatePath("/settings");
     revalidatePath("/settings/billing");
     return result;

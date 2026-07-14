@@ -4,15 +4,13 @@ import { getAppUrl } from "@/lib/env";
 import type { SubscriptionPlan } from "@prisma/client";
 import type { SubscriptionPlanId } from "@/types";
 import {
-  createPaystackCustomer,
-  createPaystackSubscription,
   generatePaymentReference,
-  getPaystackPlanCode,
-  getPlanAmountKobo,
-  initializeTransaction,
-  ngnFromKobo,
-  verifyTransaction,
-} from "@/services/paystack";
+  getFlutterwavePaymentPlanId,
+  getPlanAmountNgn,
+  initializeFlutterwavePayment,
+  verifyFlutterwaveById,
+  verifyFlutterwaveByReference,
+} from "@/services/flutterwave";
 
 const BILLING_PERIOD_DAYS = 30;
 
@@ -34,8 +32,8 @@ export async function activateSubscription(
   reference: string,
   amountNgn: number,
   channel?: string,
-  paystackCustomerCode?: string,
-  paystackSubCode?: string
+  providerCustomerId?: string,
+  providerSubId?: string
 ) {
   const periodEnd = addDays(new Date(), BILLING_PERIOD_DAYS);
 
@@ -56,8 +54,9 @@ export async function activateSubscription(
         status: "ACTIVE",
         currentPeriodEnd: periodEnd,
         lastPaymentReference: reference,
-        paystackCustomerCode: paystackCustomerCode ?? undefined,
-        paystackSubCode: paystackSubCode ?? undefined,
+        // Reuse existing columns for Flutterwave customer / plan ids.
+        paystackCustomerCode: providerCustomerId ?? undefined,
+        paystackSubCode: providerSubId ?? undefined,
       },
       create: {
         businessId,
@@ -65,8 +64,8 @@ export async function activateSubscription(
         status: "ACTIVE",
         currentPeriodEnd: periodEnd,
         lastPaymentReference: reference,
-        paystackCustomerCode,
-        paystackSubCode,
+        paystackCustomerCode: providerCustomerId,
+        paystackSubCode: providerSubId,
       },
     });
   });
@@ -86,8 +85,9 @@ export async function initializePlanCheckout(
   userName?: string
 ) {
   const reference = generatePaymentReference(businessId);
-  const amountKobo = getPlanAmountKobo(planId);
+  const amountNgn = getPlanAmountNgn(planId);
   const appUrl = getAppUrl();
+  const paymentPlanId = getFlutterwavePaymentPlanId(planId);
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId },
@@ -99,35 +99,43 @@ export async function initializePlanCheckout(
       subscriptionId: subscription?.id,
       reference,
       plan: planId,
-      amount: amountKobo / 100,
+      amount: amountNgn,
       status: "pending",
-      metadata: { plan: planId, businessId },
+      metadata: {
+        plan: planId,
+        businessId,
+        provider: "flutterwave",
+        ...(paymentPlanId ? { flutterwavePlanId: paymentPlanId } : {}),
+      },
     },
   });
 
-  const paystackPlanCode = getPaystackPlanCode(planId);
-
-  const result = await initializeTransaction({
+  const result = await initializeFlutterwavePayment({
     email,
-    amountKobo,
+    name: userName,
+    amountNgn,
     reference,
     callbackUrl: `${appUrl}/settings/billing/callback`,
-    planCode: paystackPlanCode,
+    planId,
+    paymentPlanId,
     metadata: {
       businessId,
       plan: planId,
       transactionId: transaction.id,
-      ...(paystackPlanCode ? { paystackPlanCode } : {}),
+      ...(paymentPlanId ? { flutterwavePlanId: paymentPlanId } : {}),
     },
   });
 
   return {
-    authorizationUrl: result.authorization_url,
-    reference: result.reference,
+    authorizationUrl: result.link,
+    reference,
   };
 }
 
-export async function verifyAndActivatePayment(reference: string) {
+export async function verifyAndActivatePayment(
+  reference: string,
+  transactionId?: string
+) {
   const existing = await prisma.paymentTransaction.findUnique({
     where: { reference },
   });
@@ -143,9 +151,26 @@ export async function verifyAndActivatePayment(reference: string) {
     return { success: true, alreadyProcessed: true, subscription: sub };
   }
 
-  const verified = await verifyTransaction(reference);
+  let verified;
+  try {
+    verified = transactionId
+      ? await verifyFlutterwaveById(transactionId)
+      : await verifyFlutterwaveByReference(reference);
+  } catch (error) {
+    // Fallback: if callback only has tx_ref, try reference verify once more.
+    if (transactionId) {
+      verified = await verifyFlutterwaveByReference(reference);
+    } else {
+      throw error;
+    }
+  }
 
-  if (verified.status !== "success") {
+  const ok =
+    verified.status === "successful" ||
+    verified.status === "success" ||
+    String(verified.status).toLowerCase() === "successful";
+
+  if (!ok || verified.tx_ref !== reference) {
     await prisma.paymentTransaction.update({
       where: { reference },
       data: { status: "failed" },
@@ -153,52 +178,23 @@ export async function verifyAndActivatePayment(reference: string) {
     return { success: false, error: "Payment not successful" };
   }
 
-  const metadata = verified.metadata ?? {};
-  const businessId = metadata.businessId ?? existing.businessId;
-  const plan = (metadata.plan ?? existing.plan) as SubscriptionPlan;
-
-  let customerCode: string | undefined = verified.customer?.customer_code;
-
-  if (!customerCode) {
-    try {
-      const customer = await createPaystackCustomer(verified.customer.email);
-      customerCode = customer.customer_code;
-    } catch {
-      // Customer may already exist
-    }
-  }
-
-  let paystackSubCode: string | undefined;
-  const planCode =
-    getPaystackPlanCode(plan as SubscriptionPlanId) ||
-    metadata.paystackPlanCode;
-  const authorizationCode = verified.authorization?.authorization_code;
-
-  // After first charge, register recurring subscription when plan codes are set.
-  if (planCode && customerCode && authorizationCode) {
-    try {
-      const sub = await createPaystackSubscription(
-        customerCode,
-        planCode,
-        authorizationCode
-      );
-      paystackSubCode = sub.subscription_code;
-    } catch (error) {
-      console.warn(
-        "[billing] Could not create Paystack subscription (payment still counted):",
-        error instanceof Error ? error.message : error
-      );
-    }
-  }
+  const meta = (verified.meta ?? {}) as Record<string, string>;
+  const businessId = meta.businessId ?? existing.businessId;
+  const plan = (meta.plan ?? existing.plan) as SubscriptionPlan;
+  const customerId = verified.customer?.id
+    ? String(verified.customer.id)
+    : undefined;
+  const paymentPlanId =
+    meta.flutterwavePlanId || getFlutterwavePaymentPlanId(plan as SubscriptionPlanId);
 
   const subscription = await activateSubscription(
     businessId,
     plan,
     reference,
-    ngnFromKobo(verified.amount),
-    verified.channel,
-    customerCode,
-    paystackSubCode
+    Number(verified.amount),
+    verified.payment_type,
+    customerId,
+    paymentPlanId
   );
 
   await prisma.auditLog.create({
@@ -207,92 +203,52 @@ export async function verifyAndActivatePayment(reference: string) {
       action: "subscription.activated",
       entity: "subscription",
       entityId: subscription.id,
-      metadata: { plan, reference, amount: ngnFromKobo(verified.amount) },
+      metadata: {
+        plan,
+        reference,
+        amount: Number(verified.amount),
+        provider: "flutterwave",
+      },
     },
   });
 
   return { success: true, subscription };
 }
 
-export async function handlePaystackWebhookEvent(event: string, data: Record<string, unknown>) {
+export async function handleFlutterwaveWebhookEvent(
+  event: string,
+  data: Record<string, unknown>
+) {
   switch (event) {
-    case "charge.success": {
-      const reference = data.reference as string;
+    case "charge.completed": {
+      const status = String(data.status ?? "").toLowerCase();
+      if (status !== "successful" && status !== "success") {
+        break;
+      }
+      const reference = String(data.tx_ref ?? "");
+      const transactionId = data.id != null ? String(data.id) : undefined;
       if (reference) {
-        return verifyAndActivatePayment(reference);
+        return verifyAndActivatePayment(reference, transactionId);
       }
       break;
     }
-    case "subscription.create": {
-      const subCode = data.subscription_code as string;
-      const customer = data.customer as { customer_code?: string };
-      const plan = data.plan as { plan_code?: string };
-      // Match business by customer code if possible
-      if (customer?.customer_code) {
-        const subscription = await prisma.subscription.findFirst({
-          where: { paystackCustomerCode: customer.customer_code },
-        });
-        if (subscription) {
-          await prisma.subscription.update({
-            where: { id: subscription.id },
-            data: {
-              paystackSubCode: subCode,
-              status: "ACTIVE",
-              currentPeriodEnd: addDays(new Date(), BILLING_PERIOD_DAYS),
-            },
-          });
-        }
-      }
-      void plan;
-      break;
-    }
-    case "invoice.payment_failed": {
-      const subscriptionCode = data.subscription as { subscription_code?: string };
-      if (subscriptionCode?.subscription_code) {
+    case "subscription.cancelled": {
+      const id = data.id != null ? String(data.id) : undefined;
+      if (id) {
         const sub = await prisma.subscription.findFirst({
-          where: { paystackSubCode: subscriptionCode.subscription_code },
-        });
-        if (sub) await markSubscriptionPastDue(sub.businessId);
-      }
-      break;
-    }
-    case "invoice.update":
-    case "invoice.create": {
-      // Successful recurring invoice — extend access window.
-      const paid = data.status === "success" || data.paid === true || data.paid === 1;
-      const subscriptionCode =
-        (data.subscription as { subscription_code?: string } | undefined)
-          ?.subscription_code ??
-        (typeof data.subscription === "string" ? data.subscription : undefined);
-      if (paid && subscriptionCode) {
-        const sub = await prisma.subscription.findFirst({
-          where: { paystackSubCode: subscriptionCode },
+          where: { paystackSubCode: id },
         });
         if (sub) {
           await prisma.subscription.update({
             where: { id: sub.id },
-            data: {
-              status: "ACTIVE",
-              currentPeriodEnd: addDays(new Date(), BILLING_PERIOD_DAYS),
-            },
+            data: { status: "CANCELLED" },
           });
         }
       }
       break;
     }
-    case "subscription.disable": {
-      const code = data.subscription_code as string;
-      const sub = await prisma.subscription.findFirst({
-        where: { paystackSubCode: code },
-      });
-      if (sub) {
-        await prisma.subscription.update({
-          where: { id: sub.id },
-          data: { status: "CANCELLED" },
-        });
-      }
+    default:
       break;
-    }
   }
   return { handled: true };
 }

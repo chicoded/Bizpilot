@@ -227,9 +227,9 @@ export const LAUNCH_QA_ITEMS: LaunchQaItem[] = [
     href: "/reports",
   },
   {
-    id: "billing-paystack",
+    id: "billing-flutterwave",
     section: "integrations",
-    title: "Paystack upgrade flow (test mode)",
+    title: "Flutterwave upgrade flow (test mode)",
     description: "Start subscription checkout with test keys before going live.",
     href: "/settings/billing",
   },

@@ -12,7 +12,7 @@ import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 interface PlanSelectorProps {
   currentPlan: SubscriptionPlan;
   status: SubscriptionStatus;
-  paystackConfigured: boolean;
+  paymentsConfigured: boolean;
 }
 
 const PLAN_RANK: Record<SubscriptionPlan, number> = {
@@ -24,7 +24,7 @@ const PLAN_RANK: Record<SubscriptionPlan, number> = {
 export function PlanSelector({
   currentPlan,
   status,
-  paystackConfigured,
+  paymentsConfigured,
 }: PlanSelectorProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -83,7 +83,7 @@ export function PlanSelector({
               <Button
                 className="w-full mt-5"
                 variant={isCurrent ? "outline" : isPopular ? "success" : "default"}
-                disabled={isCurrent || isPending || !paystackConfigured}
+                disabled={isCurrent || isPending || !paymentsConfigured}
                 onClick={() => handleSelect(plan.id)}
               >
                 {isPending ? (
