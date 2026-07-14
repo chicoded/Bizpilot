@@ -51,6 +51,15 @@ export async function lookupProductByBarcode(
       }
     }
 
+    // Local miss — only hit the server when online.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return {
+        ok: false,
+        reason: "not_found",
+        message: normalized,
+      };
+    }
+
     const response = await fetch(
       `/api/products/barcode?code=${encodeURIComponent(normalized)}`
     );

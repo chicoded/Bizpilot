@@ -149,7 +149,7 @@ export function BackupSettingsPanel() {
   function handleRestoreFile(file: File | undefined) {
     if (!file) return;
     const confirmed = window.confirm(
-      "Restore this backup? It will replace inventory, customers, sales, and expenses on THIS device with the backup file."
+      "Restore this backup?\n\nThis replaces inventory, customers, sales, and expenses on THIS device.\nA safety copy of the current data is saved first when possible."
     );
     if (!confirmed) return;
 
@@ -159,7 +159,11 @@ export function BackupSettingsPanel() {
         const summary = await restoreBackupFromFile(file);
         await refresh();
         setMessage(
-          `Restored ${summary.businessName}: ${summary.products} products, ${summary.customers} customers, ${summary.sales} sales, ${summary.expenses} expenses.`
+          `Restored ${summary.businessName}: ${summary.products} products, ${summary.customers} customers, ${summary.sales} sales, ${summary.expenses} expenses.${
+            summary.safetySnapshotSaved
+              ? " A safety copy of the previous data was kept on this device."
+              : ""
+          }`
         );
       } catch (error) {
         setMessage(

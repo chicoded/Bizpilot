@@ -1,8 +1,9 @@
-import { setLocalBusinessMeta } from "@/lib/local-data/business";
+import { setLocalBusinessMeta, getActiveBusinessId } from "@/lib/local-data/business";
 import { replaceLocalCustomers } from "@/lib/local-data/customers";
 import { replaceLocalExpenses } from "@/lib/local-data/expenses";
 import { replaceLocalProducts } from "@/lib/local-data/products";
 import { replaceLocalSales } from "@/lib/local-data/sales";
+import { saveBackupSnapshot } from "@/lib/backup/export";
 import type { BackupExportPayload } from "@/lib/backup/export";
 import type {
   LocalCustomer,
@@ -19,6 +20,7 @@ export type RestoreSummary = {
   sales: number;
   expenses: number;
   exportedAt: string | null;
+  safetySnapshotSaved: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -87,6 +89,18 @@ export async function restoreBackupFromJson(
   const business = payload.business!;
   const businessId = business.businessId;
 
+  // Safety snapshot of current device data before replacing.
+  let safetySnapshotSaved = false;
+  try {
+    const currentId = await getActiveBusinessId();
+    if (currentId) {
+      await saveBackupSnapshot(currentId);
+      safetySnapshotSaved = true;
+    }
+  } catch {
+    safetySnapshotSaved = false;
+  }
+
   const products = payload.products.map((p) => ({
     ...p,
     businessId,
@@ -121,6 +135,7 @@ export async function restoreBackupFromJson(
     sales: sales.length,
     expenses: expenses.length,
     exportedAt: payload.exportedAt,
+    safetySnapshotSaved,
   };
 }
 

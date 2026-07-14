@@ -13,9 +13,18 @@ import {
   getLocalDashboardKPIs,
 } from "@/lib/local-data/dashboard";
 import { Package, AlertTriangle, Users } from "lucide-react";
-import { RevenueChart } from "@/features/dashboard/revenue-chart";
+import dynamic from "next/dynamic";
 import { LowStockAlertsCard } from "@/features/dashboard/low-stock-alerts-card";
 import type { DashboardKPIs, BusinessHealthResult } from "@/types";
+
+const RevenueChart = dynamic(
+  () =>
+    import("@/features/dashboard/revenue-chart").then((mod) => mod.RevenueChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[260px] rounded-2xl" />,
+  }
+);
 
 const emptyKPIs: DashboardKPIs = {
   revenueToday: 0,

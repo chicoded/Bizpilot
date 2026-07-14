@@ -27,30 +27,89 @@ type LocalDataContextValue = {
 
 const LocalDataContext = createContext<LocalDataContextValue | null>(null);
 
+function applyMeta(
+  meta: Awaited<ReturnType<typeof getLocalBusinessMeta>>,
+  setBusinessId: (id: string | null) => void,
+  setBusinessName: (name: string) => void,
+  setCurrency: (currency: string) => void
+) {
+  const id = meta?.businessId ?? null;
+  setBusinessId(id);
+  setBusinessName(meta?.name ?? "My shop");
+  setCurrency(meta?.currency ?? "NGN");
+  return id;
+}
+
 export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<LocalDataStatus>("loading");
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("My shop");
   const [currency, setCurrency] = useState("NGN");
 
-  const refresh = useCallback(async () => {
-    setStatus("loading");
+  const refresh = useCallback(async (options?: { quiet?: boolean }) => {
+    if (!options?.quiet) {
+      setStatus("loading");
+    }
+
     try {
       handleGmailOAuthRedirect();
+
+      // Warm path: if this device already has shop data, become ready immediately.
+      const existingMeta = await getLocalBusinessMeta();
+      const existingId =
+        existingMeta?.businessId ?? (await getActiveBusinessId());
+      if (existingId) {
+        applyMeta(
+          existingMeta ?? {
+            businessId: existingId,
+            name: "My shop",
+            currency: "NGN",
+            updatedAt: new Date().toISOString(),
+          },
+          setBusinessId,
+          setBusinessName,
+          setCurrency
+        );
+        setStatus("ready");
+      }
+
       await hydrateLocalStoreFromServer();
       const meta = await getLocalBusinessMeta();
       const id = meta?.businessId ?? (await getActiveBusinessId());
-      setBusinessId(id);
-      setBusinessName(meta?.name ?? "My shop");
-      setCurrency(meta?.currency ?? "NGN");
-      setStatus("ready");
+      if (id) {
+        applyMeta(
+          meta ?? {
+            businessId: id,
+            name: "My shop",
+            currency: "NGN",
+            updatedAt: new Date().toISOString(),
+          },
+          setBusinessId,
+          setBusinessName,
+          setCurrency
+        );
+        setStatus("ready");
+        return;
+      }
+
+      if (!existingId) {
+        setStatus("error");
+      }
     } catch {
       const meta = await getLocalBusinessMeta();
       const id = meta?.businessId ?? (await getActiveBusinessId());
       if (id) {
-        setBusinessId(id);
-        setBusinessName(meta?.name ?? "My shop");
-        setCurrency(meta?.currency ?? "NGN");
+        applyMeta(
+          meta ?? {
+            businessId: id,
+            name: "My shop",
+            currency: "NGN",
+            updatedAt: new Date().toISOString(),
+          },
+          setBusinessId,
+          setBusinessName,
+          setCurrency
+        );
         setStatus("ready");
       } else {
         setStatus("error");
@@ -85,7 +144,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.data?.type === "bizpilot:gmail-connected") {
-        void refresh();
+        void refresh({ quiet: true });
       }
     }
     window.addEventListener("message", onMessage);
@@ -99,7 +158,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
       businessName,
       currency,
       storageMode: "local" as const,
-      refresh,
+      refresh: () => refresh(),
       runBackupNow,
     }),
     [status, businessId, businessName, currency, refresh, runBackupNow]

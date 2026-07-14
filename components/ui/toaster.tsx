@@ -11,7 +11,7 @@ export function Toaster() {
 
   return (
     <div
-      className="fixed top-4 right-4 z-[200] flex w-full max-w-sm flex-col gap-2 pointer-events-none"
+      className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-[200] flex max-w-sm flex-col gap-2 pointer-events-none md:bottom-auto md:top-4 md:left-auto md:right-4 md:w-full"
       aria-live="polite"
       aria-label="Notifications"
     >
@@ -20,9 +20,9 @@ export function Toaster() {
           key={t.id}
           role="status"
           className={cn(
-            "pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-lg animate-in slide-in-from-top-2 fade-in duration-200",
+            "pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-lg animate-in slide-in-from-bottom-2 fade-in duration-200 md:slide-in-from-top-2",
             t.dismissed &&
-              "animate-out fade-out slide-out-to-top-2 duration-200 pointer-events-none",
+              "animate-out fade-out slide-out-to-bottom-2 md:slide-out-to-top-2 duration-200 pointer-events-none",
             t.variant === "destructive" &&
               "border-destructive/30 bg-destructive/5 text-destructive",
             t.variant === "success" &&

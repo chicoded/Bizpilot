@@ -55,8 +55,11 @@ export async function hydrateLocalStoreFromServer(): Promise<{
       id: string;
       name: string;
       sellingPrice: number;
+      purchasePrice?: number;
       quantity: number;
       barcode?: string | null;
+      category?: string | null;
+      reorderLevel?: number;
       imageUrl?: string | null;
     }> }>("/api/products"),
     fetchJson<{ customers: Array<{
@@ -78,12 +81,12 @@ export async function hydrateLocalStoreFromServer(): Promise<{
       name: product.name,
       sku: null,
       barcode: product.barcode ?? null,
-      category: null,
-      purchasePrice: 0,
+      category: product.category ?? null,
+      purchasePrice: Number(product.purchasePrice ?? 0),
       sellingPrice: Number(product.sellingPrice),
       unitsPerPack: 1,
       quantity: product.quantity,
-      reorderLevel: 5,
+      reorderLevel: product.reorderLevel ?? 5,
       batchNumber: null,
       expiryDate: null,
       imageUrl: product.imageUrl ?? null,

@@ -12,12 +12,13 @@ export default function OfflinePage() {
       </div>
       <h1 className="text-2xl font-bold text-brand mb-2">You&apos;re offline</h1>
       <p className="text-muted-foreground text-center max-w-sm mb-4">
-        Your shop data is saved on this device. Open the installed BizPilot app
-        to keep selling and managing inventory without internet.
+        Shop data stays on this device. If you already opened BizPilot while
+        online, try POS or Inventory below. First install still needs a short
+        online open.
       </p>
       <p className="text-xs text-muted-foreground text-center max-w-sm mb-8 flex items-center justify-center gap-2">
         <HardDrive className="h-4 w-4" />
-        POS and inventory work offline. Gmail backup runs when you&apos;re back online.
+        Backup to Gmail/Drive when you&apos;re back online.
       </p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <Button
@@ -36,6 +37,11 @@ export default function OfflinePage() {
         <Link href="/inventory" className="w-full">
           <Button variant="outline" size="lg" className="w-full h-14">
             Open Inventory
+          </Button>
+        </Link>
+        <Link href="/reports?period=today" className="w-full">
+          <Button variant="ghost" size="lg" className="w-full h-12">
+            Today&apos;s report
           </Button>
         </Link>
       </div>
