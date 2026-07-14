@@ -38,14 +38,18 @@ export async function hydrateLocalStoreFromServer(): Promise<{
     };
   }
 
+  const businessId = context.businessId;
+  const businessName = context.businessName ?? "My shop";
+  const currency = context.currency;
+
   await setLocalBusinessMeta({
-    businessId: context.businessId,
-    name: context.businessName ?? "My shop",
-    currency: context.currency,
+    businessId,
+    name: businessName,
+    currency,
     updatedAt: new Date().toISOString(),
   });
 
-  const existingProducts = await listLocalProducts(context.businessId);
+  const existingProducts = await listLocalProducts(businessId);
   if (existingProducts.length > 0) {
     return { seeded: true, source: "local" };
   }
@@ -77,7 +81,7 @@ export async function hydrateLocalStoreFromServer(): Promise<{
   if (productsRes?.products?.length) {
     const products: LocalProduct[] = productsRes.products.map((product) => ({
       id: product.id,
-      businessId: context.businessId,
+      businessId,
       name: product.name,
       sku: null,
       barcode: product.barcode ?? null,
@@ -95,13 +99,13 @@ export async function hydrateLocalStoreFromServer(): Promise<{
       updatedAt: timestamp,
       syncedAt: timestamp,
     }));
-    await replaceLocalProducts(context.businessId, products);
+    await replaceLocalProducts(businessId, products);
   }
 
   if (customersRes?.customers?.length) {
     const customers: LocalCustomer[] = customersRes.customers.map((customer) => ({
       id: customer.id,
-      businessId: context.businessId,
+      businessId,
       name: customer.name,
       phone: customer.phone ?? null,
       email: customer.email ?? null,
@@ -111,10 +115,10 @@ export async function hydrateLocalStoreFromServer(): Promise<{
       updatedAt: timestamp,
       syncedAt: timestamp,
     }));
-    await replaceLocalCustomers(context.businessId, customers);
+    await replaceLocalCustomers(businessId, customers);
   }
 
-  await replaceLocalExpenses(context.businessId, [] as LocalExpense[]);
+  await replaceLocalExpenses(businessId, [] as LocalExpense[]);
 
   return {
     seeded: Boolean(productsRes?.products?.length || customersRes?.customers?.length),
