@@ -16,7 +16,8 @@ function sub(
     plan,
     currentPeriodEnd: new Date("2099-01-01"),
     paystackCustomerCode: null,
-    paystackSubscriptionCode: null,
+    paystackSubCode: null,
+    lastPaymentReference: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

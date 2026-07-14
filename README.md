@@ -22,7 +22,7 @@ BizPilot AI is not bookkeeping software — it's an AI employee for Nigerian sma
 | Backend | Supabase PostgreSQL, Prisma ORM |
 | Auth | Clerk |
 | AI | OpenAI GPT-4o-mini |
-| Payments | Paystack (Phase 8) |
+| Payments | Flutterwave |
 | Deploy | Vercel |
 
 ## Getting Started
@@ -107,7 +107,7 @@ types/            # TypeScript types
 | 5 | ✅ Done | Reports + PDF/Excel export |
 | 6 | ✅ Done | AI assistant + Health Score |
 | 7 | ✅ Done | WhatsApp AI |
-| 8 | ✅ Done | Paystack subscriptions |
+| 8 | ✅ Done | Flutterwave subscriptions |
 | 9 | ✅ Done | Mobile PWA optimization |
 | 10 | ✅ Done | Production deployment |
 
@@ -157,19 +157,19 @@ Displayed on the dashboard with actionable recommendations.
 For multiple shops on one Twilio number, customers prefix with business code:
 `ABCD1234: Do you have Vitamin C?`
 
-## Paystack Billing Setup (Phase 8)
+## Flutterwave Billing
 
-1. Create a [Paystack](https://paystack.com) account (test mode for development)
-2. Add to `.env.local`:
+1. Create a [Flutterwave](https://flutterwave.com) account (test mode for development)
+2. Add to `.env.local` / Vercel:
    ```
-   PAYSTACK_SECRET_KEY=sk_test_...
-   NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
-   NEXT_PUBLIC_APP_URL=https://your-domain.com
+   FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST_...
+   NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST_...
+   FLUTTERWAVE_SECRET_HASH=your_webhook_hash
+   NEXT_PUBLIC_APP_URL=https://www.zaplex.site
    ```
-3. Run `npx prisma db push` for payment tables
-4. Go to **Settings → Billing** and subscribe to a plan
-5. Add webhook URL in Paystack Dashboard:
-   `https://your-domain.com/api/webhooks/paystack`
+3. Go to **Settings → Billing** and subscribe to a plan
+4. Webhook URL in Flutterwave Dashboard:
+   `https://www.zaplex.site/api/webhooks/flutterwave`
 
 **Plans:** Starter ₦5,000 · Business ₦15,000 · AI Pro ₦30,000/month
 

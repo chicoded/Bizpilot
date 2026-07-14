@@ -116,8 +116,9 @@ Set these in **Project → Settings → Environment Variables** for Production, 
 | Variable | Description |
 |----------|-------------|
 | `OPENAI_API_KEY` | AI assistant |
-| `PAYSTACK_SECRET_KEY` | Billing (live key in production) |
-| `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Billing |
+| `FLUTTERWAVE_SECRET_KEY` | Billing (live key in production) |
+| `NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY` | Billing |
+| `FLUTTERWAVE_SECRET_HASH` | Billing webhooks |
 | `SENTRY_DSN` | Error monitoring |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client-side Sentry |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Analytics |
@@ -131,7 +132,7 @@ Set these in **Project → Settings → Environment Variables** for Production, 
 | `TWILIO_AUTH_TOKEN` | WhatsApp AI |
 | `TWILIO_WHATSAPP_NUMBER` | WhatsApp sender |
 | `RESEND_API_KEY` | Email notifications |
-| `PAYSTACK_PLAN_*` | Recurring subscription plan codes |
+| `FLUTTERWAVE_PLAN_*` | Optional recurring payment plan IDs |
 
 ---
 

@@ -24,8 +24,6 @@ export async function getBillingData() {
   return {
     subscription,
     paymentsConfigured: isFlutterwaveConfigured(),
-    /** @deprecated use paymentsConfigured */
-    paystackConfigured: isFlutterwaveConfigured(),
     webhookUrl: `${getAppUrl()}/api/webhooks/flutterwave`,
     email: user?.emailAddresses[0]?.emailAddress ?? "",
     businessName: ctx.business.name,

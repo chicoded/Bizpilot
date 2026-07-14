@@ -54,7 +54,7 @@ export async function activateSubscription(
         status: "ACTIVE",
         currentPeriodEnd: periodEnd,
         lastPaymentReference: reference,
-        // Reuse existing columns for Flutterwave customer / plan ids.
+        // Existing DB columns (legacy names) — store Flutterwave customer / plan ids.
         paystackCustomerCode: providerCustomerId ?? undefined,
         paystackSubCode: providerSubId ?? undefined,
       },
