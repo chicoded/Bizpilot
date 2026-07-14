@@ -30,10 +30,33 @@ export async function createBusiness(formData: FormData) {
       imageUrl: user.imageUrl,
     });
 
-    const existing = await prisma.membership.findFirst({
+    const email = user.emailAddresses[0]?.emailAddress?.trim().toLowerCase();
+
+    let existing = await prisma.membership.findFirst({
       where: { userId: user.id },
-      select: { businessId: true },
+      select: { businessId: true, id: true },
     });
+
+    // Recovery: shop still linked to a pre-Clerk-domain user id for this email.
+    if (!existing && email) {
+      const byEmail = await prisma.membership.findFirst({
+        where: {
+          user: { email: { equals: email, mode: "insensitive" } },
+        },
+        select: { businessId: true, id: true, userId: true },
+        orderBy: { createdAt: "desc" },
+      });
+      if (byEmail) {
+        if (byEmail.userId !== user.id) {
+          await prisma.membership.update({
+            where: { id: byEmail.id },
+            data: { userId: user.id },
+          });
+        }
+        existing = { businessId: byEmail.businessId, id: byEmail.id };
+      }
+    }
+
     if (existing) {
       await setActiveBusinessId(existing.businessId);
       revalidatePath("/dashboard");
