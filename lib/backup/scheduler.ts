@@ -5,6 +5,7 @@ import {
 } from "@/lib/local-db/backup-config";
 import { exportBackupJson, saveBackupSnapshot } from "@/lib/backup/export";
 import { deliverBackupToGmail } from "@/lib/backup/gmail";
+import { deliverBackupToDrive } from "@/lib/backup/drive";
 import { getLocalBusinessMeta } from "@/lib/local-data/business";
 
 export async function runScheduledBackup(
@@ -16,7 +17,17 @@ export async function runScheduledBackup(
     return { ok: true, message: "Backup not due yet." };
   }
 
-  if (!config.gmailEmail && !options?.force) {
+  const toGmail = config.backupToGmail !== false;
+  const toDrive = config.backupToDrive === true;
+
+  if (!toGmail && !toDrive && !options?.force) {
+    return {
+      ok: false,
+      message: "Turn on Gmail and/or Drive backup in Settings → Backup & storage.",
+    };
+  }
+
+  if (toGmail && !config.gmailEmail && !options?.force) {
     return {
       ok: false,
       message: "Add your Gmail address in Settings → Backup & storage first.",
@@ -29,15 +40,30 @@ export async function runScheduledBackup(
     const business = await getLocalBusinessMeta();
     const businessName = business?.name ?? "My shop";
 
-    const result = await deliverBackupToGmail(json, businessName);
+    const messages: string[] = [];
+    let anyOk = false;
+
+    if (toGmail || (!toGmail && !toDrive && options?.force)) {
+      const gmailResult = await deliverBackupToGmail(json, businessName);
+      messages.push(gmailResult.message);
+      anyOk = anyOk || gmailResult.ok;
+    }
+
+    if (toDrive) {
+      const driveResult = await deliverBackupToDrive(json, businessName);
+      messages.push(driveResult.message);
+      anyOk = anyOk || driveResult.ok;
+    }
+
+    const message = messages.join(" · ");
 
     saveBackupConfig({
       lastBackupAt: new Date().toISOString(),
-      lastBackupStatus: result.ok ? "success" : "error",
-      lastBackupMessage: result.message,
+      lastBackupStatus: anyOk ? "success" : "error",
+      lastBackupMessage: message,
     });
 
-    return result;
+    return { ok: anyOk, message };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Backup failed unexpectedly";

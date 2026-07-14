@@ -5,6 +5,9 @@ import {
 import { shareBackupFile } from "@/lib/backup/export";
 
 const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const USERINFO_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
+const GOOGLE_SCOPES = `${GMAIL_SCOPE} ${DRIVE_SCOPE} ${USERINFO_SCOPE}`;
 
 function getGoogleClientId(): string | null {
   return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? null;
@@ -90,7 +93,7 @@ export function startGmailOAuth(): { ok: true } | { ok: false; error: string } {
     return {
       ok: false,
       error:
-        "Automatic Gmail send needs Google sign-in setup. Use Send to Gmail below — it opens your Gmail app with the backup file.",
+        "Automatic Gmail/Drive save needs Google sign-in setup. Use Send to Gmail or Save to Drive below — they open your phone share menu.",
     };
   }
 
@@ -102,7 +105,7 @@ export function startGmailOAuth(): { ok: true } | { ok: false; error: string } {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: "token",
-    scope: `${GMAIL_SCOPE} https://www.googleapis.com/auth/userinfo.email`,
+    scope: GOOGLE_SCOPES,
     include_granted_scopes: "true",
     state,
     prompt: "consent",

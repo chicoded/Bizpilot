@@ -31,7 +31,6 @@ import {
   Search,
   Plus,
   Minus,
-  Trash2,
   ShoppingCart,
   Check,
   Loader2,
@@ -40,6 +39,7 @@ import {
   Printer,
   RefreshCw,
   PackageOpen,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -88,6 +88,7 @@ export default function SalesPage() {
   const [lastReceiptNumber, setLastReceiptNumber] = useState<string | null>(null);
   const [barcodeLookupPending, startBarcodeLookup] = useTransition();
   const cartRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const loadQuickPicks = useCallback(async (options?: { silent?: boolean }) => {
     if (!businessId) {
@@ -204,6 +205,10 @@ export default function SalesPage() {
       }
       return [...prev, { product, quantity: 1 }];
     });
+    // Keep the Pay bar visible — keyboard/search focus often covers it after scan.
+    requestAnimationFrame(() => {
+      searchInputRef.current?.blur();
+    });
   }
 
   const handleBarcodeScan = useCallback(
@@ -262,6 +267,14 @@ export default function SalesPage() {
         )
         .filter((i) => i.quantity > 0)
     );
+  }
+
+  function removeFromCart(productId: string) {
+    setCart((prev) => prev.filter((i) => i.product.id !== productId));
+  }
+
+  function clearCart() {
+    setCart([]);
   }
 
   function scrollToCart() {
@@ -330,7 +343,7 @@ export default function SalesPage() {
       <AppShell
         title="Point of Sale"
         subtitle="Tap products to add to cart"
-        className={cn(cart.length > 0 && "pb-36 lg:pb-6")}
+        className={cn(cart.length > 0 && "pb-56 lg:pb-6")}
         actions={
           <Link
             href="/sales/history"
@@ -351,6 +364,7 @@ export default function SalesPage() {
                 aria-hidden
               />
               <Input
+                ref={searchInputRef}
                 placeholder="Search products or scan barcode..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -363,6 +377,7 @@ export default function SalesPage() {
                 data-barcode-wedge="true"
                 className="pl-10 h-14 text-base"
                 autoFocus
+                enterKeyHint="done"
                 aria-label="Search products or scan barcode"
                 disabled={barcodeLookupPending}
               />
@@ -466,12 +481,22 @@ export default function SalesPage() {
                     Tap products to add them here
                   </p>
                 ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
                     {cart.map((item) => (
                       <div
                         key={item.product.id}
                         className="flex items-center gap-2 rounded-lg surface-muted p-2"
                       >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                          onClick={() => removeFromCart(item.product.id)}
+                          aria-label={`Remove ${item.product.name} from cart`}
+                        >
+                          <X className="h-5 w-5" strokeWidth={2.5} />
+                        </Button>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {item.product.name}
@@ -485,7 +510,7 @@ export default function SalesPage() {
                             type="button"
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9"
+                            className="h-9 w-9 touch-manipulation"
                             onClick={() => updateQty(item.product.id, -1)}
                             aria-label={`Decrease quantity of ${item.product.name}`}
                           >
@@ -501,25 +526,22 @@ export default function SalesPage() {
                             type="button"
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9"
+                            className="h-9 w-9 touch-manipulation"
                             onClick={() => updateQty(item.product.id, 1)}
                             aria-label={`Increase quantity of ${item.product.name}`}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 text-destructive hover:text-destructive"
-                            onClick={() => updateQty(item.product.id, -item.quantity)}
-                            aria-label={`Remove ${item.product.name} from cart`}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </div>
                       </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={clearCart}
+                      className="w-full text-center text-xs font-medium text-destructive py-1 touch-manipulation"
+                    >
+                      Clear cart
+                    </button>
                   </div>
                 )}
 
@@ -630,38 +652,91 @@ export default function SalesPage() {
       </AppShell>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-[4.5rem] left-0 right-0 z-[90] md:hidden border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
-          <div className="flex items-center gap-3 max-w-7xl mx-auto">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">
-                {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
-              </p>
-              <p className="text-lg font-bold text-brand">
-                {formatCurrency(subtotal)}
-              </p>
+        <div
+          className="fixed inset-x-0 z-[110] md:hidden border-t border-border bg-card/95 backdrop-blur-xl px-3 pt-2 pb-3 shadow-[0_-8px_28px_rgba(0,0,0,0.18)] dark:shadow-[0_-8px_28px_rgba(0,0,0,0.45)] pointer-events-auto"
+          style={{
+            // Sit above bottom nav + raised center button so Pay stays usable after scan
+            bottom: "calc(5.75rem + env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          <div className="max-w-7xl mx-auto space-y-2">
+            <div className="max-h-28 overflow-y-auto space-y-1.5">
+              {[...cart].reverse().map((item) => (
+                <div
+                  key={item.product.id}
+                  className="flex items-center gap-2 rounded-xl bg-muted/70 px-2 py-1.5"
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                    onClick={() => removeFromCart(item.product.id)}
+                    aria-label={`Remove ${item.product.name}`}
+                  >
+                    <X className="h-4 w-4" strokeWidth={2.75} />
+                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.product.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ×{item.quantity} ·{" "}
+                      {formatCurrency(item.product.sellingPrice * item.quantity)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 touch-manipulation"
+                      onClick={() => updateQty(item.product.id, -1)}
+                      aria-label={`Decrease ${item.product.name}`}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 touch-manipulation"
+                      onClick={() => updateQty(item.product.id, 1)}
+                      aria-label={`Increase ${item.product.name}`}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={scrollToCart}
-            >
-              Review
-            </Button>
-            <Button
-              type="button"
-              variant="success"
-              size="sm"
-              className="min-w-[88px]"
-              onClick={completeSale}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-label="Processing sale" />
-              ) : (
-                "Pay"
-              )}
-            </Button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={scrollToCart}
+                className="flex-1 min-w-0 text-left touch-manipulation rounded-xl px-1"
+              >
+                <p className="text-xs text-muted-foreground">
+                  {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
+                </p>
+                <p className="text-lg font-bold text-brand leading-tight">
+                  {formatCurrency(subtotal)}
+                </p>
+              </button>
+              <Button
+                type="button"
+                variant="success"
+                size="lg"
+                className="h-12 min-w-[120px] shrink-0 touch-manipulation text-base font-semibold"
+                onClick={completeSale}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-label="Processing sale" />
+                ) : (
+                  "Pay"
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -86,6 +86,10 @@ export type BackupConfig = {
   gmailEmail: string | null;
   gmailAccessToken: string | null;
   gmailTokenExpiry: number | null;
+  /** Email backup file to Gmail */
+  backupToGmail: boolean;
+  /** Upload backup file to Google Drive */
+  backupToDrive: boolean;
   lastBackupAt: string | null;
   lastBackupStatus: "success" | "error" | null;
   lastBackupMessage: string | null;

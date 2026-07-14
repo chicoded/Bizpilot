@@ -61,23 +61,38 @@ export function ExpensesPanel({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    const formData = new FormData(e.currentTarget);
-    formData.set("category", category);
+
     if (!businessId) {
       setError("Shop data not loaded yet.");
       return;
     }
 
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const amount = Number(formData.get("amount"));
+    const description = String(formData.get("description") ?? "").trim() || undefined;
+    const date = String(formData.get("date") ?? "");
+
+    if (!amount || amount <= 0) {
+      setError("Enter an amount greater than zero");
+      return;
+    }
+
     startTransition(async () => {
-      await createLocalExpense(businessId, {
-        category,
-        amount: Number(formData.get("amount")),
-        description: String(formData.get("description") ?? "") || undefined,
-        date: String(formData.get("date") ?? ""),
-      });
-      setShowForm(false);
-      e.currentTarget.reset();
-      onChanged?.();
+      try {
+        await createLocalExpense(businessId, {
+          category,
+          amount,
+          description,
+          date: date || undefined,
+        });
+        form.reset();
+        setShowForm(false);
+        setCategory("FUEL");
+        onChanged?.();
+      } catch {
+        setError("Could not save expense. Try again.");
+      }
     });
   }
 

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { sendSupplyRequest } from "@/actions/supply-request";
 import { Button } from "@/components/ui/button";
 import { Loader2, MessageCircle } from "lucide-react";
+import { openWhatsAppChat } from "@/lib/phone";
 
 export function QuickSupplierReorderButton({
   supplierId,
@@ -37,7 +38,15 @@ export function QuickSupplierReorderButton({
       }
 
       if (result.whatsAppUrl) {
-        window.open(result.whatsAppUrl, "_blank", "noopener,noreferrer");
+        // Fallback when opened after async — openWhatsAppChat still handles blockers
+        const url = new URL(result.whatsAppUrl);
+        const phone = url.pathname.replace("/", "");
+        const text = url.searchParams.get("text") ?? "";
+        if (phone) {
+          openWhatsAppChat(phone, text);
+        } else {
+          window.location.assign(result.whatsAppUrl);
+        }
       }
 
       setSuccess(`Reorder opened in WhatsApp for ${supplierName}.`);
@@ -62,9 +71,7 @@ export function QuickSupplierReorderButton({
           </>
         )}
       </Button>
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-600">{error}</p>}
       {success && (
         <p className="text-xs text-emerald-700">{success}</p>
       )}

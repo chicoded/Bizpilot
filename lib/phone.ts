@@ -38,3 +38,27 @@ export function toWhatsAppWebUrl(phone: string, message: string): string {
   const digits = normalizeNigerianPhone(phone).replace(/\D/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Opens the supplier/customer WhatsApp chat with a pre-filled message.
+ * Prefer this over window.open after async work — popup blockers often block
+ * that; this uses the current user tap more reliably.
+ */
+export function openWhatsAppChat(phone: string, message: string): boolean {
+  if (typeof window === "undefined") return false;
+
+  const url = toWhatsAppWebUrl(phone, message);
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    window.location.assign(url);
+    return true;
+  }
+
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    window.location.assign(url);
+  }
+  return true;
+}
+

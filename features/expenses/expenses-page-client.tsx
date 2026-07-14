@@ -23,17 +23,21 @@ export function ExpensesPageClient() {
   const [data, setData] = useState({ expenses: [] as Awaited<ReturnType<typeof listLocalExpensesSummary>>["expenses"], total: 0 });
   const [loading, setLoading] = useState(true);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (options?: { silent?: boolean }) => {
     if (!businessId) {
       setData({ expenses: [], total: 0 });
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!options?.silent) {
+      setLoading(true);
+    }
     try {
       setData(await listLocalExpensesSummary(businessId, period));
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }, [businessId, period]);
 
@@ -56,7 +60,7 @@ export function ExpensesPageClient() {
         total={data.total}
         currency={currency}
         period={period}
-        onChanged={reload}
+        onChanged={() => void reload({ silent: true })}
       />
     </AppShell>
   );

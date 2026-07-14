@@ -9,6 +9,8 @@ const DEFAULT_CONFIG: BackupConfig = {
   gmailEmail: null,
   gmailAccessToken: null,
   gmailTokenExpiry: null,
+  backupToGmail: true,
+  backupToDrive: true,
   lastBackupAt: null,
   lastBackupStatus: null,
   lastBackupMessage: null,

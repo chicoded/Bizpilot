@@ -27,9 +27,19 @@ import {
   isGmailBackupConfigured,
   saveGmailAddress,
 } from "@/lib/backup/gmail";
+import { deliverBackupToDrive } from "@/lib/backup/drive";
 import { downloadBackupFile, exportBackupJson } from "@/lib/backup/export";
 import { useLocalData } from "@/components/providers/local-data-provider";
-import { CloudUpload, Download, HardDrive, Loader2, Mail, Send } from "lucide-react";
+import {
+  CloudUpload,
+  Download,
+  FolderOpen,
+  HardDrive,
+  Loader2,
+  Mail,
+  Send,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function BackupSettingsPanel() {
   const { businessId, businessName, runBackupNow } = useLocalData();
@@ -49,7 +59,7 @@ export function BackupSettingsPanel() {
     if (searchParams.get("gmail") === "connected") {
       setConfig(getBackupConfig());
       setGmailInput(getBackupConfig().gmailEmail ?? "");
-      setMessage("Gmail connected — automatic email backups are ready.");
+      setMessage("Google connected — Gmail and Drive backups are ready.");
     }
   }, [searchParams]);
 
@@ -58,7 +68,7 @@ export function BackupSettingsPanel() {
       if (event.data?.type === "bizpilot:gmail-connected") {
         setConfig(getBackupConfig());
         setGmailInput(getBackupConfig().gmailEmail ?? "");
-        setMessage("Gmail connected — automatic email backups are ready.");
+        setMessage("Google connected — Gmail and Drive backups are ready.");
       }
     }
     window.addEventListener("message", onMessage);
@@ -89,6 +99,21 @@ export function BackupSettingsPanel() {
     startTransition(async () => {
       const json = await exportBackupJson(businessId);
       const result = await deliverBackupToGmail(json, businessName);
+      setConfig(getBackupConfig());
+      setMessage(result.message);
+    });
+  }
+
+  function handleSaveToDrive() {
+    if (!businessId) {
+      setMessage("No local shop data found yet.");
+      return;
+    }
+    setMessage(null);
+    startTransition(async () => {
+      const json = await exportBackupJson(businessId);
+      const result = await deliverBackupToDrive(json, businessName);
+      setConfig(getBackupConfig());
       setMessage(result.message);
     });
   }
@@ -114,21 +139,25 @@ export function BackupSettingsPanel() {
     });
   }
 
-  function handleConnectGmail() {
+  function handleConnectGoogle() {
     setMessage(null);
     startTransition(async () => {
       const result = await connectGmailAccount();
       setConfig(getBackupConfig());
       if (result.ok) {
         setGmailInput(result.email);
-        setMessage(`Connected ${result.email} for automatic Gmail backups.`);
+        setMessage(
+          `Connected ${result.email} — backups can save to Gmail and Google Drive.`
+        );
       } else {
         setMessage(result.error);
       }
     });
   }
 
-  const hasAutoGmail = Boolean(config.gmailAccessToken && config.gmailEmail);
+  const hasGoogle = Boolean(config.gmailAccessToken && config.gmailEmail);
+  const backupToGmail = config.backupToGmail !== false;
+  const backupToDrive = config.backupToDrive === true;
 
   return (
     <div className="space-y-4">
@@ -142,8 +171,8 @@ export function BackupSettingsPanel() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
             Your inventory, sales, customers, and expenses are saved on this
-            device first. The app works like a traditional shop app even when
-            the online database is down.
+            device first. Backups keep a copy in Gmail and/or Google Drive so you
+            don&apos;t lose shop data.
           </p>
         </CardContent>
       </Card>
@@ -152,7 +181,7 @@ export function BackupSettingsPanel() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Mail className="h-5 w-5" />
-            Gmail backup
+            Save to Gmail or Drive
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -176,41 +205,96 @@ export function BackupSettingsPanel() {
                 Save
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Backups are sent to this address on your schedule.
-            </p>
           </div>
 
-          <Button
-            type="button"
-            size="lg"
-            className="w-full h-12 touch-manipulation"
-            onClick={handleSendToGmail}
-            disabled={isPending || !businessId}
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            Send backup to Gmail now
-          </Button>
-          <p className="text-xs text-muted-foreground -mt-2">
-            On mobile, this opens the share menu — pick Gmail and send the file
-            to yourself.
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => updateConfig({ backupToGmail: !backupToGmail })}
+              className={cn(
+                "rounded-xl border px-4 py-3 text-left transition-colors touch-manipulation",
+                backupToGmail
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card"
+              )}
+            >
+              <p className="font-medium text-sm flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Gmail
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {backupToGmail ? "On — email backup file" : "Off"}
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateConfig({ backupToDrive: !backupToDrive })}
+              className={cn(
+                "rounded-xl border px-4 py-3 text-left transition-colors touch-manipulation",
+                backupToDrive
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card"
+              )}
+            >
+              <p className="font-medium text-sm flex items-center gap-2">
+                <FolderOpen className="h-4 w-4" />
+                Google Drive
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {backupToDrive
+                  ? "On — save to BizPilot Backups folder"
+                  : "Off"}
+              </p>
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              size="lg"
+              className="w-full h-12 touch-manipulation"
+              onClick={handleSendToGmail}
+              disabled={isPending || !businessId}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Send backup to Gmail now
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="w-full h-12 touch-manipulation"
+              onClick={handleSaveToDrive}
+              disabled={isPending || !businessId}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FolderOpen className="h-4 w-4" />
+              )}
+              Save backup to Drive now
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Without Google Connect, mobile share lets you pick Gmail or Drive.
+            With Connect, files send/upload automatically.
           </p>
 
           <div className="rounded-xl border border-border/60 p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-medium text-sm">Automatic Gmail send</p>
+                <p className="font-medium text-sm">Connect Google</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {hasAutoGmail
-                    ? `Connected — backups email automatically to ${config.gmailEmail}`
-                    : "Connect Google to email backups without opening share each time"}
+                  {hasGoogle
+                    ? `Connected as ${config.gmailEmail} — Gmail send + Drive upload`
+                    : "Allow BizPilot to email and save backups to your Google account"}
                 </p>
               </div>
-              {hasAutoGmail ? (
+              {hasGoogle ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -218,7 +302,7 @@ export function BackupSettingsPanel() {
                   onClick={() => {
                     disconnectGmailAccount();
                     setConfig(getBackupConfig());
-                    setMessage("Automatic Gmail send disconnected.");
+                    setMessage("Google account disconnected.");
                   }}
                 >
                   Disconnect
@@ -227,7 +311,7 @@ export function BackupSettingsPanel() {
                 <Button
                   type="button"
                   size="sm"
-                  onClick={handleConnectGmail}
+                  onClick={handleConnectGoogle}
                   disabled={isPending}
                 >
                   Connect Google
@@ -236,9 +320,10 @@ export function BackupSettingsPanel() {
             </div>
             {!isGmailBackupConfigured() && (
               <p className="text-xs text-muted-foreground">
-                Share-to-Gmail works without setup. For fully automatic email,
-                add <span className="font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>{" "}
-                in Vercel (Google Cloud OAuth).
+                Share to Gmail/Drive works without setup. For automatic save, add{" "}
+                <span className="font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>{" "}
+                in Vercel (Google Cloud OAuth with Gmail send + Drive file
+                scopes).
               </p>
             )}
           </div>
@@ -261,6 +346,14 @@ export function BackupSettingsPanel() {
                   config.frequencyUnit,
                   config.frequencyInterval
                 )}
+                {backupToGmail || backupToDrive
+                  ? ` → ${[
+                      backupToGmail ? "Gmail" : null,
+                      backupToDrive ? "Drive" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" + ")}`
+                  : ""}
               </p>
             </div>
             <Button
@@ -327,7 +420,7 @@ export function BackupSettingsPanel() {
               ) : (
                 <CloudUpload className="h-4 w-4" />
               )}
-              Run scheduled backup
+              Run backup now
             </Button>
             <Button
               type="button"
