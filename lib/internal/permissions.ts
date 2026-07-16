@@ -12,7 +12,9 @@ export type InternalPermission =
   | "payments:view"
   | "admins:manage"
   | "logs:view"
-  | "system:view";
+  | "system:view"
+  | "support:view"
+  | "support:write";
 
 const ROLE_PERMISSIONS: Record<InternalAdminRole, InternalPermission[]> = {
   SUPER_ADMIN: [
@@ -28,6 +30,8 @@ const ROLE_PERMISSIONS: Record<InternalAdminRole, InternalPermission[]> = {
     "admins:manage",
     "logs:view",
     "system:view",
+    "support:view",
+    "support:write",
   ],
   ADMIN: [
     "dashboard:view",
@@ -38,6 +42,8 @@ const ROLE_PERMISSIONS: Record<InternalAdminRole, InternalPermission[]> = {
     "subscriptions:view",
     "logs:view",
     "system:view",
+    "support:view",
+    "support:write",
   ],
   SUPPORT: [
     "dashboard:view",
@@ -45,6 +51,8 @@ const ROLE_PERMISSIONS: Record<InternalAdminRole, InternalPermission[]> = {
     "users:view",
     "subscriptions:view",
     "logs:view",
+    "support:view",
+    "support:write",
   ],
   FINANCE: [
     "dashboard:view",
@@ -58,6 +66,8 @@ const ROLE_PERMISSIONS: Record<InternalAdminRole, InternalPermission[]> = {
     "businesses:view",
     "logs:view",
     "system:view",
+    "support:view",
+    "support:write",
   ],
 };
 

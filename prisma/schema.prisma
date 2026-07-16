@@ -143,6 +143,7 @@ model Business {
   mealCombos     MealCombo[]
   favoriteProducts FavoriteProduct[]
   kitchenOrders  KitchenOrder[]
+  supportTickets SupportTicket[]
 
   @@map("businesses")
 }
@@ -161,6 +162,7 @@ model User {
   auditLogs       AuditLog[]
   internalAdmin   InternalAdmin?
   internalAudits  InternalAuditLog[]
+  supportTickets  SupportTicket[]
 
   @@map("users")
 }
@@ -653,4 +655,33 @@ model AiPromptLog {
 
   @@index([businessId, createdAt])
   @@map("ai_prompt_logs")
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+/// Customer bug reports / support requests (Settings → Help & support).
+model SupportTicket {
+  id         String              @id @default(cuid())
+  businessId String?
+  userId     String?
+  email      String?
+  summary    String
+  details    String?
+  pageUrl    String?
+  status     SupportTicketStatus @default(OPEN)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([businessId])
+  @@index([createdAt])
+  @@map("support_tickets")
 }

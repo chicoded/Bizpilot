@@ -228,6 +228,27 @@ export const teamInviteSchema = z.object({
   role: z.enum(["MANAGER", "CASHIER", "STAFF"]),
 });
 
+export const supportTicketSchema = z.object({
+  summary: z
+    .string()
+    .trim()
+    .min(5, "Describe the issue in at least 5 characters")
+    .max(200, "Keep the summary under 200 characters"),
+  details: z
+    .string()
+    .trim()
+    .max(4000, "Details are too long")
+    .optional()
+    .or(z.literal("")),
+  pageUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .optional()
+    .or(z.literal("")),
+});
+
 export const updateMemberRoleSchema = z.object({
   userId: z.string().min(1),
   role: z.enum(["MANAGER", "CASHIER", "STAFF"]),

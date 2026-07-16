@@ -10,6 +10,7 @@ import {
   Building2,
   CreditCard,
   LayoutDashboard,
+  LifeBuoy,
   Receipt,
   ScrollText,
   Server,
@@ -53,6 +54,12 @@ const NAV: {
     label: "Payments",
     icon: Receipt,
     permission: "payments:view",
+  },
+  {
+    href: "/internal/support",
+    label: "Support",
+    icon: LifeBuoy,
+    permission: "support:view",
   },
   {
     href: "/internal/admins",

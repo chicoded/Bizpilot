@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useUser } from "@clerk/nextjs";
+import { createSupportTicket } from "@/actions/support";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { openWhatsAppChat } from "@/lib/phone";
 import { buildBugReportMessage } from "@/lib/support-contact";
-import { Bug, Mail, MessageCircle } from "lucide-react";
+import { Bug, Loader2, Mail, MessageCircle, Send } from "lucide-react";
 
 interface SupportBugReportFormProps {
   businessName?: string | null;
@@ -26,9 +27,11 @@ export function SupportBugReportForm({
   supportWhatsAppDisplay,
 }: SupportBugReportFormProps) {
   const { user } = useUser();
+  const [isPending, startTransition] = useTransition();
   const [summary, setSummary] = useState("");
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const userEmail =
     user?.primaryEmailAddress?.emailAddress ??
@@ -50,10 +53,31 @@ export function SupportBugReportForm({
       setError(
         "Please describe the bug in a short sentence (at least 5 characters)."
       );
+      setSuccess(null);
       return false;
     }
     setError(null);
     return true;
+  }
+
+  function handleSubmitInApp() {
+    if (!requireSummary()) return;
+    setSuccess(null);
+    startTransition(async () => {
+      const result = await createSupportTicket({
+        summary,
+        details,
+        pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        email: userEmail ?? undefined,
+      });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setSuccess("Report submitted. Our team will review it shortly.");
+      setSummary("");
+      setDetails("");
+    });
   }
 
   function handleWhatsApp() {
@@ -62,7 +86,16 @@ export function SupportBugReportForm({
       setError("WhatsApp support is not configured yet.");
       return;
     }
-    openWhatsAppChat(supportWhatsAppDisplay, buildMessage());
+    // Also save in-app so staff see it in Ops even if chat is closed.
+    startTransition(async () => {
+      await createSupportTicket({
+        summary,
+        details,
+        pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        email: userEmail ?? undefined,
+      }).catch(() => null);
+      openWhatsAppChat(supportWhatsAppDisplay, buildMessage());
+    });
   }
 
   function handleEmail() {
@@ -71,9 +104,17 @@ export function SupportBugReportForm({
       setError("Email support is not configured yet.");
       return;
     }
-    const body = encodeURIComponent(buildMessage());
-    const subject = encodeURIComponent("Zaplex bug report");
-    window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
+    startTransition(async () => {
+      await createSupportTicket({
+        summary,
+        details,
+        pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        email: userEmail ?? undefined,
+      }).catch(() => null);
+      const body = encodeURIComponent(buildMessage());
+      const subject = encodeURIComponent("Zaplex bug report");
+      window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
+    });
   }
 
   return (
@@ -86,8 +127,8 @@ export function SupportBugReportForm({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Tell us what went wrong. We&apos;ll open WhatsApp or your email app
-          with the report ready to send.
+          Tell us what went wrong. Submit in the app so our team sees it, or
+          also send via WhatsApp / email.
         </p>
 
         <div className="space-y-2">
@@ -118,41 +159,52 @@ export function SupportBugReportForm({
             {error}
           </p>
         )}
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          {whatsappConfigured && (
-            <Button
-              type="button"
-              className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
-              onClick={handleWhatsApp}
-            >
-              <MessageCircle className="h-4 w-4" />
-              Send on WhatsApp
-            </Button>
-          )}
-          {emailConfigured && (
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={handleEmail}
-            >
-              <Mail className="h-4 w-4" />
-              Send by email
-              {supportEmail ? (
-                <span className="sr-only"> to {supportEmail}</span>
-              ) : null}
-            </Button>
-          )}
-        </div>
-
-        {!whatsappConfigured && !emailConfigured && (
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            Support contacts are not set yet. Add{" "}
-            <code className="text-xs">NEXT_PUBLIC_SUPPORT_WHATSAPP</code> and{" "}
-            <code className="text-xs">NEXT_PUBLIC_SUPPORT_EMAIL</code> on
-            Vercel.
+        {success && (
+          <p className="text-sm text-emerald-700 rounded-lg bg-emerald-50 px-3 py-2 dark:bg-emerald-950/40 dark:text-emerald-300">
+            {success}
           </p>
+        )}
+
+        <Button
+          type="button"
+          className="w-full gap-2"
+          disabled={isPending}
+          onClick={handleSubmitInApp}
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+          Submit report
+        </Button>
+
+        {(whatsappConfigured || emailConfigured) && (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {whatsappConfigured && (
+              <Button
+                type="button"
+                className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
+                disabled={isPending}
+                onClick={handleWhatsApp}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Also WhatsApp
+              </Button>
+            )}
+            {emailConfigured && (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 gap-2"
+                disabled={isPending}
+                onClick={handleEmail}
+              >
+                <Mail className="h-4 w-4" />
+                Also email
+              </Button>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

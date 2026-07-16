@@ -282,3 +282,30 @@ export async function setInternalAdminDisabled(input: {
   revalidatePath("/internal/admins");
   return { ok: true as const };
 }
+
+export async function updateSupportTicketStatus(input: {
+  ticketId: string;
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+}) {
+  const admin = await requireInternalAdmin("support:write");
+  const allowed = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
+  if (!allowed.includes(input.status)) {
+    return { ok: false as const, error: "Invalid status." };
+  }
+
+  await prisma.supportTicket.update({
+    where: { id: input.ticketId },
+    data: { status: input.status },
+  });
+
+  await writeInternalAudit({
+    actorUserId: admin.userId,
+    action: "support.status",
+    entity: "support_ticket",
+    entityId: input.ticketId,
+    metadata: { status: input.status },
+  });
+
+  revalidatePath("/internal/support");
+  return { ok: true as const };
+}

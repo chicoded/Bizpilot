@@ -27,8 +27,8 @@ export default async function SettingsSupportPage() {
           <CardContent className="space-y-3 p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Need help?</p>
             <p>
-              Report bugs or ask questions directly. We reply on WhatsApp or
-              email.
+              Report bugs from here — they appear in our ops inbox. You can also
+              reach us on WhatsApp or email.
             </p>
             <ul className="space-y-2">
               {contacts.whatsapp && (
