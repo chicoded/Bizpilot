@@ -81,29 +81,44 @@ export async function createBusiness(formData: FormData) {
       return { error: parsed.error.flatten().fieldErrors };
     }
 
-    const business = await prisma.business.create({
-      data: {
-        name: parsed.data.name,
-        industry: parsed.data.industry,
-        industryLabel: parsed.data.industryLabel ?? null,
-        currency: parsed.data.currency,
-        address: parsed.data.address,
-        phone: parsed.data.phone,
-        memberships: {
-          create: {
-            userId: user.id,
-            role: Role.OWNER,
-          },
-        },
-        subscription: {
-          create: {
-            plan: "STARTER",
-            status: "TRIAL",
-            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-          },
+    const baseData = {
+      name: parsed.data.name,
+      industry: parsed.data.industry,
+      currency: parsed.data.currency,
+      address: parsed.data.address,
+      phone: parsed.data.phone,
+      memberships: {
+        create: {
+          userId: user.id,
+          role: Role.OWNER,
         },
       },
-    });
+      subscription: {
+        create: {
+          plan: "STARTER" as const,
+          status: "TRIAL" as const,
+          currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        },
+      },
+    };
+
+    let business;
+    try {
+      business = await prisma.business.create({
+        data: {
+          ...baseData,
+          industryLabel: parsed.data.industryLabel ?? null,
+        },
+      });
+    } catch (createError) {
+      // Older DBs may not have industryLabel yet — still create the shop.
+      const detail =
+        createError instanceof Error ? createError.message : String(createError);
+      if (!/industryLabel|column.*does not exist|P2022/i.test(detail)) {
+        throw createError;
+      }
+      business = await prisma.business.create({ data: baseData });
+    }
 
     await prisma.auditLog.create({
       data: {
@@ -121,16 +136,6 @@ export async function createBusiness(formData: FormData) {
     return { success: true, businessId: business.id };
   } catch (error) {
     console.error("[createBusiness] failed:", error);
-    const detail = error instanceof Error ? error.message : "";
-    if (/industryLabel|column.*does not exist|P2022/i.test(detail)) {
-      return {
-        error: {
-          _form: [
-            "Database needs a quick update. In Supabase SQL Editor, run database/repair-industry-label.sql, then try again.",
-          ],
-        },
-      };
-    }
     return {
       error: {
         _form: [
@@ -517,17 +522,35 @@ export async function updateBusiness(formData: FormData) {
       return { error: formatFieldErrors(parsed.error.flatten().fieldErrors) };
     }
 
-    await prisma.business.update({
-      where: { id: ctx.businessId },
-      data: {
-        name: parsed.data.name,
-        industry: parsed.data.industry,
-        industryLabel: parsed.data.industryLabel ?? null,
-        currency: parsed.data.currency,
-        address: parsed.data.address ?? null,
-        phone: parsed.data.phone ?? null,
-      },
-    });
+    try {
+      await prisma.business.update({
+        where: { id: ctx.businessId },
+        data: {
+          name: parsed.data.name,
+          industry: parsed.data.industry,
+          industryLabel: parsed.data.industryLabel ?? null,
+          currency: parsed.data.currency,
+          address: parsed.data.address ?? null,
+          phone: parsed.data.phone ?? null,
+        },
+      });
+    } catch (updateError) {
+      const detail =
+        updateError instanceof Error ? updateError.message : String(updateError);
+      if (!/industryLabel|column.*does not exist|P2022/i.test(detail)) {
+        throw updateError;
+      }
+      await prisma.business.update({
+        where: { id: ctx.businessId },
+        data: {
+          name: parsed.data.name,
+          industry: parsed.data.industry,
+          currency: parsed.data.currency,
+          address: parsed.data.address ?? null,
+          phone: parsed.data.phone ?? null,
+        },
+      });
+    }
 
     revalidatePath("/settings");
     revalidatePath("/dashboard");

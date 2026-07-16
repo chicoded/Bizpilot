@@ -15,11 +15,11 @@ import {
 
 const BUSINESS_INCLUDE = { business: true } as const;
 
-const BUSINESS_SELECT_FALLBACK = {
+/** Safe columns that exist on older DBs before industryLabel was added. */
+const BUSINESS_SELECT_CORE = {
   id: true,
   name: true,
   industry: true,
-  industryLabel: true,
   currency: true,
   logo: true,
   address: true,
@@ -29,12 +29,25 @@ const BUSINESS_SELECT_FALLBACK = {
   updatedAt: true,
 } as const;
 
+function isMissingSchemaColumnError(error: unknown): boolean {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2022") return true;
+  }
+  return (
+    error instanceof Error &&
+    /rolePermissions|sectionOverrides|industryLabel|column.*does not exist|P2022/i.test(
+      error.message
+    )
+  );
+}
+
 function formatBusinessContext(
   membership: MembershipWithBusiness,
   userId: string
 ) {
   const business = membership.business as Business & {
     rolePermissions?: Prisma.JsonValue | null;
+    industryLabel?: string | null;
   };
 
   return {
@@ -46,6 +59,7 @@ function formatBusinessContext(
         .sectionOverrides ?? null,
     business: {
       ...business,
+      industryLabel: business.industryLabel ?? null,
       rolePermissions: business.rolePermissions ?? null,
     },
   };
@@ -70,21 +84,21 @@ async function loadMembershipForUser(userId: string, businessId?: string) {
   return picked;
 }
 
-async function loadMembershipForUserWithoutRolePermissions(
+async function loadMembershipForUserCoreColumns(
   userId: string,
   businessId?: string
 ) {
   if (businessId) {
     return prisma.membership.findUnique({
       where: { userId_businessId: { userId, businessId } },
-      include: { business: { select: BUSINESS_SELECT_FALLBACK } },
+      include: { business: { select: BUSINESS_SELECT_CORE } },
     });
   }
 
   const cookieBusinessId = await getActiveBusinessIdFromCookie();
   const memberships = await prisma.membership.findMany({
     where: { userId },
-    include: { business: { select: BUSINESS_SELECT_FALLBACK } },
+    include: { business: { select: BUSINESS_SELECT_CORE } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -126,17 +140,12 @@ export async function getBusinessContext(businessId?: string) {
 
     return formatBusinessContext(membership, userId);
   } catch (error) {
-    const missingRolePermissions =
-      error instanceof Error &&
-      /rolePermissions|sectionOverrides|column.*does not exist|P2022/i.test(
-        error.message
-      );
-
-    if (!missingRolePermissions) {
+    if (!isMissingSchemaColumnError(error)) {
       throw error;
     }
 
-    const membership = await loadMembershipForUserWithoutRolePermissions(
+    // Older DBs may be missing industryLabel / rolePermissions / etc.
+    const membership = await loadMembershipForUserCoreColumns(
       userId,
       businessId
     );
@@ -147,7 +156,11 @@ export async function getBusinessContext(businessId?: string) {
       {
         ...membership,
         sectionOverrides: null,
-        business: { ...membership.business, rolePermissions: null },
+        business: {
+          ...membership.business,
+          industryLabel: null,
+          rolePermissions: null,
+        },
       } as MembershipWithBusiness,
       userId
     );
