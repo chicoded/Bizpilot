@@ -43,6 +43,8 @@ import {
   Check,
   Loader2,
   PackageOpen,
+  Settings2,
+  BarChart3,
 } from "lucide-react";
 
 type CartItem = {
@@ -85,6 +87,8 @@ export function RushPosEngine({
   const [category, setCategory] = useState("All");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [splitCash, setSplitCash] = useState("");
+  const [splitTransfer, setSplitTransfer] = useState("");
   const [serviceType, setServiceType] = useState<ServiceTypeValue>("WALK_IN");
   const [notes, setNotes] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -259,14 +263,44 @@ export function RushPosEngine({
 
   function completeSale() {
     if (!businessId || cart.length === 0) return;
+
+    let payment = paymentMethod;
+    let noteParts = [...notes];
+
+    if (paymentMethod === "SPLIT") {
+      const cash = Number(splitCash) || 0;
+      const transfer = Number(splitTransfer) || 0;
+      if (cash + transfer <= 0) {
+        toast({
+          title: "Split payment",
+          description: "Enter cash and/or transfer amounts.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (Math.abs(cash + transfer - subtotal) > 0.5) {
+        toast({
+          title: "Split must match total",
+          description: `Cash + transfer should equal ${formatCurrency(subtotal)}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      payment = cash >= transfer ? "CASH" : "TRANSFER";
+      noteParts = [
+        ...noteParts,
+        `SPLIT: CASH ${cash} TRANSFER ${transfer}`,
+      ];
+    }
+
     startTransition(async () => {
-      const noteText = notes.join(", ");
+      const noteText = noteParts.join(", ");
       const result = await createLocalSale(businessId, {
         items: cart.map((i) => ({
           productId: i.product.id,
           quantity: i.quantity,
         })),
-        paymentMethod,
+        paymentMethod: payment,
         notes: noteText || undefined,
         serviceType,
       });
@@ -322,6 +356,8 @@ export function RushPosEngine({
 
       setCart([]);
       setNotes([]);
+      setSplitCash("");
+      setSplitTransfer("");
       toast({
         title: "Order complete",
         description: kitchenEnabled
@@ -340,6 +376,20 @@ export function RushPosEngine({
       className={cn(cart.length > 0 && "pb-36")}
       actions={
         <div className="flex items-center gap-3">
+          <Link
+            href="/sales/rush-setup"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand"
+          >
+            <Settings2 className="h-4 w-4" />
+            Menu
+          </Link>
+          <Link
+            href="/sales/rush-insights"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Insights
+          </Link>
           {kitchenEnabled && (
             <Link
               href="/sales/kitchen"
@@ -637,7 +687,10 @@ export function RushPosEngine({
             ))}
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {PAYMENT_METHODS.filter((m) => m.value !== "CREDIT").map((m) => (
+              {[
+                ...PAYMENT_METHODS.filter((m) => m.value !== "CREDIT"),
+                { value: "SPLIT", label: "Split" },
+              ].map((m) => (
                 <button
                   key={m.value}
                   type="button"
@@ -653,6 +706,32 @@ export function RushPosEngine({
                 </button>
               ))}
             </div>
+            {paymentMethod === "SPLIT" && (
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-muted-foreground">
+                  Cash
+                  <Input
+                    type="number"
+                    min={0}
+                    value={splitCash}
+                    onChange={(e) => setSplitCash(e.target.value)}
+                    className="mt-1 h-12"
+                    placeholder="0"
+                  />
+                </label>
+                <label className="text-xs text-muted-foreground">
+                  Transfer
+                  <Input
+                    type="number"
+                    min={0}
+                    value={splitTransfer}
+                    onChange={(e) => setSplitTransfer(e.target.value)}
+                    className="mt-1 h-12"
+                    placeholder="0"
+                  />
+                </label>
+              </div>
+            )}
           </div>
         )}
 

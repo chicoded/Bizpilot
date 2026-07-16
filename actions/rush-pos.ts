@@ -57,13 +57,17 @@ export async function updateRestaurantSettings(input: {
   revalidatePath("/sales");
   revalidatePath("/settings/profile");
   revalidatePath("/sales/kitchen");
+  revalidatePath("/sales/rush-setup");
   return { ok: true as const, settings: updated };
 }
 
-export async function listMealCombosForBusiness() {
+export async function listMealCombosForBusiness(includeInactive = false) {
   const ctx = await requireBusinessContext();
   return prisma.mealCombo.findMany({
-    where: { businessId: ctx.businessId, isActive: true },
+    where: {
+      businessId: ctx.businessId,
+      ...(includeInactive ? {} : { isActive: true }),
+    },
     include: {
       items: {
         include: {
@@ -93,6 +97,96 @@ export async function listFavoriteProductIds() {
   return rows.map((r) => r.productId);
 }
 
+export async function setFavoriteProducts(productIds: string[]) {
+  const ctx = await requireBusinessContext();
+  const unique = [...new Set(productIds)].slice(0, 20);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.favoriteProduct.deleteMany({ where: { businessId: ctx.businessId } });
+    if (unique.length === 0) return;
+    await tx.favoriteProduct.createMany({
+      data: unique.map((productId, index) => ({
+        businessId: ctx.businessId,
+        productId,
+        sortOrder: index,
+      })),
+    });
+  });
+
+  revalidatePath("/sales");
+  revalidatePath("/sales/rush-setup");
+  return { ok: true as const, count: unique.length };
+}
+
+export async function createMealCombo(input: {
+  name: string;
+  description?: string;
+  price: number;
+  productIds: string[];
+}) {
+  const ctx = await requireBusinessContext();
+  const name = input.name.trim();
+  if (!name) return { error: "Combo name is required" };
+  if (input.productIds.length === 0) return { error: "Add at least one product" };
+  if (!(input.price > 0)) return { error: "Price must be greater than zero" };
+
+  const products = await prisma.product.findMany({
+    where: {
+      businessId: ctx.businessId,
+      id: { in: input.productIds },
+      isActive: true,
+    },
+    select: { id: true },
+  });
+  if (products.length !== input.productIds.length) {
+    return { error: "One or more products were not found" };
+  }
+
+  const combo = await prisma.mealCombo.create({
+    data: {
+      businessId: ctx.businessId,
+      name,
+      description: input.description?.trim() || null,
+      price: input.price,
+      isActive: true,
+      items: {
+        create: input.productIds.map((productId) => ({
+          productId,
+          quantity: 1,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/sales");
+  revalidatePath("/sales/rush-setup");
+  return { ok: true as const, id: combo.id };
+}
+
+export async function deactivateMealCombo(comboId: string) {
+  const ctx = await requireBusinessContext();
+  await prisma.mealCombo.updateMany({
+    where: { id: comboId, businessId: ctx.businessId },
+    data: { isActive: false },
+  });
+  revalidatePath("/sales");
+  revalidatePath("/sales/rush-setup");
+  return { ok: true as const };
+}
+
+export async function listActiveKitchenOrders() {
+  const ctx = await requireBusinessContext();
+  return prisma.kitchenOrder.findMany({
+    where: {
+      businessId: ctx.businessId,
+      status: { in: ["PENDING", "PREPARING", "READY"] },
+    },
+    include: { items: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+}
+
 export async function createKitchenOrderFromSale(input: {
   saleId: string;
   orderNumber: string;
@@ -102,8 +196,19 @@ export async function createKitchenOrderFromSale(input: {
 }) {
   const ctx = await requireBusinessContext();
   try {
-    const order = await prisma.kitchenOrder.create({
-      data: {
+    const order = await prisma.kitchenOrder.upsert({
+      where: {
+        businessId_orderNumber: {
+          businessId: ctx.businessId,
+          orderNumber: input.orderNumber,
+        },
+      },
+      update: {
+        saleId: input.saleId,
+        serviceType: input.serviceType,
+        notes: input.notes,
+      },
+      create: {
         businessId: ctx.businessId,
         saleId: input.saleId,
         orderNumber: input.orderNumber,
@@ -131,7 +236,8 @@ export async function createKitchenOrderFromSale(input: {
 
 export async function updateKitchenOrderStatus(
   orderId: string,
-  status: "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED"
+  status: "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED",
+  orderNumber?: string
 ) {
   const ctx = await requireBusinessContext();
   const data: {
@@ -142,10 +248,18 @@ export async function updateKitchenOrderStatus(
   if (status === "READY") data.readyAt = new Date();
   if (status === "COMPLETED") data.completedAt = new Date();
 
-  await prisma.kitchenOrder.updateMany({
+  const byId = await prisma.kitchenOrder.updateMany({
     where: { id: orderId, businessId: ctx.businessId },
     data,
   });
+
+  if (byId.count === 0 && orderNumber) {
+    await prisma.kitchenOrder.updateMany({
+      where: { businessId: ctx.businessId, orderNumber },
+      data,
+    });
+  }
+
   revalidatePath("/sales/kitchen");
   return { ok: true as const };
 }

@@ -28,6 +28,13 @@ Rush Mode turns on automatically. Toggle options under **Rush POS Engine** on th
 - Offline local sales + local kitchen tickets
 - Models: `RestaurantSettings`, `MealCombo`, `FavoriteProduct`, `KitchenOrder`
 
+## Phase 2
+
+- Favorites + combo management UI: `/sales/rush-setup`
+- Rush insights: `/sales/rush-insights` (peak hours, top items, pairings)
+- Split payment (cash + transfer)
+- Kitchen multi-device sync via `/api/kitchen/orders`
+
 ## Schema
 
 Run on deploy via `scripts/ensure-app-schema.mjs`, or manually:
@@ -37,7 +44,5 @@ Run on deploy via `scripts/ensure-app-schema.mjs`, or manually:
 ## Still on the roadmap
 
 - Voice orders (Nigerian English)
-- Combo / favorites management UI
-- Split payment
-- Rush-hour reporting dashboard
-- Server-synced kitchen multi-device polish
+- Faster cashier leaderboards / average order time telemetry
+- Dedicated combo pricing overrides vs sum of parts
