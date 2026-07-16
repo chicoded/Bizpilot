@@ -1,23 +1,34 @@
+import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/auth";
 import { getInternalDashboardMetrics } from "@/lib/internal/metrics";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 function MetricCard({
   label,
   value,
   hint,
+  href,
 }: {
   label: string;
   value: string;
   hint?: string;
+  href?: string;
 }) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+  const body = (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 transition hover:border-slate-700">
       <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
       {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
     </div>
   );
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {body}
+      </Link>
+    );
+  }
+  return body;
 }
 
 export default async function InternalDashboardPage() {
@@ -34,6 +45,12 @@ export default async function InternalDashboardPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Open support tickets"
+          value={String(m.openSupportTickets)}
+          hint="Bug reports needing attention"
+          href="/internal/support"
+        />
         <MetricCard label="Total businesses" value={String(m.totalBusinesses)} />
         <MetricCard
           label="Active businesses"
@@ -69,6 +86,55 @@ export default async function InternalDashboardPage() {
           hint={`${m.todayTransactions} txns`}
         />
       </div>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-slate-200">
+              Latest bug reports
+            </p>
+            <p className="text-xs text-slate-500">
+              From Settings → Help & support
+            </p>
+          </div>
+          <Link
+            href="/internal/support"
+            className="text-sm text-emerald-400 hover:underline"
+          >
+            View all →
+          </Link>
+        </div>
+
+        {m.recentSupportTickets.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-500">
+            No reports yet. When a customer taps{" "}
+            <span className="text-slate-300">Submit report</span>, it shows
+            here and under{" "}
+            <Link href="/internal/support" className="text-emerald-400 hover:underline">
+              Support
+            </Link>
+            .
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-slate-800">
+            {m.recentSupportTickets.map((t) => (
+              <li key={t.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-100">{t.summary}</p>
+                  <p className="text-xs text-slate-500">
+                    {[t.businessName, t.email].filter(Boolean).join(" · ") ||
+                      "No contact"}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right text-xs text-slate-500">
+                  <p>{t.status.replace("_", " ")}</p>
+                  <p>{formatDate(t.createdAt)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <p className="text-sm font-medium text-slate-200">Signups · last 7 days</p>

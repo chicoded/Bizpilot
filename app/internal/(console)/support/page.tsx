@@ -34,7 +34,7 @@ export default async function InternalSupportPage({
         <div>
           <h1 className="text-2xl font-semibold text-white">Support tickets</h1>
           <p className="text-sm text-slate-400">
-            Bug reports from Settings → Help & support
+            Bug reports submitted in-app. Update status as you handle each one.
           </p>
         </div>
         <form className="flex flex-wrap gap-2">
@@ -85,7 +85,9 @@ export default async function InternalSupportPage({
             {!loadError && tickets.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                  No support tickets yet.
+                  No support tickets yet. Customer reports from{" "}
+                  <span className="text-slate-300">Settings → Help & support</span>{" "}
+                  (Submit report) appear here.
                 </td>
               </tr>
             )}
@@ -118,6 +120,16 @@ export default async function InternalSupportPage({
                   ) : (
                     "—"
                   )}
+                  {t.business?.phone ? (
+                    <p className="mt-1 text-xs">
+                      <a
+                        href={`tel:${t.business.phone.replace(/\s+/g, "")}`}
+                        className="text-slate-400 hover:text-emerald-400"
+                      >
+                        {t.business.phone}
+                      </a>
+                    </p>
+                  ) : null}
                 </td>
                 <td className="px-3 py-2 text-slate-300">
                   {t.email || t.user?.email || "—"}
@@ -171,7 +183,7 @@ async function loadTickets(q: string, statusFilter?: string) {
         : {}),
     },
     include: {
-      business: { select: { id: true, name: true } },
+      business: { select: { id: true, name: true, phone: true } },
       user: { select: { email: true } },
     },
     orderBy: { createdAt: "desc" },

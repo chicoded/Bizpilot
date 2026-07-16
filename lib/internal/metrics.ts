@@ -84,6 +84,43 @@ export async function getInternalDashboardMetrics() {
     }
   }
 
+  let openSupportTickets = 0;
+  let recentSupportTickets: {
+    id: string;
+    summary: string;
+    email: string | null;
+    status: string;
+    createdAt: Date;
+    businessName: string | null;
+  }[] = [];
+
+  try {
+    const [openCount, recent] = await Promise.all([
+      prisma.supportTicket.count({
+        where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
+      }),
+      prisma.supportTicket.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        include: {
+          business: { select: { name: true } },
+          user: { select: { email: true } },
+        },
+      }),
+    ]);
+    openSupportTickets = openCount;
+    recentSupportTickets = recent.map((t) => ({
+      id: t.id,
+      summary: t.summary,
+      email: t.email || t.user?.email || null,
+      status: t.status,
+      createdAt: t.createdAt,
+      businessName: t.business?.name ?? null,
+    }));
+  } catch {
+    // support_tickets table may not exist yet
+  }
+
   return {
     totalBusinesses,
     activeBusinesses,
@@ -107,6 +144,8 @@ export async function getInternalDashboardMetrics() {
     aiMonth,
     productCount,
     customerCount,
+    openSupportTickets,
+    recentSupportTickets,
     signupSpark: Array.from(signupsByDay.entries()).map(([date, count]) => ({
       date,
       count,
