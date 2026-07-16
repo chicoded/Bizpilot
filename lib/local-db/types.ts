@@ -1,8 +1,3 @@
-export type LocalRecipeLine = {
-  componentId: string;
-  quantity: number;
-};
-
 export type LocalProduct = {
   id: string;
   businessId: string;
@@ -10,14 +5,6 @@ export type LocalProduct = {
   sku: string | null;
   barcode: string | null;
   category: string | null;
-  productType?: string | null;
-  description?: string | null;
-  unit?: string | null;
-  prepTimeMinutes?: number | null;
-  isPopular?: boolean;
-  isChefSpecial?: boolean;
-  tracksStock?: boolean;
-  recipeLines?: LocalRecipeLine[];
   purchasePrice: number;
   sellingPrice: number;
   unitsPerPack: number;

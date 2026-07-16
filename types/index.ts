@@ -24,14 +24,6 @@ export interface ProductApiItem {
   quantity: number;
   barcode: string | null;
   category?: string | null;
-  productType?: string | null;
-  description?: string | null;
-  unit?: string | null;
-  prepTimeMinutes?: number | null;
-  isPopular?: boolean;
-  isChefSpecial?: boolean;
-  tracksStock?: boolean;
-  recipeLines?: { componentId: string; quantity: number }[];
   reorderLevel?: number;
   unitsPerPack?: number;
   sku?: string | null;

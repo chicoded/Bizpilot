@@ -117,25 +117,6 @@ export async function hydrateLocalStoreFromServer(): Promise<{
         sku: product.sku ?? null,
         barcode: product.barcode ?? null,
         category: product.category ?? null,
-        productType:
-          (product as { productType?: string | null }).productType ??
-          "READY_MADE",
-        description:
-          (product as { description?: string | null }).description ?? null,
-        unit: (product as { unit?: string | null }).unit ?? null,
-        prepTimeMinutes:
-          (product as { prepTimeMinutes?: number | null }).prepTimeMinutes ??
-          null,
-        isPopular: Boolean((product as { isPopular?: boolean }).isPopular),
-        isChefSpecial: Boolean(
-          (product as { isChefSpecial?: boolean }).isChefSpecial
-        ),
-        tracksStock:
-          (product as { tracksStock?: boolean }).tracksStock !== false,
-        recipeLines:
-          (product as {
-            recipeLines?: { componentId: string; quantity: number }[];
-          }).recipeLines ?? [],
         purchasePrice: Number(product.purchasePrice ?? 0),
         sellingPrice: Number(product.sellingPrice),
         unitsPerPack: product.unitsPerPack ?? 1,

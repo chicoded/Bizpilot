@@ -99,15 +99,6 @@ export const productSchema = z.object({
   barcode: z.string().trim().optional(),
   category: z.string().trim().optional(),
   supplierId: z.string().trim().optional(),
-  productType: z
-    .enum(["MENU_ITEM", "READY_MADE", "INGREDIENT", "PACKAGING", "SERVICE"])
-    .optional()
-    .default("READY_MADE"),
-  description: z.string().trim().max(500).optional(),
-  unit: z.string().trim().max(20).optional(),
-  prepTimeMinutes: z.coerce.number().int().min(0).max(1440).optional(),
-  isPopular: z.coerce.boolean().optional(),
-  isChefSpecial: z.coerce.boolean().optional(),
   purchasePrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
   unitsPerPack: z.coerce.number().int().min(1).default(1),

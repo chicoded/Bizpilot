@@ -22,14 +22,6 @@ export type CloudProductRow = {
   quantity: number;
   barcode?: string | null;
   category?: string | null;
-  productType?: string | null;
-  description?: string | null;
-  unit?: string | null;
-  prepTimeMinutes?: number | null;
-  isPopular?: boolean;
-  isChefSpecial?: boolean;
-  tracksStock?: boolean;
-  recipeLines?: { componentId: string; quantity: number }[];
   reorderLevel?: number;
   unitsPerPack?: number;
   sku?: string | null;
@@ -59,15 +51,6 @@ function mapCloudToLocal(
     sku: product.sku ?? existing?.sku ?? null,
     barcode: product.barcode ?? existing?.barcode ?? null,
     category: product.category ?? existing?.category ?? null,
-    productType: product.productType ?? existing?.productType ?? "READY_MADE",
-    description: product.description ?? existing?.description ?? null,
-    unit: product.unit ?? existing?.unit ?? null,
-    prepTimeMinutes:
-      product.prepTimeMinutes ?? existing?.prepTimeMinutes ?? null,
-    isPopular: product.isPopular ?? existing?.isPopular ?? false,
-    isChefSpecial: product.isChefSpecial ?? existing?.isChefSpecial ?? false,
-    tracksStock: product.tracksStock ?? existing?.tracksStock ?? true,
-    recipeLines: product.recipeLines ?? existing?.recipeLines ?? [],
     purchasePrice: Number(product.purchasePrice ?? existing?.purchasePrice ?? 0),
     sellingPrice: Number(product.sellingPrice),
     unitsPerPack: product.unitsPerPack ?? existing?.unitsPerPack ?? 1,
@@ -125,14 +108,6 @@ export async function pushLocalProducts(
           sku: p.sku,
           barcode: p.barcode,
           category: p.category,
-          productType: p.productType ?? "READY_MADE",
-          description: p.description ?? null,
-          unit: p.unit ?? null,
-          prepTimeMinutes: p.prepTimeMinutes ?? null,
-          isPopular: Boolean(p.isPopular),
-          isChefSpecial: Boolean(p.isChefSpecial),
-          tracksStock: p.tracksStock !== false,
-          recipeLines: p.recipeLines ?? [],
           purchasePrice: p.purchasePrice,
           sellingPrice: p.sellingPrice,
           unitsPerPack: p.unitsPerPack,

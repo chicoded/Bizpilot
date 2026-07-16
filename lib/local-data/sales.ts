@@ -13,11 +13,6 @@ import { nextLocalReceiptNumber } from "@/lib/local-data/receipt";
 import { getLocalProduct } from "@/lib/local-data/products";
 import { getLocalCustomer } from "@/lib/local-data/customers";
 import type { PaymentMethod } from "@prisma/client";
-import {
-  assertSaleStockAvailable,
-  buildSaleStockDeltas,
-} from "@/lib/hybrid-inventory";
-import { normalizeProductType } from "@/lib/product-types";
 
 export type LocalSalePeriod = "today" | "week" | "month" | "all";
 
@@ -83,10 +78,8 @@ export async function createLocalSale(
     if (!product) {
       return { error: "One or more products were not found" };
     }
-
-    const type = normalizeProductType(product.productType);
-    if (type === "INGREDIENT" || type === "PACKAGING") {
-      return { error: `${product.name} is not sold on POS` };
+    if (product.quantity < item.quantity) {
+      return { error: `Insufficient stock for ${product.name}` };
     }
 
     const lineTotal = product.sellingPrice * item.quantity;
@@ -101,14 +94,6 @@ export async function createLocalSale(
       sellingPrice: product.sellingPrice,
       total: lineTotal,
     });
-  }
-
-  const stockError = await assertSaleStockAvailable(
-    (id) => getLocalProduct(businessId, id),
-    input.items
-  );
-  if (stockError) {
-    return { error: stockError };
   }
 
   const discount = input.discount ?? 0;
@@ -138,31 +123,20 @@ export async function createLocalSale(
   };
 
   await db.transaction("rw", db.sales, db.products, db.customers, async () => {
-    const deltas = await buildSaleStockDeltas(
-      async (id) => {
-        const row = await db.products.get(id);
-        if (!row || row.businessId !== businessId || !row.isActive) return undefined;
-        return row;
-      },
-      input.items
-    );
-    if ("error" in deltas) {
-      throw new Error(deltas.error);
-    }
-
-    for (const d of deltas) {
-      const product = await db.products.get(d.productId);
+    for (const item of input.items) {
+      const product = await db.products.get(item.productId);
       if (!product || product.businessId !== businessId) {
         throw new Error("Product missing during sale");
       }
-      const nextQty = product.quantity + d.delta;
-      if (nextQty < 0) {
+      if (product.quantity < item.quantity) {
         throw new Error(`Insufficient stock for ${product.name}`);
       }
       await db.products.put({
         ...product,
-        quantity: nextQty,
+        quantity: product.quantity - item.quantity,
         updatedAt: timestamp,
+        // Keep syncedAt: sale upload owns cloud stock decrement.
+        // Clearing it caused product push to overwrite cloud qty and break team sync.
       });
     }
 

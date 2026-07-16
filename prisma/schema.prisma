@@ -236,43 +236,26 @@ model TeamInvite {
   @@map("team_invites")
 }
 
-enum ProductType {
-  MENU_ITEM
-  READY_MADE
-  INGREDIENT
-  PACKAGING
-  SERVICE
-}
-
 model Product {
-  id             String      @id @default(cuid())
+  id             String    @id @default(cuid())
   businessId     String
   name           String
   sku            String?
   barcode        String?
   category       String?
   supplierId     String?
-  /// Hybrid inventory classification (restaurant + future verticals).
-  productType    ProductType @default(READY_MADE)
-  description    String?
-  unit           String?
-  prepTimeMinutes Int?
-  isPopular      Boolean     @default(false)
-  isChefSpecial  Boolean     @default(false)
-  /// When false (typical MENU_ITEM), stock comes from recipe components.
-  tracksStock    Boolean     @default(true)
-  purchasePrice  Decimal     @default(0) @db.Decimal(12, 2)
-  sellingPrice   Decimal     @default(0) @db.Decimal(12, 2)
+  purchasePrice  Decimal   @default(0) @db.Decimal(12, 2)
+  sellingPrice   Decimal   @default(0) @db.Decimal(12, 2)
   /// Units in one pack (e.g. 10 sachets). 1 = sold individually.
-  unitsPerPack   Int         @default(1)
-  quantity       Int         @default(0)
-  reorderLevel   Int         @default(5)
+  unitsPerPack   Int       @default(1)
+  quantity       Int       @default(0)
+  reorderLevel   Int       @default(5)
   batchNumber    String?
   expiryDate     DateTime?
   imageUrl       String?
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   business         Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
   supplier         Supplier?         @relation(fields: [supplierId], references: [id])
@@ -281,30 +264,12 @@ model Product {
   favoriteProducts FavoriteProduct[]
   mealComboItems   MealComboItem[]
   kitchenOrderItems KitchenOrderItem[]
-  recipeLines      RecipeLine[]      @relation("RecipeParent")
-  usedInRecipes    RecipeLine[]      @relation("RecipeComponent")
 
   @@unique([businessId, sku])
   @@index([businessId])
   @@index([businessId, barcode])
   @@index([businessId, category])
-  @@index([businessId, productType])
   @@map("products")
-}
-
-/// BOM: menu item consumes ingredients and/or packaging per sale unit.
-model RecipeLine {
-  id              String  @id @default(cuid())
-  parentProductId String
-  componentId     String
-  quantity        Decimal @db.Decimal(12, 4)
-
-  parent    Product @relation("RecipeParent", fields: [parentProductId], references: [id], onDelete: Cascade)
-  component Product @relation("RecipeComponent", fields: [componentId], references: [id], onDelete: Restrict)
-
-  @@unique([parentProductId, componentId])
-  @@index([componentId])
-  @@map("recipe_lines")
 }
 
 /// Per-business Rush POS settings (auto-enabled for restaurant industries).

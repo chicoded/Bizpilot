@@ -3,21 +3,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProductImage } from "@/components/product/product-image";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
-import { productTypeLabel, normalizeProductType } from "@/lib/product-types";
+import type { InventoryListProduct } from "@/lib/products";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    category: string | null;
-    productType?: string | null;
-    sellingPrice: number;
-    quantity: number;
-    reorderLevel: number;
-    tracksStock?: boolean;
-    expiryDate: Date | null;
-    imageUrl: string | null;
-  };
+  product: Pick<
+    InventoryListProduct,
+    | "id"
+    | "name"
+    | "category"
+    | "sellingPrice"
+    | "quantity"
+    | "reorderLevel"
+    | "expiryDate"
+    | "imageUrl"
+  >;
   currency: string;
   isLowStock: boolean;
   isExpiring: boolean;
@@ -29,9 +28,6 @@ export function ProductCard({
   isLowStock,
   isExpiring,
 }: ProductCardProps) {
-  const type = normalizeProductType(product.productType);
-  const showStock = product.tracksStock !== false && type !== "MENU_ITEM";
-
   return (
     <Link
       href={`/inventory/${product.id}`}
@@ -47,11 +43,6 @@ export function ProductCard({
             <div className="absolute top-2 right-2 rounded-full bg-amber-100 p-1.5 shadow-sm">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
             </div>
-          )}
-          {type !== "READY_MADE" && (
-            <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
-              {productTypeLabel(type)}
-            </span>
           )}
         </div>
         <CardContent className="p-4">
@@ -71,11 +62,7 @@ export function ProductCard({
                   isLowStock ? "text-amber-600" : "text-muted-foreground"
                 }`}
               >
-                {showStock
-                  ? `${product.quantity} in stock`
-                  : type === "MENU_ITEM"
-                    ? "Made to order"
-                    : `${product.quantity} available`}
+                {product.quantity} in stock
               </p>
             </div>
             {product.expiryDate && (

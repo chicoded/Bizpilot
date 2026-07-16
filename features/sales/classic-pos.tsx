@@ -9,8 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocalData } from "@/components/providers/local-data-provider";
 import { listLocalProducts, searchLocalProducts } from "@/lib/local-data/products";
-import { listPosSellableProducts } from "@/lib/hybrid-inventory";
-
 import { listLocalCustomers } from "@/lib/local-data/customers";
 import { createLocalSale } from "@/lib/local-data/sales";
 import { formatCurrency } from "@/lib/utils";
@@ -105,8 +103,8 @@ export function ClassicPos() {
     setProductsError(null);
     try {
       const products = await listLocalProducts(businessId);
-      const sellable = listPosSellableProducts(products);
-      const quick = sellable
+      const inStock = products.filter((p) => p.quantity > 0);
+      const quick = inStock
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 8)
         .map((p) => ({
@@ -117,7 +115,7 @@ export function ClassicPos() {
           barcode: p.barcode,
         }));
       setDisplayProducts(quick);
-      setTotalInStock(sellable.length);
+      setTotalInStock(inStock.length);
       setProductViewMode("quick");
     } catch {
       setProductsError("Could not load local products.");
@@ -173,7 +171,9 @@ export function ClassicPos() {
       try {
         const products = await searchLocalProducts(businessId, term);
         setDisplayProducts(
-          listPosSellableProducts(products).map((p) => ({
+          products
+            .filter((p) => p.quantity > 0)
+            .map((p) => ({
               id: p.id,
               name: p.name,
               sellingPrice: p.sellingPrice,

@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocalData } from "@/components/providers/local-data-provider";
 import { listLocalProducts } from "@/lib/local-data/products";
-import { listPosSellableProducts } from "@/lib/hybrid-inventory";
 import { createLocalSale, listLocalSales } from "@/lib/local-data/sales";
 import { createLocalKitchenOrder } from "@/lib/local-data/kitchen-orders";
 import { createKitchenOrderFromSale } from "@/actions/rush-pos";
@@ -108,7 +107,7 @@ export function RushPosEngine({
         listLocalProducts(businessId),
         listLocalSales(businessId),
       ]);
-      setProducts(listPosSellableProducts(productRows));
+      setProducts(productRows.filter((p) => p.quantity > 0));
       setSales(saleRows.slice(0, 200));
     } finally {
       setLoading(false);
