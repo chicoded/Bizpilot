@@ -40,10 +40,18 @@ const productApiSelect = {
   quantity: true,
   barcode: true,
   category: true,
+  productType: true,
+  description: true,
+  unit: true,
+  prepTimeMinutes: true,
+  isPopular: true,
+  isChefSpecial: true,
+  tracksStock: true,
   reorderLevel: true,
   unitsPerPack: true,
   sku: true,
   isActive: true,
+  imageUrl: true,
 } as const;
 
 function normalizeListProduct(
@@ -190,9 +198,13 @@ export async function listProductsForApi(
     const products = await prisma.product.findMany({
       where: { businessId, isActive: true },
       orderBy: { name: "asc" },
-      select: withImages
-        ? { ...productApiSelect, imageUrl: true }
-        : productApiSelect,
+      select: {
+        ...productApiSelect,
+        ...(withImages ? { imageUrl: true } : {}),
+        recipeLines: {
+          select: { componentId: true, quantity: true },
+        },
+      },
     });
 
     return products.map((product) => ({
@@ -203,6 +215,44 @@ export async function listProductsForApi(
       quantity: product.quantity,
       barcode: product.barcode ?? null,
       category: product.category ?? null,
+      productType:
+        "productType" in product
+          ? String((product as { productType?: string }).productType ?? "READY_MADE")
+          : "READY_MADE",
+      description:
+        "description" in product
+          ? ((product as { description?: string | null }).description ?? null)
+          : null,
+      unit:
+        "unit" in product
+          ? ((product as { unit?: string | null }).unit ?? null)
+          : null,
+      prepTimeMinutes:
+        "prepTimeMinutes" in product
+          ? ((product as { prepTimeMinutes?: number | null }).prepTimeMinutes ??
+            null)
+          : null,
+      isPopular: Boolean(
+        (product as { isPopular?: boolean }).isPopular
+      ),
+      isChefSpecial: Boolean(
+        (product as { isChefSpecial?: boolean }).isChefSpecial
+      ),
+      tracksStock:
+        (product as { tracksStock?: boolean }).tracksStock !== false,
+      recipeLines: Array.isArray(
+        (product as { recipeLines?: { componentId: string; quantity: unknown }[] })
+          .recipeLines
+      )
+        ? (
+            product as {
+              recipeLines: { componentId: string; quantity: unknown }[];
+            }
+          ).recipeLines.map((l) => ({
+            componentId: l.componentId,
+            quantity: Number(l.quantity),
+          }))
+        : [],
       reorderLevel: product.reorderLevel,
       unitsPerPack: product.unitsPerPack ?? 1,
       sku: product.sku ?? null,
@@ -215,28 +265,51 @@ export async function listProductsForApi(
   } catch (error) {
     console.error("listProductsForApi failed:", error);
 
-    if (!withImages) return [];
+    // Fallback without hybrid columns / recipe relation
+    try {
+      const products = await prisma.product.findMany({
+        where: { businessId, isActive: true },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          sellingPrice: true,
+          purchasePrice: true,
+          quantity: true,
+          barcode: true,
+          category: true,
+          reorderLevel: true,
+          unitsPerPack: true,
+          sku: true,
+          isActive: true,
+          ...(withImages ? { imageUrl: true } : {}),
+        },
+      });
 
-    const products = await prisma.product.findMany({
-      where: { businessId, isActive: true },
-      orderBy: { name: "asc" },
-      select: productApiSelect,
-    });
-
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      sellingPrice: Number(product.sellingPrice),
-      purchasePrice: Number(product.purchasePrice),
-      quantity: product.quantity,
-      barcode: product.barcode ?? null,
-      category: product.category ?? null,
-      reorderLevel: product.reorderLevel,
-      unitsPerPack: product.unitsPerPack ?? 1,
-      sku: product.sku ?? null,
-      isActive: product.isActive,
-      imageUrl: null,
-    }));
+      return products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        sellingPrice: Number(product.sellingPrice),
+        purchasePrice: Number(product.purchasePrice),
+        quantity: product.quantity,
+        barcode: product.barcode ?? null,
+        category: product.category ?? null,
+        productType: "READY_MADE",
+        tracksStock: true,
+        recipeLines: [],
+        reorderLevel: product.reorderLevel,
+        unitsPerPack: product.unitsPerPack ?? 1,
+        sku: product.sku ?? null,
+        isActive: product.isActive,
+        imageUrl:
+          withImages && "imageUrl" in product
+            ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
+            : null,
+      }));
+    } catch (retryError) {
+      console.error("listProductsForApi fallback failed:", retryError);
+      return [];
+    }
   }
 }
 

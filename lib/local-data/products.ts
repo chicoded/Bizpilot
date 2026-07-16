@@ -1,12 +1,25 @@
 import { getLocalDB } from "@/lib/local-db/database";
-import type { LocalProduct } from "@/lib/local-db/types";
+import type { LocalProduct, LocalRecipeLine } from "@/lib/local-db/types";
 import { localId } from "@/lib/local-data/id";
+import {
+  defaultTracksStock,
+  normalizeProductType,
+  type ProductTypeValue,
+} from "@/lib/product-types";
 
 export type ProductInput = {
   name: string;
   sku?: string | null;
   barcode?: string | null;
   category?: string | null;
+  productType?: ProductTypeValue | string | null;
+  description?: string | null;
+  unit?: string | null;
+  prepTimeMinutes?: number | null;
+  isPopular?: boolean;
+  isChefSpecial?: boolean;
+  tracksStock?: boolean;
+  recipeLines?: LocalRecipeLine[];
   purchasePrice: number;
   sellingPrice: number;
   unitsPerPack?: number;
@@ -47,6 +60,9 @@ export async function createLocalProduct(
 ): Promise<LocalProduct> {
   const db = getLocalDB();
   const timestamp = nowIso();
+  const productType = normalizeProductType(input.productType);
+  const tracksStock =
+    input.tracksStock ?? defaultTracksStock(productType);
 
   const product: LocalProduct = {
     id: localId("prod"),
@@ -55,10 +71,18 @@ export async function createLocalProduct(
     sku: input.sku?.trim() || null,
     barcode: input.barcode?.trim() || null,
     category: input.category?.trim() || null,
+    productType,
+    description: input.description?.trim() || null,
+    unit: input.unit?.trim() || null,
+    prepTimeMinutes: input.prepTimeMinutes ?? null,
+    isPopular: Boolean(input.isPopular),
+    isChefSpecial: Boolean(input.isChefSpecial),
+    tracksStock,
+    recipeLines: input.recipeLines ?? [],
     purchasePrice: input.purchasePrice,
     sellingPrice: input.sellingPrice,
     unitsPerPack: input.unitsPerPack ?? 1,
-    quantity: input.quantity,
+    quantity: tracksStock ? input.quantity : 0,
     reorderLevel: input.reorderLevel,
     batchNumber: input.batchNumber?.trim() || null,
     expiryDate: input.expiryDate || null,
@@ -90,6 +114,14 @@ export async function updateLocalProduct(
   const existing = await getLocalProduct(businessId, productId);
   if (!existing) return null;
 
+  const productType = normalizeProductType(
+    input.productType ?? existing.productType
+  );
+  const tracksStock =
+    input.tracksStock ??
+    existing.tracksStock ??
+    defaultTracksStock(productType);
+
   const updated: LocalProduct = {
     ...existing,
     ...input,
@@ -103,6 +135,28 @@ export async function updateLocalProduct(
       input.category !== undefined
         ? input.category?.trim() || null
         : existing.category,
+    productType,
+    description:
+      input.description !== undefined
+        ? input.description?.trim() || null
+        : existing.description ?? null,
+    unit:
+      input.unit !== undefined ? input.unit?.trim() || null : existing.unit ?? null,
+    prepTimeMinutes:
+      input.prepTimeMinutes !== undefined
+        ? input.prepTimeMinutes
+        : existing.prepTimeMinutes ?? null,
+    isPopular:
+      input.isPopular !== undefined ? input.isPopular : Boolean(existing.isPopular),
+    isChefSpecial:
+      input.isChefSpecial !== undefined
+        ? input.isChefSpecial
+        : Boolean(existing.isChefSpecial),
+    tracksStock,
+    recipeLines:
+      input.recipeLines !== undefined
+        ? input.recipeLines
+        : existing.recipeLines ?? [],
     unitsPerPack: input.unitsPerPack ?? existing.unitsPerPack,
     updatedAt: nowIso(),
     syncedAt: null,

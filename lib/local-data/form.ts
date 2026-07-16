@@ -1,6 +1,11 @@
 import { productSchema } from "@/lib/validations";
 import { parseMoneyInput } from "@/lib/pack-pricing";
 import type { ProductInput } from "@/lib/local-data/products";
+import {
+  defaultTracksStock,
+  normalizeProductType,
+} from "@/lib/product-types";
+import { parseRecipeLinesFromForm } from "@/lib/hybrid-inventory";
 
 function formValue(value: FormDataEntryValue | null): string | undefined {
   if (value === null) return undefined;
@@ -33,6 +38,14 @@ export async function parseProductFormData(
     sku: formValue(formData.get("sku")),
     barcode: formValue(formData.get("barcode")),
     category: formValue(formData.get("category")),
+    productType: formValue(formData.get("productType")) ?? "READY_MADE",
+    description: formValue(formData.get("description")),
+    unit: formValue(formData.get("unit")),
+    prepTimeMinutes: formValue(formData.get("prepTimeMinutes")),
+    isPopular: formData.get("isPopular") === "true" || formData.get("isPopular") === "on",
+    isChefSpecial:
+      formData.get("isChefSpecial") === "true" ||
+      formData.get("isChefSpecial") === "on",
     purchasePrice: formData.get("purchasePrice"),
     sellingPrice: formData.get("sellingPrice"),
     unitsPerPack: formData.get("unitsPerPack") ?? "1",
@@ -50,6 +63,12 @@ export async function parseProductFormData(
   }
 
   const imageUrl = await imageFromForm(formData);
+  const productType = normalizeProductType(parsed.data.productType);
+  const recipeLines = parseRecipeLinesFromForm(formData);
+
+  if (productType === "MENU_ITEM" && recipeLines.length === 0) {
+    // Allow saving without recipe (can add later), but warn softly — not an error.
+  }
 
   return {
     data: {
@@ -57,6 +76,14 @@ export async function parseProductFormData(
       sku: parsed.data.sku ?? null,
       barcode: parsed.data.barcode ?? null,
       category: parsed.data.category ?? null,
+      productType,
+      description: parsed.data.description ?? null,
+      unit: parsed.data.unit ?? null,
+      prepTimeMinutes: parsed.data.prepTimeMinutes ?? null,
+      isPopular: Boolean(parsed.data.isPopular),
+      isChefSpecial: Boolean(parsed.data.isChefSpecial),
+      tracksStock: defaultTracksStock(productType),
+      recipeLines,
       purchasePrice: parseMoneyInput(String(parsed.data.purchasePrice)),
       sellingPrice: parseMoneyInput(String(parsed.data.sellingPrice)),
       unitsPerPack: parsed.data.unitsPerPack,

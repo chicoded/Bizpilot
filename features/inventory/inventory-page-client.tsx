@@ -24,9 +24,11 @@ export function InventoryPageClient() {
         id: product.id,
         name: product.name,
         category: product.category,
+        productType: product.productType ?? "READY_MADE",
         sellingPrice: product.sellingPrice,
         quantity: product.quantity,
         reorderLevel: product.reorderLevel,
+        tracksStock: product.tracksStock !== false,
         expiryDate: product.expiryDate ? new Date(product.expiryDate) : null,
         imageUrl: product.imageUrl,
       })),
@@ -34,7 +36,7 @@ export function InventoryPageClient() {
   );
 
   const lowStockCount = normalizedProducts.filter(
-    (p) => p.quantity <= p.reorderLevel
+    (p) => p.tracksStock && p.quantity <= p.reorderLevel
   ).length;
   const expiringCount = normalizedProducts.filter(
     (p) =>

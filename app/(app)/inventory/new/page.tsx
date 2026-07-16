@@ -11,6 +11,10 @@ export default async function NewProductPage({
   const { barcode } = await searchParams;
   const suppliers = await listSuppliersForBusiness(ctx.businessId);
   return (
-    <NewProductForm initialBarcode={barcode ?? ""} suppliers={suppliers} />
+    <NewProductForm
+      initialBarcode={barcode ?? ""}
+      suppliers={suppliers}
+      industry={ctx.business.industry}
+    />
   );
 }

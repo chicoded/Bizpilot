@@ -27,6 +27,8 @@ interface ProductEditFormProps {
     name: string;
     category: string | null;
     barcode: string | null;
+    productType?: string | null;
+    recipeLines?: { componentId: string; quantity: number }[];
     purchasePrice: number;
     sellingPrice: number;
     unitsPerPack: number;
@@ -158,6 +160,22 @@ export function ProductEditForm({
                   defaultValue={product.name}
                 />
               </div>
+              <input
+                type="hidden"
+                name="productType"
+                value={
+                  "productType" in product && product.productType
+                    ? String(product.productType)
+                    : "READY_MADE"
+                }
+              />
+              {"recipeLines" in product && Array.isArray(product.recipeLines) ? (
+                <input
+                  type="hidden"
+                  name="recipeLines"
+                  value={JSON.stringify(product.recipeLines)}
+                />
+              ) : null}
               <PackPricingFields
                 defaultPurchasePrice={product.purchasePrice}
                 defaultSellingPrice={product.sellingPrice}

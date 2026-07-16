@@ -13,9 +13,11 @@ interface InventoryProduct {
   id: string;
   name: string;
   category: string | null;
+  productType?: string | null;
   sellingPrice: number;
   quantity: number;
   reorderLevel: number;
+  tracksStock?: boolean;
   expiryDate: Date | null;
   imageUrl: string | null;
 }
@@ -32,7 +34,9 @@ export function InventoryList({ products, currency }: InventoryListProps) {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return products.filter((product) => {
-      const isLowStock = product.quantity <= product.reorderLevel;
+      const isLowStock =
+        product.tracksStock !== false &&
+        product.quantity <= product.reorderLevel;
       const isExpiring =
         product.expiryDate &&
         product.expiryDate <= addDays(new Date(), 30) &&
@@ -82,7 +86,9 @@ export function InventoryList({ products, currency }: InventoryListProps) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((product) => {
-            const isLowStock = product.quantity <= product.reorderLevel;
+            const isLowStock =
+              product.tracksStock !== false &&
+              product.quantity <= product.reorderLevel;
             const isExpiring =
               product.expiryDate &&
               product.expiryDate <= addDays(new Date(), 30);

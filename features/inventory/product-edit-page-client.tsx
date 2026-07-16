@@ -25,6 +25,8 @@ export function ProductEditPageClient({
     name: string;
     category: string | null;
     barcode: string | null;
+    productType?: string | null;
+    recipeLines?: { componentId: string; quantity: number }[];
     purchasePrice: number;
     sellingPrice: number;
     unitsPerPack: number;
@@ -52,6 +54,8 @@ export function ProductEditPageClient({
         name: row.name,
         category: row.category,
         barcode: row.barcode,
+        productType: row.productType ?? "READY_MADE",
+        recipeLines: row.recipeLines ?? [],
         purchasePrice: row.purchasePrice,
         sellingPrice: row.sellingPrice,
         unitsPerPack: row.unitsPerPack,
