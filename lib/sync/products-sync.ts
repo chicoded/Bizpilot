@@ -14,14 +14,63 @@ export type ProductPullResult = {
   message: string;
 };
 
+export type CloudProductRow = {
+  id: string;
+  name: string;
+  sellingPrice: number;
+  purchasePrice?: number;
+  quantity: number;
+  barcode?: string | null;
+  category?: string | null;
+  reorderLevel?: number;
+  unitsPerPack?: number;
+  sku?: string | null;
+  imageUrl?: string | null;
+  isActive?: boolean;
+};
+
 async function listUnsyncedLocalProducts(
   businessId: string
 ): Promise<LocalProduct[]> {
   const { getLocalDB } = await import("@/lib/local-db/database");
   const db = getLocalDB();
   const rows = await db.products.where("businessId").equals(businessId).toArray();
-  // Include inactive so soft-deletes also reach the team database.
   return rows.filter((p) => p.syncedAt == null);
+}
+
+function mapCloudToLocal(
+  businessId: string,
+  product: CloudProductRow,
+  timestamp: string,
+  existing?: LocalProduct
+): LocalProduct {
+  return {
+    id: product.id,
+    businessId,
+    name: product.name,
+    sku: product.sku ?? existing?.sku ?? null,
+    barcode: product.barcode ?? existing?.barcode ?? null,
+    category: product.category ?? existing?.category ?? null,
+    purchasePrice: Number(product.purchasePrice ?? existing?.purchasePrice ?? 0),
+    sellingPrice: Number(product.sellingPrice),
+    unitsPerPack: product.unitsPerPack ?? existing?.unitsPerPack ?? 1,
+    quantity: product.quantity,
+    reorderLevel: product.reorderLevel ?? existing?.reorderLevel ?? 5,
+    batchNumber: existing?.batchNumber ?? null,
+    expiryDate: existing?.expiryDate ?? null,
+    imageUrl: product.imageUrl ?? existing?.imageUrl ?? null,
+    isActive: product.isActive !== false,
+    createdAt: existing?.createdAt ?? timestamp,
+    updatedAt: timestamp,
+    syncedAt: timestamp,
+  };
+}
+
+async function fetchCloudProducts(): Promise<CloudProductRow[] | null> {
+  const response = await fetch("/api/products?sync=1", { cache: "no-store" });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { products?: CloudProductRow[] };
+  return Array.isArray(data.products) ? data.products : [];
 }
 
 /** Push local-only / edited products into the shared team database. */
@@ -116,15 +165,22 @@ export async function pushLocalProducts(
   }
 }
 
-/** Pull shared products from cloud into local IndexedDB (merge by id). */
-export async function pullCloudProducts(businessId: string): Promise<ProductPullResult> {
+/**
+ * Merge team catalog into local IndexedDB.
+ * Cloud is source of truth for shared products (name, price, stock).
+ * Keeps local-only rows that have not been uploaded yet.
+ */
+export async function pullCloudProducts(
+  businessId: string,
+  options?: { forceReplace?: boolean }
+): Promise<ProductPullResult> {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     return { ok: true, updated: 0, added: 0, message: "Offline — using local stock" };
   }
 
   try {
-    const response = await fetch("/api/products?sync=1", { cache: "no-store" });
-    if (!response.ok) {
+    const cloudProducts = await fetchCloudProducts();
+    if (!cloudProducts) {
       return {
         ok: false,
         updated: 0,
@@ -133,90 +189,75 @@ export async function pullCloudProducts(businessId: string): Promise<ProductPull
       };
     }
 
-    const data = (await response.json()) as {
-      products: Array<{
-        id: string;
-        name: string;
-        sellingPrice: number;
-        purchasePrice?: number;
-        quantity: number;
-        barcode?: string | null;
-        category?: string | null;
-        reorderLevel?: number;
-        unitsPerPack?: number;
-        sku?: string | null;
-        imageUrl?: string | null;
-        isActive?: boolean;
-      }>;
-    };
-
-    if (!data.products?.length) {
+    if (!cloudProducts.length) {
+      if (options?.forceReplace) {
+        const { replaceLocalProducts } = await import("@/lib/local-data/products");
+        await replaceLocalProducts(businessId, []);
+        notifyLocalDataChanged("products");
+      }
       return { ok: true, updated: 0, added: 0, message: "No cloud products yet" };
     }
 
     const { getLocalDB } = await import("@/lib/local-db/database");
     const db = getLocalDB();
     const timestamp = new Date().toISOString();
+    const cloudIds = new Set(cloudProducts.map((p) => p.id));
+
+    if (options?.forceReplace) {
+      const { replaceLocalProducts } = await import("@/lib/local-data/products");
+      const mapped = cloudProducts.map((p) =>
+        mapCloudToLocal(businessId, p, timestamp)
+      );
+      await replaceLocalProducts(businessId, mapped);
+      notifyLocalDataChanged("products");
+      return {
+        ok: true,
+        updated: mapped.length,
+        added: mapped.length,
+        message: `Reloaded ${mapped.length} product(s) from team database`,
+      };
+    }
+
     let updated = 0;
     let added = 0;
 
     await db.transaction("rw", db.products, async () => {
-      for (const product of data.products) {
+      for (const product of cloudProducts) {
         const existing = await db.products.get(product.id);
         if (existing && existing.businessId === businessId) {
-          // Keep newer local unsynced edits; otherwise take team stock.
-          if (existing.syncedAt == null) {
-            continue;
-          }
-          await db.products.put({
-            ...existing,
-            name: product.name,
-            sku: product.sku ?? existing.sku,
-            sellingPrice: Number(product.sellingPrice),
-            purchasePrice: Number(
-              product.purchasePrice ?? existing.purchasePrice
-            ),
-            quantity: product.quantity,
-            barcode: product.barcode ?? existing.barcode,
-            category: product.category ?? existing.category,
-            reorderLevel: product.reorderLevel ?? existing.reorderLevel,
-            unitsPerPack: product.unitsPerPack ?? existing.unitsPerPack,
-            imageUrl: product.imageUrl ?? existing.imageUrl,
-            isActive: product.isActive !== false,
-            updatedAt: timestamp,
-            syncedAt: timestamp,
-          });
+          await db.products.put(
+            mapCloudToLocal(businessId, product, timestamp, existing)
+          );
           updated += 1;
         } else if (!existing) {
+          await db.products.put(mapCloudToLocal(businessId, product, timestamp));
+          added += 1;
+        }
+      }
+
+      // Soft-deactivate previously synced products removed from the team catalog.
+      const localRows = await db.products
+        .where("businessId")
+        .equals(businessId)
+        .toArray();
+      for (const row of localRows) {
+        if (
+          row.syncedAt != null &&
+          row.isActive &&
+          !cloudIds.has(row.id)
+        ) {
           await db.products.put({
-            id: product.id,
-            businessId,
-            name: product.name,
-            sku: product.sku ?? null,
-            barcode: product.barcode ?? null,
-            category: product.category ?? null,
-            purchasePrice: Number(product.purchasePrice ?? 0),
-            sellingPrice: Number(product.sellingPrice),
-            unitsPerPack: product.unitsPerPack ?? 1,
-            quantity: product.quantity,
-            reorderLevel: product.reorderLevel ?? 5,
-            batchNumber: null,
-            expiryDate: null,
-            imageUrl: product.imageUrl ?? null,
-            isActive: product.isActive !== false,
-            createdAt: timestamp,
+            ...row,
+            isActive: false,
             updatedAt: timestamp,
             syncedAt: timestamp,
           });
-          added += 1;
         }
       }
     });
 
     const total = updated + added;
-    if (total > 0) {
-      notifyLocalDataChanged("products");
-    }
+    notifyLocalDataChanged("products");
 
     return {
       ok: true,
@@ -239,7 +280,17 @@ export async function pullCloudProducts(businessId: string): Promise<ProductPull
   }
 }
 
-/** Full team catalog sync: upload local edits, then download shared stock. */
+/** Push local edits, then replace local catalog from the team database. */
+export async function reloadTeamCatalog(businessId: string): Promise<{
+  push: ProductPushResult;
+  pull: ProductPullResult;
+}> {
+  const push = await pushLocalProducts(businessId);
+  const pull = await pullCloudProducts(businessId, { forceReplace: true });
+  return { push, pull };
+}
+
+/** Full team catalog sync: upload local edits, then merge shared stock. */
 export async function syncTeamProducts(businessId: string) {
   const push = await pushLocalProducts(businessId);
   const pull = await pullCloudProducts(businessId);

@@ -162,4 +162,9 @@ export async function flushSaleSyncQueue(
   return flushInFlight;
 }
 
-export { pullCloudProducts, pushLocalProducts, syncTeamProducts } from "@/lib/sync/products-sync";
+export {
+  pullCloudProducts,
+  pushLocalProducts,
+  syncTeamProducts,
+  reloadTeamCatalog,
+} from "@/lib/sync/products-sync";

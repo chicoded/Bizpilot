@@ -11,6 +11,7 @@ import { Plus, Package, AlertTriangle, HardDrive } from "lucide-react";
 import { addDays } from "date-fns";
 import { InventoryList } from "@/features/inventory/inventory-list";
 import { ScanToAddProductButton } from "@/features/inventory/scan-to-add-button";
+import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 import { useLocalProducts } from "@/hooks/use-local-products";
 import { useLocalData } from "@/components/providers/local-data-provider";
 
@@ -72,6 +73,8 @@ export function InventoryPageClient() {
         <HardDrive className="h-4 w-4 shrink-0 text-primary" />
         Stored on this phone. Set Gmail backup in Settings → Backup & storage.
       </div>
+
+      <TeamSyncStatus />
 
       {normalizedProducts.length > 0 && <ScanToAddProductButton />}
 

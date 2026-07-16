@@ -23,7 +23,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 
 export async function hydrateLocalStoreFromServer(): Promise<{
   seeded: boolean;
-  source: "local" | "server" | "empty";
+  source: "local" | "server" | "empty" | "merged";
 }> {
   const context = await fetchJson<AppContextResponse>("/api/context");
   if (!context?.businessId) {
@@ -52,22 +52,22 @@ export async function hydrateLocalStoreFromServer(): Promise<{
   });
 
   const existingProducts = await listLocalProducts(businessId);
-  if (existingProducts.length > 0) {
-    return { seeded: true, source: "local" };
+
+  // Always merge the shared team catalog when online — cloud is source of truth.
+  // Local-only unsynced products are preserved inside pullCloudProducts.
+  if (typeof navigator === "undefined" || navigator.onLine) {
+    try {
+      const { pushLocalProducts, pullCloudProducts } = await import(
+        "@/lib/sync/products-sync"
+      );
+      await pushLocalProducts(businessId);
+      await pullCloudProducts(businessId);
+    } catch {
+      // Offline or sync failure — keep whatever local data we have.
+    }
   }
 
-  const [productsRes, customersRes] = await Promise.all([
-    fetchJson<{ products: Array<{
-      id: string;
-      name: string;
-      sellingPrice: number;
-      purchasePrice?: number;
-      quantity: number;
-      barcode?: string | null;
-      category?: string | null;
-      reorderLevel?: number;
-      imageUrl?: string | null;
-    }> }>("/api/products"),
+  const [customersRes] = await Promise.all([
     fetchJson<{ customers: Array<{
       id: string;
       name: string;
@@ -78,33 +78,60 @@ export async function hydrateLocalStoreFromServer(): Promise<{
     }> }>("/api/customers"),
   ]);
 
-  const timestamp = new Date().toISOString();
+  // First-time empty device: if merge didn't land products, seed from API once.
+  const afterMerge = await listLocalProducts(businessId);
+  if (afterMerge.length === 0) {
+    const productsRes = await fetchJson<{ products: Array<{
+      id: string;
+      name: string;
+      sellingPrice: number;
+      purchasePrice?: number;
+      quantity: number;
+      barcode?: string | null;
+      category?: string | null;
+      reorderLevel?: number;
+      unitsPerPack?: number;
+      sku?: string | null;
+      imageUrl?: string | null;
+    }> }>("/api/products?sync=1");
 
-  if (productsRes?.products?.length) {
-    const products: LocalProduct[] = productsRes.products.map((product) => ({
-      id: product.id,
-      businessId,
-      name: product.name,
-      sku: null,
-      barcode: product.barcode ?? null,
-      category: product.category ?? null,
-      purchasePrice: Number(product.purchasePrice ?? 0),
-      sellingPrice: Number(product.sellingPrice),
-      unitsPerPack: 1,
-      quantity: product.quantity,
-      reorderLevel: product.reorderLevel ?? 5,
-      batchNumber: null,
-      expiryDate: null,
-      imageUrl: product.imageUrl ?? null,
-      isActive: true,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      syncedAt: timestamp,
-    }));
-    await replaceLocalProducts(businessId, products);
+    const timestamp = new Date().toISOString();
+    if (productsRes?.products?.length) {
+      const products: LocalProduct[] = productsRes.products.map((product) => ({
+        id: product.id,
+        businessId,
+        name: product.name,
+        sku: product.sku ?? null,
+        barcode: product.barcode ?? null,
+        category: product.category ?? null,
+        purchasePrice: Number(product.purchasePrice ?? 0),
+        sellingPrice: Number(product.sellingPrice),
+        unitsPerPack: product.unitsPerPack ?? 1,
+        quantity: product.quantity,
+        reorderLevel: product.reorderLevel ?? 5,
+        batchNumber: null,
+        expiryDate: null,
+        imageUrl: product.imageUrl ?? null,
+        isActive: true,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        syncedAt: timestamp,
+      }));
+      await replaceLocalProducts(businessId, products);
+    }
   }
 
-  if (customersRes?.customers?.length) {
+  const localCustomers = await (async () => {
+    try {
+      const { listLocalCustomers } = await import("@/lib/local-data/customers");
+      return listLocalCustomers(businessId);
+    } catch {
+      return [];
+    }
+  })();
+
+  if (customersRes?.customers?.length && localCustomers.length === 0) {
+    const timestamp = new Date().toISOString();
     const customers: LocalCustomer[] = customersRes.customers.map((customer) => ({
       id: customer.id,
       businessId,
@@ -120,10 +147,13 @@ export async function hydrateLocalStoreFromServer(): Promise<{
     await replaceLocalCustomers(businessId, customers);
   }
 
-  await replaceLocalExpenses(businessId, [] as LocalExpense[]);
+  if (existingProducts.length === 0) {
+    await replaceLocalExpenses(businessId, [] as LocalExpense[]);
+  }
 
+  const finalProducts = await listLocalProducts(businessId);
   return {
-    seeded: Boolean(productsRes?.products?.length || customersRes?.customers?.length),
-    source: "server",
+    seeded: finalProducts.length > 0,
+    source: existingProducts.length > 0 ? "merged" : "server",
   };
 }

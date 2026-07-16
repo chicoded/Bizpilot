@@ -7,10 +7,12 @@ import {
   flushSaleSyncQueue,
   pullCloudProducts,
   pushLocalProducts,
+  reloadTeamCatalog,
 } from "@/lib/sync/sales-sync";
 import { Button } from "@/components/ui/button";
-import { Cloud, CloudOff, Loader2, RefreshCw } from "lucide-react";
+import { Cloud, CloudOff, Loader2, RefreshCw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 export function TeamSyncStatus({ className }: { className?: string }) {
   const { businessId, status } = useLocalData();
@@ -34,9 +36,6 @@ export function TeamSyncStatus({ className }: { className?: string }) {
     setBusy(true);
     setMessage(null);
     try {
-      // 1) Share local products so teammates can see them
-      // 2) Upload pending sales
-      // 3) Pull authoritative team stock
       const push = await pushLocalProducts(businessId);
       const flush = await flushSaleSyncQueue(businessId);
       const pull = await pullCloudProducts(businessId);
@@ -44,6 +43,38 @@ export function TeamSyncStatus({ className }: { className?: string }) {
       setMessage(`${push.message}. ${flush.message}. ${pull.message}`);
     } catch {
       setMessage("Could not sync right now.");
+    } finally {
+      setBusy(false);
+    }
+  }, [businessId, refreshCount]);
+
+  const runReloadFromTeam = useCallback(async () => {
+    if (!businessId) return;
+    const confirmed = window.confirm(
+      "Reload products from the team database?\n\nThis replaces your local catalog with the shared team catalog (after uploading any products you added on this device)."
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setMessage(null);
+    try {
+      const { push, pull } = await reloadTeamCatalog(businessId);
+      const flush = await flushSaleSyncQueue(businessId);
+      await refreshCount();
+      const text = `${push.message}. ${pull.message}. ${flush.message}`;
+      setMessage(text);
+      toast({
+        title: "Team catalog reloaded",
+        description: pull.message,
+        variant: "success",
+      });
+    } catch {
+      setMessage("Could not reload team catalog.");
+      toast({
+        title: "Reload failed",
+        description: "Check your connection and try again.",
+        variant: "destructive",
+      });
     } finally {
       setBusy(false);
     }
@@ -98,7 +129,7 @@ export function TeamSyncStatus({ className }: { className?: string }) {
         {online
           ? pending > 0
             ? `${pending} sale(s) waiting to sync to team database`
-            : "Team sync on — products & sales share to the cloud"
+            : "Team sync on — cloud catalog is shared across devices"
           : pending > 0
             ? `Offline · ${pending} sale(s) will sync when back online`
             : "Offline · selling from this device"}
@@ -118,6 +149,18 @@ export function TeamSyncStatus({ className }: { className?: string }) {
           <RefreshCw className="h-3.5 w-3.5" />
         )}
         Sync now
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 shrink-0"
+        disabled={busy || !online}
+        onClick={() => void runReloadFromTeam()}
+        title="Replace local products with the shared team catalog"
+      >
+        <Download className="h-3.5 w-3.5" />
+        Reload from team
       </Button>
     </div>
   );
