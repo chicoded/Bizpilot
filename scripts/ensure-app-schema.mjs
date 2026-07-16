@@ -78,6 +78,7 @@ const REPAIR_STATEMENTS = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "sales_businessId_clientSaleId_key"
     ON "sales"("businessId", "clientSaleId");`,
   `ALTER TABLE "businesses" ADD COLUMN IF NOT EXISTS "suspendedAt" TIMESTAMP(3);`,
+  `ALTER TABLE "businesses" ADD COLUMN IF NOT EXISTS "industryLabel" TEXT;`,
   `DO $$ BEGIN
     CREATE TYPE "InternalAdminRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'SUPPORT', 'FINANCE', 'DEVELOPER');
   EXCEPTION WHEN duplicate_object THEN NULL;

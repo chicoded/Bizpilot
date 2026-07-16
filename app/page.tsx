@@ -182,6 +182,11 @@ export default function LandingPage() {
 
       <footer className="px-4 py-8 text-center text-sm text-muted-foreground border-t">
         <p>© {new Date().getFullYear()} Zaplex. Built for African SMEs.</p>
+        <p className="mt-2">
+          <Link href="/support" className="underline hover:text-foreground">
+            Report a bug / Contact support
+          </Link>
+        </p>
       </footer>
     </div>
   );

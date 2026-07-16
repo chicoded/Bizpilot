@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePageAccess } from "@/lib/auth";
 import { getBillingData } from "@/actions/billing";
 import { SettingsShell } from "@/components/layout/settings-shell";
@@ -23,7 +24,11 @@ export default async function BillingPage() {
           <Card className="border-warning/30 bg-warning/10">
             <CardContent className="p-4 text-sm">
               Online payments are temporarily unavailable. Please try again later
-              or contact support.
+              or{" "}
+              <Link href="/settings/support" className="underline">
+                contact support
+              </Link>
+              .
             </CardContent>
           </Card>
         )}

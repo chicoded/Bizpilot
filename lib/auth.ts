@@ -13,10 +13,7 @@ import {
   type MembershipWithBusiness,
 } from "@/lib/active-business";
 
-const BUSINESS_INCLUDE = { business: true } as const;
-
-/** Safe columns that exist on older DBs before industryLabel was added. */
-const BUSINESS_SELECT_CORE = {
+const BUSINESS_SELECT_SAFE = {
   id: true,
   name: true,
   industry: true,
@@ -27,6 +24,13 @@ const BUSINESS_SELECT_CORE = {
   suspendedAt: true,
   createdAt: true,
   updatedAt: true,
+  rolePermissions: true,
+} as const;
+
+/** Includes custom industry text — only used after column exists. */
+const BUSINESS_SELECT_WITH_LABEL = {
+  ...BUSINESS_SELECT_SAFE,
+  industryLabel: true,
 } as const;
 
 function isMissingSchemaColumnError(error: unknown): boolean {
@@ -35,7 +39,7 @@ function isMissingSchemaColumnError(error: unknown): boolean {
   }
   return (
     error instanceof Error &&
-    /rolePermissions|sectionOverrides|industryLabel|column.*does not exist|P2022/i.test(
+    /rolePermissions|sectionOverrides|industryLabel|suspendedAt|column.*does not exist|P2022/i.test(
       error.message
     )
   );
@@ -65,40 +69,22 @@ function formatBusinessContext(
   };
 }
 
-async function loadMembershipForUser(userId: string, businessId?: string) {
-  if (businessId) {
-    return prisma.membership.findUnique({
-      where: { userId_businessId: { userId, businessId } },
-      include: BUSINESS_INCLUDE,
-    });
-  }
-
-  const cookieBusinessId = await getActiveBusinessIdFromCookie();
-  const memberships = await prisma.membership.findMany({
-    where: { userId },
-    include: BUSINESS_INCLUDE,
-    orderBy: { createdAt: "desc" },
-  });
-
-  const picked = pickActiveMembership(memberships, cookieBusinessId);
-  return picked;
-}
-
-async function loadMembershipForUserCoreColumns(
+async function loadMembershipWithBusinessSelect(
   userId: string,
-  businessId?: string
+  businessId: string | undefined,
+  select: typeof BUSINESS_SELECT_SAFE | typeof BUSINESS_SELECT_WITH_LABEL
 ) {
   if (businessId) {
     return prisma.membership.findUnique({
       where: { userId_businessId: { userId, businessId } },
-      include: { business: { select: BUSINESS_SELECT_CORE } },
+      include: { business: { select } },
     });
   }
 
   const cookieBusinessId = await getActiveBusinessIdFromCookie();
   const memberships = await prisma.membership.findMany({
     where: { userId },
-    include: { business: { select: BUSINESS_SELECT_CORE } },
+    include: { business: { select } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -108,20 +94,62 @@ async function loadMembershipForUserCoreColumns(
   );
 }
 
+async function loadMembershipForUser(userId: string, businessId?: string) {
+  // Prefer label column when present; never use include:true (pulls every schema field).
+  try {
+    return await loadMembershipWithBusinessSelect(
+      userId,
+      businessId,
+      BUSINESS_SELECT_WITH_LABEL
+    );
+  } catch (error) {
+    if (!isMissingSchemaColumnError(error)) throw error;
+    try {
+      return await loadMembershipWithBusinessSelect(
+        userId,
+        businessId,
+        BUSINESS_SELECT_SAFE
+      );
+    } catch (inner) {
+      if (!isMissingSchemaColumnError(inner)) throw inner;
+      // Oldest DBs: drop rolePermissions + suspendedAt too.
+      const minimal = {
+        id: true,
+        name: true,
+        industry: true,
+        currency: true,
+        logo: true,
+        address: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+      } as const;
+      return loadMembershipWithBusinessSelect(userId, businessId, minimal as typeof BUSINESS_SELECT_SAFE);
+    }
+  }
+}
+
 export async function getCurrentUser() {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      memberships: {
-        include: { business: true },
+  try {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        memberships: {
+          include: { business: { select: BUSINESS_SELECT_SAFE } },
+        },
       },
-    },
-  });
-
-  return user;
+    });
+  } catch {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        memberships: true,
+      },
+    });
+  }
 }
 
 export async function getBusinessContext(businessId?: string) {
@@ -132,7 +160,6 @@ export async function getBusinessContext(businessId?: string) {
     let membership = await loadMembershipForUser(userId, businessId);
     if (!membership) return null;
 
-    // Heal anyone stuck on an empty shop when another membership has stock.
     if (!businessId) {
       const healed = await healEmptyShopIfNeeded(userId, membership);
       if (healed) membership = healed;
@@ -140,30 +167,8 @@ export async function getBusinessContext(businessId?: string) {
 
     return formatBusinessContext(membership, userId);
   } catch (error) {
-    if (!isMissingSchemaColumnError(error)) {
-      throw error;
-    }
-
-    // Older DBs may be missing industryLabel / rolePermissions / etc.
-    const membership = await loadMembershipForUserCoreColumns(
-      userId,
-      businessId
-    );
-
-    if (!membership) return null;
-
-    return formatBusinessContext(
-      {
-        ...membership,
-        sectionOverrides: null,
-        business: {
-          ...membership.business,
-          industryLabel: null,
-          rolePermissions: null,
-        },
-      } as MembershipWithBusiness,
-      userId
-    );
+    console.error("[getBusinessContext] failed:", error);
+    return null;
   }
 }
 
