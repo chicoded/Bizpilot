@@ -188,7 +188,7 @@ async function healEmptyShopIfNeeded(
 
     const memberships = await prisma.membership.findMany({
       where: { userId },
-      include: { business: true },
+      include: { business: { select: BUSINESS_SELECT_SAFE } },
       orderBy: { createdAt: "desc" },
     });
 
