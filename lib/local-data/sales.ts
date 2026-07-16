@@ -56,6 +56,8 @@ export type CreateLocalSaleInput = {
   discount?: number;
   tax?: number;
   isCredit?: boolean;
+  notes?: string;
+  serviceType?: string;
 };
 
 export async function createLocalSale(
@@ -114,6 +116,8 @@ export async function createLocalSale(
     paymentMethod: input.paymentMethod,
     customerId: input.customerId ?? null,
     isCredit: input.isCredit ?? input.paymentMethod === "CREDIT",
+    notes: input.notes ?? null,
+    serviceType: input.serviceType ?? null,
     createdAt: timestamp,
     syncedAt: null,
   };

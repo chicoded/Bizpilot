@@ -94,6 +94,7 @@ export const PRODUCTION_ENV_CHECKLIST = [
   { key: "SUPABASE_SERVICE_ROLE_KEY", required: false, service: "Product image uploads" },
   { key: "NEXT_PUBLIC_POSTHOG_KEY", required: false, service: "PostHog" },
   { key: "HEALTH_CHECK_SECRET", required: false, service: "Detailed /api/health responses" },
+  { key: "INTERNAL_ADMIN_EMAILS", required: false, service: "Internal Ops console bootstrap" },
   { key: "NEXT_PUBLIC_SENTRY_DSN", required: false, service: "Sentry (client)" },
   { key: "SENTRY_DSN", required: false, service: "Sentry (server)" },
   { key: "RUN_PRISMA_MIGRATE", required: false, service: "Auto-apply DB migrations on deploy" },

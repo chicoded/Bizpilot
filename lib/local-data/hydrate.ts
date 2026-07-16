@@ -8,6 +8,7 @@ export type AppContextResponse = {
   businessId: string | null;
   businessName: string | null;
   currency: string;
+  industry?: string | null;
 };
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -46,6 +47,7 @@ export async function hydrateLocalStoreFromServer(): Promise<{
     businessId,
     name: businessName,
     currency,
+    industry: context.industry ?? null,
     updatedAt: new Date().toISOString(),
   });
 

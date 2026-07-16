@@ -55,7 +55,28 @@ export type LocalSale = {
   paymentMethod: string;
   customerId: string | null;
   isCredit: boolean;
+  notes?: string | null;
+  serviceType?: string | null;
   createdAt: string;
+  syncedAt: string | null;
+};
+
+export type LocalKitchenOrder = {
+  id: string;
+  businessId: string;
+  saleId: string | null;
+  orderNumber: string;
+  serviceType: string;
+  status: "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
+  notes: string | null;
+  items: {
+    productId: string | null;
+    productName: string;
+    quantity: number;
+    notes: string | null;
+  }[];
+  createdAt: string;
+  updatedAt: string;
   syncedAt: string | null;
 };
 
@@ -74,6 +95,7 @@ export type LocalBusinessMeta = {
   businessId: string;
   name: string;
   currency: string;
+  industry?: string | null;
   updatedAt: string;
 };
 

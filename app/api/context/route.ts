@@ -24,5 +24,6 @@ export async function GET() {
     businessId: ctx.businessId,
     businessName: ctx.business.name,
     currency: ctx.business.currency ?? "NGN",
+    industry: ctx.business.industry ?? "OTHER",
   });
 }

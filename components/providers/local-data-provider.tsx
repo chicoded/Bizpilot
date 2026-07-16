@@ -48,7 +48,8 @@ function isAuthOnlyPath(pathname: string | null) {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/sign-up") ||
-    pathname.startsWith("/invite")
+    pathname.startsWith("/invite") ||
+    pathname.startsWith("/internal")
   );
 }
 

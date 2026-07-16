@@ -25,7 +25,25 @@ enum Industry {
   FASHION
   MINI_MART
   ELECTRONICS
+  RESTAURANT
+  FAST_FOOD
+  CAFE
   OTHER
+}
+
+enum KitchenOrderStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum RestaurantServiceType {
+  WALK_IN
+  DINE_IN
+  PICKUP
+  DELIVERY
 }
 
 enum PaymentMethod {
@@ -59,6 +77,14 @@ enum SubscriptionStatus {
   TRIAL
 }
 
+enum InternalAdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  FINANCE
+  DEVELOPER
+}
+
 enum StockAdjustmentType {
   PURCHASE
   SALE
@@ -89,6 +115,8 @@ model Business {
   address   String?
   phone     String?
   rolePermissions Json?
+  /// When set, customer app access is blocked for this tenant.
+  suspendedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -109,6 +137,10 @@ model Business {
   whatsappMessages WhatsAppMessage[]
   aiPromptLogs   AiPromptLog[]
   receiptCounters ReceiptCounter[]
+  restaurantSettings RestaurantSettings?
+  mealCombos     MealCombo[]
+  favoriteProducts FavoriteProduct[]
+  kitchenOrders  KitchenOrder[]
 
   @@map("businesses")
 }
@@ -122,11 +154,45 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Membership[]
-  teamInvites TeamInvite[] @relation("TeamInvitesSent")
-  auditLogs   AuditLog[]
+  memberships     Membership[]
+  teamInvites     TeamInvite[] @relation("TeamInvitesSent")
+  auditLogs       AuditLog[]
+  internalAdmin   InternalAdmin?
+  internalAudits  InternalAuditLog[]
 
   @@map("users")
+}
+
+/// Platform staff for /internal ops console (not tenant membership roles).
+model InternalAdmin {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  role      InternalAdminRole @default(SUPPORT)
+  disabled  Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([role])
+  @@map("internal_admins")
+}
+
+model InternalAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entity      String?
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("internal_audit_logs")
 }
 
 model Membership {
@@ -191,11 +257,115 @@ model Product {
   supplier         Supplier?         @relation(fields: [supplierId], references: [id])
   saleItems        SaleItem[]
   stockAdjustments StockAdjustment[]
+  favoriteProducts FavoriteProduct[]
+  mealComboItems   MealComboItem[]
+  kitchenOrderItems KitchenOrderItem[]
 
   @@unique([businessId, sku])
   @@index([businessId])
   @@index([businessId, barcode])
+  @@index([businessId, category])
   @@map("products")
+}
+
+/// Per-business Rush POS settings (auto-enabled for restaurant industries).
+model RestaurantSettings {
+  id                   String   @id @default(cuid())
+  businessId           String   @unique
+  rushModeEnabled      Boolean  @default(true)
+  voiceOrdersEnabled   Boolean  @default(false)
+  aiSuggestionsEnabled Boolean  @default(true)
+  comboMealsEnabled    Boolean  @default(true)
+  kitchenDisplayEnabled Boolean @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("restaurant_settings")
+}
+
+model MealCombo {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  imageUrl    String?
+  price       Decimal  @db.Decimal(12, 2)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items    MealComboItem[]
+
+  @@index([businessId, isActive])
+  @@map("meal_combos")
+}
+
+model MealComboItem {
+  id        String @id @default(cuid())
+  comboId   String
+  productId String
+  quantity  Int    @default(1)
+
+  combo   MealCombo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, productId])
+  @@index([productId])
+  @@map("meal_combo_items")
+}
+
+model FavoriteProduct {
+  id         String @id @default(cuid())
+  businessId String
+  productId  String
+  sortOrder  Int    @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, productId])
+  @@index([businessId, sortOrder])
+  @@map("favorite_products")
+}
+
+model KitchenOrder {
+  id            String             @id @default(cuid())
+  businessId    String
+  saleId        String?
+  orderNumber   String
+  serviceType   RestaurantServiceType @default(WALK_IN)
+  status        KitchenOrderStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  readyAt       DateTime?
+  completedAt   DateTime?
+
+  business Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items    KitchenOrderItem[]
+
+  @@unique([businessId, orderNumber])
+  @@index([businessId, status, createdAt])
+  @@map("kitchen_orders")
+}
+
+model KitchenOrderItem {
+  id             String  @id @default(cuid())
+  kitchenOrderId String
+  productId      String?
+  productName    String
+  quantity       Int
+  notes          String?
+
+  kitchenOrder KitchenOrder @relation(fields: [kitchenOrderId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([kitchenOrderId])
+  @@map("kitchen_order_items")
 }
 
 model StockAdjustment {

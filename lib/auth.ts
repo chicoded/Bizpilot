@@ -22,6 +22,7 @@ const BUSINESS_SELECT_FALLBACK = {
   logo: true,
   address: true,
   phone: true,
+  suspendedAt: true,
   createdAt: true,
   updatedAt: true,
 } as const;

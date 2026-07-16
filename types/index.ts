@@ -200,6 +200,9 @@ export const INDUSTRIES = [
   { value: "FASHION", label: "Fashion Store" },
   { value: "MINI_MART", label: "Mini Mart" },
   { value: "ELECTRONICS", label: "Electronics Store" },
+  { value: "RESTAURANT", label: "Restaurant" },
+  { value: "FAST_FOOD", label: "Fast Food" },
+  { value: "CAFE", label: "Cafe" },
   { value: "OTHER", label: "Other" },
 ] as const;
 

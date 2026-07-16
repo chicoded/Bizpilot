@@ -4,6 +4,7 @@ import type {
   LocalBusinessMeta,
   LocalCustomer,
   LocalExpense,
+  LocalKitchenOrder,
   LocalProduct,
   LocalSale,
   SyncQueueItem,
@@ -17,6 +18,7 @@ export class BizPilotLocalDB extends Dexie {
   businessMeta!: Table<LocalBusinessMeta, string>;
   backupSnapshots!: Table<LocalBackupSnapshot, string>;
   syncQueue!: Table<SyncQueueItem, string>;
+  kitchenOrders!: Table<LocalKitchenOrder, string>;
 
   constructor() {
     super("bizpilot_local");
@@ -38,6 +40,17 @@ export class BizPilotLocalDB extends Dexie {
       businessMeta: "businessId",
       backupSnapshots: "id, businessId, createdAt",
       syncQueue: "id, businessId, type, entityId, status, updatedAt",
+    });
+
+    this.version(3).stores({
+      products: "id, businessId, name, barcode, isActive, updatedAt, category",
+      customers: "id, businessId, name, updatedAt",
+      sales: "id, businessId, receiptNumber, createdAt, syncedAt",
+      expenses: "id, businessId, date, createdAt",
+      businessMeta: "businessId",
+      backupSnapshots: "id, businessId, createdAt",
+      syncQueue: "id, businessId, type, entityId, status, updatedAt",
+      kitchenOrders: "id, businessId, orderNumber, status, createdAt, syncedAt",
     });
   }
 }

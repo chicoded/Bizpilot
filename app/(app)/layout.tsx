@@ -17,6 +17,10 @@ export default async function AppLayout({
     redirect("/onboarding");
   }
 
+  if (ctx.business.suspendedAt) {
+    redirect("/account-suspended");
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <a
