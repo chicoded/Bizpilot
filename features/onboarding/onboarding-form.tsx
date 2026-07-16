@@ -36,10 +36,15 @@ export function OnboardingForm() {
       if (result.error) {
         const formErrors =
           "_form" in result.error ? result.error._form : undefined;
+        if (Array.isArray(formErrors) && formErrors[0]) {
+          setError(formErrors[0]);
+          return;
+        }
+        const fieldErrors = Object.values(result.error)
+          .flat()
+          .filter((v): v is string => typeof v === "string");
         setError(
-          Array.isArray(formErrors) && formErrors[0]
-            ? formErrors[0]
-            : "Please check your inputs and try again."
+          fieldErrors[0] ?? "Please check your inputs and try again."
         );
         return;
       }
