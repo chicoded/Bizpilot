@@ -327,7 +327,7 @@ export function BackupSettingsPanel() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {hasGoogle
                     ? `Connected as ${config.gmailEmail} — Gmail send + Drive upload`
-                    : "Allow Zaplex to email and save backups to your Google account"}
+                    : "Required for automatic Drive upload (and Gmail send without the share menu)"}
                 </p>
               </div>
               {hasGoogle ? (
@@ -354,12 +354,22 @@ export function BackupSettingsPanel() {
                 </Button>
               )}
             </div>
+            {backupToDrive && !hasGoogle && (
+              <p className="text-xs rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                Drive backup is on, but Google is not connected. Tap{" "}
+                <strong>Connect Google</strong> and allow Drive access. Until
+                then, &quot;Save to Drive&quot; downloads the file so you can
+                upload it manually.
+              </p>
+            )}
             {!isGmailBackupConfigured() && (
               <p className="text-xs text-muted-foreground">
-                Share to Gmail/Drive works without setup. For automatic save, add{" "}
+                Share/download works without setup. For automatic save, add{" "}
                 <span className="font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>{" "}
-                in Vercel (Google Cloud OAuth with Gmail send + Drive file
-                scopes).
+                in Vercel (Google Cloud OAuth: Gmail send + Drive file scopes,
+                redirect URI{" "}
+                <span className="font-mono">/settings/backup</span>), then
+                redeploy.
               </p>
             )}
           </div>

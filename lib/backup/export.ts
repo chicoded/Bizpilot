@@ -95,15 +95,30 @@ export async function shareBackupFile(
   const filename = `zaplex-backup-${businessName.replace(/[^a-z0-9-_]+/gi, "-") || "shop"}-${date}.json`;
   const file = new File([json], filename, { type: "application/json" });
 
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    await navigator.share({
-      title: "Zaplex backup",
-      text: shareText ?? "Zaplex shop data backup",
-      files: [file],
-    });
-    return { method: "share" as const };
+  const canShareFiles =
+    typeof navigator !== "undefined" &&
+    typeof navigator.share === "function" &&
+    typeof navigator.canShare === "function" &&
+    navigator.canShare({ files: [file] });
+
+  if (canShareFiles) {
+    try {
+      await navigator.share({
+        title: "Zaplex backup",
+        text: shareText ?? "Zaplex shop data backup",
+        files: [file],
+      });
+      return { method: "share" as const };
+    } catch (error) {
+      // User cancelled — don't silently download.
+      if (error instanceof Error && error.name === "AbortError") {
+        throw error;
+      }
+      // Desktop / blocked share → fall through to download.
+    }
   }
 
   downloadBackupFile(json, businessName);
   return { method: "download" as const };
 }
+

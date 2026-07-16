@@ -63,8 +63,7 @@ export async function uploadBackupToDrive(
   if (!accessToken) {
     return {
       ok: false,
-      error:
-        "Connect Google for Drive upload, or use Save to Drive (share) below.",
+      error: "Google not connected",
     };
   }
 
@@ -154,14 +153,34 @@ export async function deliverBackupToDrive(
   json: string,
   businessName: string
 ): Promise<{ ok: boolean; message: string }> {
-  const uploaded = await uploadBackupToDrive(json, businessName);
-  if (uploaded.ok) {
+  const accessToken = getGoogleAccessToken();
+
+  if (accessToken) {
+    const uploaded = await uploadBackupToDrive(json, businessName);
+    if (uploaded.ok) {
+      return {
+        ok: true,
+        message: "Backup saved to Google Drive → Zaplex Backups folder",
+      };
+    }
+    // Token present but API rejected — still try share/download.
+    const shared = await shareBackupToDrive(json, businessName);
+    if (shared.ok) {
+      return {
+        ok: true,
+        message:
+          shared.method === "share"
+            ? "Choose Google Drive in the share menu to save the backup"
+            : `${uploaded.error} Backup file downloaded instead — upload it to Drive.`,
+      };
+    }
     return {
-      ok: true,
-      message: "Backup saved to Google Drive → Zaplex Backups folder",
+      ok: false,
+      message: uploaded.error || shared.error,
     };
   }
 
+  // No Google Connect — share on mobile, download on desktop.
   const shared = await shareBackupToDrive(json, businessName);
   if (shared.ok) {
     return {
@@ -169,12 +188,14 @@ export async function deliverBackupToDrive(
       message:
         shared.method === "share"
           ? "Choose Google Drive in the share menu to save the backup"
-          : "Backup downloaded — upload it to Drive manually",
+          : "Backup downloaded. For automatic Drive upload, tap Connect Google first.",
     };
   }
 
   return {
     ok: false,
-    message: uploaded.error || shared.error,
+    message:
+      shared.error ||
+      "Could not save to Drive. Tap Connect Google, or use Download backup.",
   };
 }
