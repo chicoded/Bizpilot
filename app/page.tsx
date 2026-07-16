@@ -58,7 +58,7 @@ export default function LandingPage() {
           <Sparkles className="h-4 w-4" />
           AI Operating System for African SMEs
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-biz-blue mb-6">
+        <h1 className="mb-6 text-4xl font-bold tracking-tight text-biz-blue dark:text-foreground md:text-6xl">
           Your AI employee for
           <br />
           <span className="text-biz-emerald">Nigerian business</span>
@@ -89,8 +89,8 @@ export default function LandingPage() {
         </div>
 
         {/* Health score preview */}
-        <div className="mt-16 mx-auto max-w-md rounded-2xl border border-emerald-200/50 bg-white/80 backdrop-blur-xl shadow-glass p-6 text-left">
-          <p className="text-sm font-semibold text-biz-emerald mb-3">
+        <div className="mx-auto mt-16 max-w-md rounded-2xl border border-emerald-200/50 bg-white/80 p-6 text-left shadow-glass backdrop-blur-xl dark:border-emerald-800/40 dark:bg-card/80">
+          <p className="mb-3 text-sm font-semibold text-biz-emerald">
             Business Health Score
           </p>
           <div className="flex items-center gap-4 mb-4">
@@ -106,7 +106,7 @@ export default function LandingPage() {
               <AlertTriangle className="h-4 w-4 shrink-0" />
               High generator fuel costs
             </p>
-            <p className="text-biz-blue flex items-center gap-2">
+            <p className="flex items-center gap-2 text-biz-blue dark:text-primary">
               <CircleDot className="h-4 w-4 shrink-0" />
               Restock Vitamin C · Follow up debtors
             </p>
@@ -124,7 +124,7 @@ export default function LandingPage() {
             {["Sales Today", "Profit", "Expenses", "Debt"].map((label) => (
               <div key={label} className="rounded-xl border bg-background p-3">
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-lg font-bold text-biz-blue mt-1">₦124,500</p>
+                <p className="mt-1 text-lg font-bold text-biz-blue dark:text-primary">₦124,500</p>
               </div>
             ))}
           </div>
@@ -133,16 +133,16 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="px-4 py-16 max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-biz-blue mb-12">
+        <h2 className="mb-12 text-center text-2xl font-bold text-biz-blue dark:text-foreground md:text-3xl">
           Everything your business needs
         </h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-2xl border border-border/50 bg-white/80 backdrop-blur-xl p-6 shadow-soft"
+              className="rounded-2xl border border-border/50 bg-white/80 p-6 shadow-soft backdrop-blur-xl dark:bg-card/80"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-biz-blue/10 text-biz-blue mb-4">
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-biz-blue/10 text-biz-blue dark:bg-primary/15 dark:text-primary">
                 <feature.icon className="h-5 w-5" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">

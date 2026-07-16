@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export function LandingNav() {
   const [open, setOpen] = useState(false);
@@ -21,6 +22,7 @@ export function LandingNav() {
           </span>
         </div>
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <SignedOut>
             <Link href="/sign-in">
               <Button variant="ghost" size="sm">
@@ -40,26 +42,30 @@ export function LandingNav() {
             </Link>
           </SignedIn>
         </div>
-        <button
-          type="button"
-          className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border"
-          onClick={() => setOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </nav>
 
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/50 dark:bg-black/70"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-72 bg-card border-l shadow-xl p-6 flex flex-col gap-3">
-            <div className="flex justify-end">
+          <div className="absolute right-0 top-0 flex h-full w-72 flex-col gap-3 border-l border-border bg-card p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <ThemeToggle variant="full" />
               <button type="button" onClick={() => setOpen(false)} aria-label="Close">
                 <X className="h-5 w-5" />
               </button>

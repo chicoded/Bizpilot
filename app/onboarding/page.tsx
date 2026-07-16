@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { getBusinessContext, syncClerkUser } from "@/lib/auth";
 import { getPendingInviteForEmail } from "@/lib/team";
 import { OnboardingForm } from "@/features/onboarding/onboarding-form";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -65,24 +66,27 @@ export default async function OnboardingPage() {
   if (inviteToken) redirect(`/invite/${inviteToken}`);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 flex items-center justify-center p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 p-4 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="absolute right-4 top-4 z-10 md:right-6 md:top-6">
+        <ThemeToggle variant="full" />
+      </div>
       <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-biz-gradient text-white font-bold text-xl mb-4">
+        <div className="mb-8 text-center">
+          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-biz-gradient text-xl font-bold text-white">
             Z
           </div>
-          <h1 className="text-2xl font-bold text-brand">
+          <h1 className="text-2xl font-bold text-brand dark:text-foreground">
             Set up your business
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             Takes less than 2 minutes. You can add team members later.
           </p>
         </div>
 
         {syncWarning && (
-          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-left">
-            <p className="font-medium text-amber-900">Account sync warning</p>
-            <p className="mt-1 text-amber-800/80 break-words">{syncWarning}</p>
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm dark:border-amber-800 dark:bg-amber-950/40">
+            <p className="font-medium text-amber-900 dark:text-amber-200">Account sync warning</p>
+            <p className="mt-1 break-words text-amber-800/80 dark:text-amber-300/80">{syncWarning}</p>
           </div>
         )}
 

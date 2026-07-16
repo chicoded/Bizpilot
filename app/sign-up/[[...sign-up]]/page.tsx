@@ -1,6 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { getSafeRedirectUrl } from "@/lib/redirect";
+import { AuthShell } from "@/components/layout/auth-shell";
 
 export default async function SignUpPage({
   searchParams,
@@ -11,7 +12,7 @@ export default async function SignUpPage({
   const redirectUrl = getSafeRedirectUrl(params.redirect_url, "/onboarding");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4">
+    <AuthShell>
       <SignUp
         routing="path"
         path="/sign-up"
@@ -24,6 +25,6 @@ export default async function SignUpPage({
             : "/sign-in"
         }
       />
-    </div>
+    </AuthShell>
   );
 }
