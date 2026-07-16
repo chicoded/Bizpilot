@@ -9,15 +9,36 @@ const PLAN_PRICE: Record<string, number> = {
   AI_PRO: 30000,
 };
 
-export default async function InternalSubscriptionsPage() {
+export default async function InternalSubscriptionsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string; status?: string }>;
+}) {
   await requireInternalAdmin("subscriptions:view");
+  const params = searchParams ? await searchParams : {};
+  const q = params.q?.trim() ?? "";
+  const status = params.status?.trim() ?? "";
 
   const subscriptions = await prisma.subscription.findMany({
+    where: {
+      AND: [
+        status
+          ? { status: status as "TRIAL" | "ACTIVE" | "PAST_DUE" | "CANCELLED" }
+          : {},
+        q
+          ? {
+              business: {
+                name: { contains: q, mode: "insensitive" },
+              },
+            }
+          : {},
+      ],
+    },
     include: {
       business: { select: { id: true, name: true, suspendedAt: true } },
     },
     orderBy: { updatedAt: "desc" },
-    take: 150,
+    take: 200,
   });
 
   const mrr = subscriptions
@@ -32,6 +53,32 @@ export default async function InternalSubscriptionsPage() {
           Active MRR {formatCurrency(mrr)} · {subscriptions.length} listed
         </p>
       </div>
+
+      <form className="flex flex-wrap gap-2" method="get">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Search business name"
+          className="min-w-[200px] flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+        >
+          <option value="">All statuses</option>
+          <option value="TRIAL">TRIAL</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="PAST_DUE">PAST_DUE</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select>
+        <button
+          type="submit"
+          className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-900"
+        >
+          Filter
+        </button>
+      </form>
 
       <div className="overflow-x-auto rounded-xl border border-slate-800">
         <table className="min-w-full text-left text-sm">
@@ -55,7 +102,9 @@ export default async function InternalSubscriptionsPage() {
                     {s.business.name}
                   </Link>
                   {s.business.suspendedAt ? (
-                    <span className="ml-2 text-xs text-amber-400">suspended</span>
+                    <span className="ml-2 text-xs text-amber-400">
+                      suspended
+                    </span>
                   ) : null}
                 </td>
                 <td className="px-3 py-2">{s.plan}</td>
@@ -68,6 +117,16 @@ export default async function InternalSubscriptionsPage() {
                 </td>
               </tr>
             ))}
+            {subscriptions.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-3 py-6 text-center text-slate-500"
+                >
+                  No subscriptions match this filter.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

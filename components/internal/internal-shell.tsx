@@ -12,7 +12,9 @@ import {
   LayoutDashboard,
   Receipt,
   ScrollText,
+  Server,
   Shield,
+  UserCog,
   Users,
 } from "lucide-react";
 
@@ -53,10 +55,22 @@ const NAV: {
     permission: "payments:view",
   },
   {
+    href: "/internal/admins",
+    label: "Staff",
+    icon: UserCog,
+    permission: "admins:manage",
+  },
+  {
     href: "/internal/logs",
     label: "Audit logs",
     icon: ScrollText,
     permission: "logs:view",
+  },
+  {
+    href: "/internal/system",
+    label: "System",
+    icon: Server,
+    permission: "system:view",
   },
 ];
 
