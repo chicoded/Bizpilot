@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { PWAProvider } from "@/components/pwa/pwa-provider";
 import { LocalDataProvider } from "@/components/providers/local-data-provider";
+import { CloudKeepAlive } from "@/components/providers/cloud-keep-alive";
 import { MonitoringProvider } from "@/components/monitoring/monitoring-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +19,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <MonitoringProvider>
           <LocalDataProvider>
+            <CloudKeepAlive />
             <PWAProvider>
               {children}
               <Toaster />

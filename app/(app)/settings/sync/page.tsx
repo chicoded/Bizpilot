@@ -32,6 +32,12 @@ export default async function SettingsSyncPage() {
             Products and sales sync to the shared cloud database in the
             background. Use this page if a device looks out of date.
           </p>
+          <p>
+            While you use Zaplex, the app quietly pings the database every few
+            minutes so free-tier Supabase is less likely to sleep. If it does
+            sleep, a <strong className="text-foreground">Wake database</strong>{" "}
+            banner appears at the top of the app.
+          </p>
           <TeamSyncStatus />
         </CardContent>
       </Card>
