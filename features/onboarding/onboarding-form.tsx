@@ -49,7 +49,7 @@ export function OnboardingForm() {
         return;
       }
       // Full navigation so this device drops any stale empty-shop local data.
-      window.location.assign("/get-started");
+      window.location.assign("/dashboard");
     });
   }
 

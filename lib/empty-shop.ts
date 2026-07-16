@@ -15,8 +15,12 @@ export async function isAbandonedEmptyShop(businessId: string): Promise<boolean>
 }
 
 /**
- * True when this user only owns/is on abandoned empty shops (no real activity).
- * Used so onboarding can run again after team removal.
+ * True when this user is stuck on empty leftover shops and should re-onboard.
+ *
+ * Important: a brand-new shop also has 0 products/sales. Owners of empty shops
+ * are NOT abandoned — that is the normal post-signup state and must reach the
+ * dashboard. This only flags non-owner memberships on empty shells (e.g. after
+ * being removed from a team while still linked to a dead empty shop).
  */
 export async function userOnlyHasAbandonedShops(userId: string): Promise<boolean> {
   const memberships = await prisma.membership.findMany({
@@ -25,6 +29,11 @@ export async function userOnlyHasAbandonedShops(userId: string): Promise<boolean
   });
 
   if (memberships.length === 0) return true;
+
+  // Owner of any shop (even empty) is a valid signup — do not bounce to onboarding.
+  if (memberships.some((m) => m.role === Role.OWNER)) {
+    return false;
+  }
 
   for (const m of memberships) {
     const abandoned = await isAbandonedEmptyShop(m.businessId);
