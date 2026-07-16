@@ -100,6 +100,22 @@ export function OnboardingForm() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="phone">Phone number *</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              required
+              placeholder="e.g. 08012345678"
+            />
+            <p className="text-xs text-muted-foreground">
+              So we can reach you about your shop account.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="address">Address (optional)</Label>
             <Input
               id="address"

@@ -74,6 +74,7 @@ export default async function InternalBusinessesPage({
           <thead className="bg-slate-900 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-3 py-2">Business</th>
+              <th className="px-3 py-2">Phone</th>
               <th className="px-3 py-2">Owner</th>
               <th className="px-3 py-2">Plan</th>
               <th className="px-3 py-2">Status</th>
@@ -94,6 +95,18 @@ export default async function InternalBusinessesPage({
                       {b.name}
                     </Link>
                     <p className="text-xs text-slate-500">{b.industry}</p>
+                  </td>
+                  <td className="px-3 py-2">
+                    {b.phone ? (
+                      <a
+                        href={`tel:${b.phone.replace(/\s+/g, "")}`}
+                        className="text-slate-200 hover:text-emerald-400"
+                      >
+                        {b.phone}
+                      </a>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-slate-300">
                     {owner?.email ?? "—"}

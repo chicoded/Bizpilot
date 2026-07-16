@@ -17,7 +17,12 @@ export const businessSchema = z.object({
   ]),
   currency: z.string().default("NGN"),
   address: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Enter a phone number we can reach you on")
+    .max(20, "Phone number is too long")
+    .regex(/^[+\d][\d\s()-]{6,19}$/, "Enter a valid phone number"),
 });
 
 export const updateBusinessSchema = businessSchema.pick({
@@ -26,6 +31,15 @@ export const updateBusinessSchema = businessSchema.pick({
   currency: true,
   address: true,
   phone: true,
+}).extend({
+  // Profile edits can keep an empty phone temporarily.
+  phone: z
+    .string()
+    .trim()
+    .max(20)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? v : undefined)),
 });
 
 export const productSchema = z.object({

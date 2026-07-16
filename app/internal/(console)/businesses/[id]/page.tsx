@@ -92,7 +92,21 @@ export default async function InternalBusinessDetailPage({
       <section className="rounded-xl border border-slate-800 p-4">
         <h2 className="font-medium text-white">Profile</h2>
         <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div><dt className="text-slate-500">Phone</dt><dd>{business.phone || "—"}</dd></div>
+          <div>
+            <dt className="text-slate-500">Phone</dt>
+            <dd>
+              {business.phone ? (
+                <a
+                  href={`tel:${business.phone.replace(/\s+/g, "")}`}
+                  className="text-emerald-400 hover:underline"
+                >
+                  {business.phone}
+                </a>
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
           <div><dt className="text-slate-500">Address</dt><dd>{business.address || "—"}</dd></div>
           <div>
             <dt className="text-slate-500">Subscription</dt>

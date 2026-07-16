@@ -73,6 +73,7 @@ export async function createBusiness(formData: FormData) {
       industry: formData.get("industry"),
       currency: formData.get("currency") || "NGN",
       address: formData.get("address") || undefined,
+      phone: formData.get("phone") || undefined,
     });
 
     if (!parsed.success) {
