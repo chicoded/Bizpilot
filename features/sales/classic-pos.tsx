@@ -24,7 +24,6 @@ import {
   type ScannableProduct,
   lookupProductByBarcode,
 } from "@/features/sales/scan-product-button";
-import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
 import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
 import { subscribeLocalDataChanged } from "@/lib/sync/events";
@@ -352,7 +351,7 @@ export function ClassicPos() {
       <AppShell
         title="Point of Sale"
         subtitle="Tap products to add to cart"
-        className={cn(cart.length > 0 && "pb-56 lg:pb-6")}
+        className={cn("!p-3 md:!p-4", cart.length > 0 && "pb-56 lg:pb-6")}
         actions={
           <Link
             href="/sales/history"
@@ -363,10 +362,9 @@ export function ClassicPos() {
           </Link>
         }
       >
-        <div className="grid gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-3 space-y-4">
+        <div className="grid gap-3 lg:grid-cols-5">
+          <div className="lg:col-span-3 space-y-3">
             <ScanProductButton onProductFound={addToCart} disabled={isPending} />
-            <TeamSyncStatus />
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
@@ -479,7 +477,7 @@ export function ClassicPos() {
 
           <div className="lg:col-span-2" ref={cartRef}>
             <Card className="lg:sticky lg:top-20">
-              <CardContent className="p-4 space-y-4">
+              <CardContent className="p-3 space-y-3">
                 <div className="flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5 text-brand" aria-hidden />
                   <h2 className="font-semibold text-foreground">Cart ({cartItemCount})</h2>

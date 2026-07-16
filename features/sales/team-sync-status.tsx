@@ -6,11 +6,10 @@ import { useLocalData } from "@/components/providers/local-data-provider";
 import { countUnsyncedSales } from "@/lib/sync/queue";
 import {
   flushSaleSyncQueue,
-  pullCloudProducts,
-  pushLocalProducts,
   reloadTeamCatalog,
   listSaleSyncProblems,
   dismissFailedSaleSyncs,
+  syncTeamData,
 } from "@/lib/sync/sales-sync";
 import { switchActiveBusiness } from "@/actions/switch-business";
 import { Button } from "@/components/ui/button";
@@ -98,16 +97,14 @@ export function TeamSyncStatus({ className }: { className?: string }) {
           return;
         }
 
-        const push = await pushLocalProducts(businessId);
-        const flush = await flushSaleSyncQueue(businessId);
-        const pull = await pullCloudProducts(businessId);
+        const team = await syncTeamData(businessId);
         await refreshCount();
         await loadContext();
 
         if (manual) {
           toast({
             title: "Synced",
-            description: `${push.message} · ${flush.message} · ${pull.message}`,
+            description: `${team.push.message} · ${team.flush.message} · ${team.pullProducts.message} · ${team.pullSales.message}`,
             variant: "success",
           });
         }
@@ -207,8 +204,6 @@ export function TeamSyncStatus({ className }: { className?: string }) {
     if (!businessId || status !== "ready") return;
     if (!online) return;
     void runSync();
-    const timer = window.setInterval(() => void runSync(), 60_000);
-    return () => window.clearInterval(timer);
   }, [businessId, status, online, runSync]);
 
   if (status !== "ready") return null;

@@ -154,19 +154,41 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
     if (!businessId || status !== "ready") return;
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
-    void (async () => {
+    let cancelled = false;
+
+    async function runTeamSync() {
+      if (cancelled) return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
       const { pingCloudDatabase, isCloudUsable } = await import(
         "@/lib/sync/cloud-status"
       );
       const cloud = await pingCloudDatabase({ wake: true });
-      if (!isCloudUsable(cloud.status)) return;
+      if (!isCloudUsable(cloud.status) || cancelled) return;
 
-      const { flushSaleSyncQueue, pushLocalProducts, pullCloudProducts } =
-        await import("@/lib/sync/sales-sync");
-      await pushLocalProducts(businessId);
-      await flushSaleSyncQueue(businessId);
-      await pullCloudProducts(businessId);
-    })();
+      const { syncTeamData } = await import("@/lib/sync/sales-sync");
+      await syncTeamData(businessId!);
+    }
+
+    void runTeamSync();
+    const interval = window.setInterval(() => void runTeamSync(), 25_000);
+
+    function onVisible() {
+      if (document.visibilityState === "visible") void runTeamSync();
+    }
+    function onOnline() {
+      void runTeamSync();
+    }
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+    };
   }, [businessId, status]);
 
   useEffect(() => {

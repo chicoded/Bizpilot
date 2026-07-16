@@ -47,7 +47,6 @@ import {
   Settings2,
   BarChart3,
 } from "lucide-react";
-import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 
 type CartItem = {
   product: LocalProduct;
@@ -383,7 +382,7 @@ export function RushPosEngine({
     <AppShell
       title="Rush POS"
       subtitle={`Adaptive · ${currentDaypart()} rush`}
-      className={cn(cart.length > 0 && "pb-36")}
+      className={cn("!p-3 md:!p-4", cart.length > 0 && "pb-36")}
       actions={
         <div className="flex items-center gap-3">
           <Link
@@ -419,8 +418,7 @@ export function RushPosEngine({
         </div>
       }
     >
-      <div className="space-y-3">
-        <TeamSyncStatus />
+      <div className="space-y-2.5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input

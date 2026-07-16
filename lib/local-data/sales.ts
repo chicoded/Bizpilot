@@ -135,7 +135,8 @@ export async function createLocalSale(
         ...product,
         quantity: product.quantity - item.quantity,
         updatedAt: timestamp,
-        syncedAt: null,
+        // Keep syncedAt: sale upload owns cloud stock decrement.
+        // Clearing it caused product push to overwrite cloud qty and break team sync.
       });
     }
 
@@ -157,11 +158,12 @@ export async function createLocalSale(
 
   // Hybrid sync: keep working offline, queue for shared team database.
   try {
-    const { queueLocalSaleForSync, flushSaleSyncQueue } = await import(
-      "@/lib/sync/sales-sync"
-    );
+    const { queueLocalSaleForSync, flushSaleSyncQueue, pushLocalProducts } =
+      await import("@/lib/sync/sales-sync");
     await queueLocalSaleForSync(businessId, sale);
     if (typeof navigator === "undefined" || navigator.onLine) {
+      // Ensure catalog exists on cloud before sale upload.
+      await pushLocalProducts(businessId);
       void flushSaleSyncQueue(businessId);
     }
   } catch {

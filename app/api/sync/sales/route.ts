@@ -362,3 +362,89 @@ export async function POST(request: Request) {
     );
   }
 }
+
+/** Recent team sales for other devices (history + shared visibility). */
+export async function GET(request: Request) {
+  try {
+    const ctx = await requireBusinessDataAccess(["sales"]);
+    const url = new URL(request.url);
+    const limit = Math.min(
+      100,
+      Math.max(1, Number(url.searchParams.get("limit") ?? "40") || 40)
+    );
+
+    const sales = await prisma.sale.findMany({
+      where: { businessId: ctx.businessId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        clientSaleId: true,
+        receiptNumber: true,
+        paymentMethod: true,
+        subtotal: true,
+        discount: true,
+        tax: true,
+        total: true,
+        profit: true,
+        isCredit: true,
+        notes: true,
+        customerId: true,
+        createdAt: true,
+        items: {
+          select: {
+            productId: true,
+            quantity: true,
+            cost: true,
+            sellingPrice: true,
+            total: true,
+            product: { select: { name: true } },
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      sales: sales.map((sale) => ({
+        id: sale.clientSaleId || sale.id,
+        cloudId: sale.id,
+        clientSaleId: sale.clientSaleId,
+        receiptNumber: sale.receiptNumber,
+        paymentMethod: sale.paymentMethod,
+        subtotal: Number(sale.subtotal),
+        discount: Number(sale.discount),
+        tax: Number(sale.tax),
+        total: Number(sale.total),
+        profit: Number(sale.profit),
+        isCredit: sale.isCredit,
+        notes: sale.notes,
+        customerId: sale.customerId,
+        createdAt: sale.createdAt.toISOString(),
+        items: sale.items.map((item) => ({
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: item.quantity,
+          cost: Number(item.cost),
+          sellingPrice: Number(item.sellingPrice),
+          total: Number(item.total),
+        })),
+      })),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      error instanceof Error &&
+      error.message.includes("do not have access")
+    ) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    console.error("[api/sync/sales GET]", error);
+    return NextResponse.json(
+      { error: "Could not load team sales" },
+      { status: 500 }
+    );
+  }
+}

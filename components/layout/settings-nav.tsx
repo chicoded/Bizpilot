@@ -10,11 +10,13 @@ import {
   ChevronRight,
   Rocket,
   HardDrive,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const settingsLinks = [
   { href: "/settings/profile", label: "Business profile", icon: Building2 },
+  { href: "/settings/sync", label: "Team sync", icon: RefreshCw },
   { href: "/settings/backup", label: "Backup & storage", icon: HardDrive },
   { href: "/settings/team", label: "Team", icon: Users },
   { href: "/settings/access", label: "Page access", icon: Shield, ownerOnly: true },
