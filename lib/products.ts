@@ -36,8 +36,14 @@ const productApiSelect = {
   id: true,
   name: true,
   sellingPrice: true,
+  purchasePrice: true,
   quantity: true,
   barcode: true,
+  category: true,
+  reorderLevel: true,
+  unitsPerPack: true,
+  sku: true,
+  isActive: true,
 } as const;
 
 function normalizeListProduct(
@@ -193,8 +199,14 @@ export async function listProductsForApi(
       id: product.id,
       name: product.name,
       sellingPrice: Number(product.sellingPrice),
+      purchasePrice: Number(product.purchasePrice),
       quantity: product.quantity,
       barcode: product.barcode ?? null,
+      category: product.category ?? null,
+      reorderLevel: product.reorderLevel,
+      unitsPerPack: product.unitsPerPack ?? 1,
+      sku: product.sku ?? null,
+      isActive: product.isActive,
       imageUrl:
         withImages && "imageUrl" in product
           ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
@@ -215,8 +227,14 @@ export async function listProductsForApi(
       id: product.id,
       name: product.name,
       sellingPrice: Number(product.sellingPrice),
+      purchasePrice: Number(product.purchasePrice),
       quantity: product.quantity,
       barcode: product.barcode ?? null,
+      category: product.category ?? null,
+      reorderLevel: product.reorderLevel,
+      unitsPerPack: product.unitsPerPack ?? 1,
+      sku: product.sku ?? null,
+      isActive: product.isActive,
       imageUrl: null,
     }));
   }

@@ -20,9 +20,15 @@ export interface ProductApiItem {
   id: string;
   name: string;
   sellingPrice: number;
+  purchasePrice?: number;
   quantity: number;
   barcode: string | null;
+  category?: string | null;
+  reorderLevel?: number;
+  unitsPerPack?: number;
+  sku?: string | null;
   imageUrl: string | null;
+  isActive?: boolean;
 }
 
 export interface ReportSummary {

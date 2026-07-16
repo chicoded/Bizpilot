@@ -155,9 +155,9 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
     void (async () => {
-      const { flushSaleSyncQueue, pullCloudProducts } = await import(
-        "@/lib/sync/sales-sync"
-      );
+      const { flushSaleSyncQueue, pushLocalProducts, pullCloudProducts } =
+        await import("@/lib/sync/sales-sync");
+      await pushLocalProducts(businessId);
       await flushSaleSyncQueue(businessId);
       await pullCloudProducts(businessId);
     })();

@@ -6,6 +6,7 @@ import { countUnsyncedSales } from "@/lib/sync/queue";
 import {
   flushSaleSyncQueue,
   pullCloudProducts,
+  pushLocalProducts,
 } from "@/lib/sync/sales-sync";
 import { Button } from "@/components/ui/button";
 import { Cloud, CloudOff, Loader2, RefreshCw } from "lucide-react";
@@ -33,10 +34,14 @@ export function TeamSyncStatus({ className }: { className?: string }) {
     setBusy(true);
     setMessage(null);
     try {
+      // 1) Share local products so teammates can see them
+      // 2) Upload pending sales
+      // 3) Pull authoritative team stock
+      const push = await pushLocalProducts(businessId);
       const flush = await flushSaleSyncQueue(businessId);
       const pull = await pullCloudProducts(businessId);
       await refreshCount();
-      setMessage(`${flush.message}. ${pull.message}`);
+      setMessage(`${push.message}. ${flush.message}. ${pull.message}`);
     } catch {
       setMessage("Could not sync right now.");
     } finally {
@@ -93,7 +98,7 @@ export function TeamSyncStatus({ className }: { className?: string }) {
         {online
           ? pending > 0
             ? `${pending} sale(s) waiting to sync to team database`
-            : "Team sync on — sales share to the cloud when possible"
+            : "Team sync on — products & sales share to the cloud"
           : pending > 0
             ? `Offline · ${pending} sale(s) will sync when back online`
             : "Offline · selling from this device"}

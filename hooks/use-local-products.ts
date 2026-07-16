@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { LocalProduct } from "@/lib/local-db/types";
 import { listLocalProducts } from "@/lib/local-data/products";
 import { useLocalData } from "@/components/providers/local-data-provider";
+import { subscribeLocalDataChanged } from "@/lib/sync/events";
 
 export function useLocalProducts() {
   const { businessId, status, refresh } = useLocalData();
@@ -31,6 +32,14 @@ export function useLocalProducts() {
       void reload();
     }
   }, [status, reload]);
+
+  useEffect(() => {
+    return subscribeLocalDataChanged((detail) => {
+      if (detail.type === "products" || detail.type === "all") {
+        void reload();
+      }
+    });
+  }, [reload]);
 
   return {
     products,

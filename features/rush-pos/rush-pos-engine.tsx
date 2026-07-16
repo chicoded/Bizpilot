@@ -33,6 +33,7 @@ import {
   type ServiceTypeValue,
 } from "@/lib/rush-pos/constants";
 import type { LocalProduct, LocalSale } from "@/lib/local-db/types";
+import { subscribeLocalDataChanged } from "@/lib/sync/events";
 import {
   History,
   ChefHat,
@@ -46,6 +47,7 @@ import {
   Settings2,
   BarChart3,
 } from "lucide-react";
+import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 
 type CartItem = {
   product: LocalProduct;
@@ -117,6 +119,14 @@ export function RushPosEngine({
     if (status !== "ready" || !businessId) return;
     void reload();
   }, [status, businessId, reload]);
+
+  useEffect(() => {
+    return subscribeLocalDataChanged((detail) => {
+      if (detail.type === "products" || detail.type === "all") {
+        void reload();
+      }
+    });
+  }, [reload]);
 
   const ranked = useMemo(
     () => adaptiveProductRank(products, sales, { favoriteIds: favoriteSet }),
@@ -410,6 +420,7 @@ export function RushPosEngine({
       }
     >
       <div className="space-y-3">
+        <TeamSyncStatus />
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input

@@ -28,6 +28,7 @@ import { ExternalScannerStatus } from "@/features/sales/external-scanner-status"
 import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
 import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
+import { subscribeLocalDataChanged } from "@/lib/sync/events";
 import {
   Search,
   Plus,
@@ -149,6 +150,14 @@ export function ClassicPos() {
     loadQuickPicks();
     loadCustomers();
   }, [loadQuickPicks, loadCustomers, status, businessId]);
+
+  useEffect(() => {
+    return subscribeLocalDataChanged((detail) => {
+      if (detail.type === "products" || detail.type === "all") {
+        void loadQuickPicks({ silent: true });
+      }
+    });
+  }, [loadQuickPicks]);
 
   useEffect(() => {
     const term = search.trim();

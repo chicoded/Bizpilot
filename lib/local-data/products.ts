@@ -70,6 +70,18 @@ export async function createLocalProduct(
   };
 
   await db.products.put(product);
+
+  if (typeof navigator !== "undefined" && navigator.onLine) {
+    void import("@/lib/sync/products-sync")
+      .then(({ pushLocalProducts }) => pushLocalProducts(businessId))
+      .then(() => {
+        void import("@/lib/sync/events").then(({ notifyLocalDataChanged }) =>
+          notifyLocalDataChanged("products")
+        );
+      })
+      .catch(() => null);
+  }
+
   return product;
 }
 
@@ -100,6 +112,13 @@ export async function updateLocalProduct(
   };
 
   await getLocalDB().products.put(updated);
+
+  if (typeof navigator !== "undefined" && navigator.onLine) {
+    void import("@/lib/sync/products-sync")
+      .then(({ pushLocalProducts }) => pushLocalProducts(businessId))
+      .catch(() => null);
+  }
+
   return updated;
 }
 
@@ -119,6 +138,12 @@ export async function deleteLocalProduct(
     updatedAt: nowIso(),
     syncedAt: null,
   });
+
+  if (typeof navigator !== "undefined" && navigator.onLine) {
+    void import("@/lib/sync/products-sync")
+      .then(({ pushLocalProducts }) => pushLocalProducts(businessId))
+      .catch(() => null);
+  }
 
   return true;
 }
