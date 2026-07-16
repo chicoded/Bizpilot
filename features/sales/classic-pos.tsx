@@ -24,7 +24,6 @@ import {
   type ScannableProduct,
   lookupProductByBarcode,
 } from "@/features/sales/scan-product-button";
-import { ExternalScannerStatus } from "@/features/sales/external-scanner-status";
 import { TeamSyncStatus } from "@/features/sales/team-sync-status";
 import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
 import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
@@ -368,7 +367,6 @@ export function ClassicPos() {
           <div className="lg:col-span-3 space-y-4">
             <ScanProductButton onProductFound={addToCart} disabled={isPending} />
             <TeamSyncStatus />
-            <ExternalScannerStatus />
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"

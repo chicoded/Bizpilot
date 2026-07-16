@@ -5,6 +5,7 @@ import { SettingsShell } from "@/components/layout/settings-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive } from "lucide-react";
 import { BackupSettingsPanel } from "@/features/settings/backup-settings-panel";
+import { HardwareTipsCard } from "@/features/settings/hardware-tips-card";
 
 export default async function SettingsBackupPage() {
   const ctx = await requirePageAccess("settings");
@@ -21,19 +22,28 @@ export default async function SettingsBackupPage() {
         ctx.sectionOverrides
       )}
     >
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <HardDrive className="h-5 w-5" />
-            Device storage & Gmail backup
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<p className="text-sm text-muted-foreground">Loading backup settings…</p>}>
-            <BackupSettingsPanel />
-          </Suspense>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <HardwareTipsCard />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <HardDrive className="h-5 w-5" />
+              Device storage & Gmail backup
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Suspense
+              fallback={
+                <p className="text-sm text-muted-foreground">
+                  Loading backup settings…
+                </p>
+              }
+            >
+              <BackupSettingsPanel />
+            </Suspense>
+          </CardContent>
+        </Card>
+      </div>
     </SettingsShell>
   );
 }
