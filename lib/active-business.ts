@@ -29,8 +29,8 @@ export async function setActiveBusinessId(businessId: string) {
 }
 
 /**
- * Prefer invited team shops over accidental personal OWNER shops.
- * Common bug: cashier completes onboarding (empty shop) then accepts invite.
+ * Prefer the shop with the most products when a user has multiple memberships.
+ * Avoids typo duplicates (ade pharmcy vs ade pharmacy) and empty onboarding shops.
  */
 export function pickActiveMembership(
   memberships: MembershipWithBusiness[],
@@ -53,6 +53,7 @@ export function pickActiveMembership(
       if (preferred.role === Role.OWNER && newestTeamMembership) {
         return newestTeamMembership;
       }
+      // Keep cookie choice; healEmptyShopIfNeeded may still switch if empty.
       return preferred;
     }
   }
@@ -61,7 +62,11 @@ export function pickActiveMembership(
     return memberships[0];
   }
 
-  // Multiple shops: always prefer the invited team role (CASHIER/MANAGER/STAFF).
+  // Multiple shops: prefer invited team role over accidental OWNER shop.
+  if (newestTeamMembership && ownerMemberships.length >= 1) {
+    return newestTeamMembership;
+  }
+
   if (newestTeamMembership) {
     return newestTeamMembership;
   }

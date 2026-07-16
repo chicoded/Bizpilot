@@ -40,6 +40,7 @@ export function TeamSyncStatus({ className }: { className?: string }) {
   const [saleProblems, setSaleProblems] = useState<
     { id: string; status: string; lastError: string | null }[]
   >([]);
+  const [cloudStatus, setCloudStatus] = useState<string | null>(null);
   const [switching, startSwitch] = useTransition();
 
   const refreshCount = useCallback(async () => {
@@ -79,13 +80,25 @@ export function TeamSyncStatus({ className }: { className?: string }) {
     setMessage(null);
     try {
       await loadContext();
+      const { pingCloudDatabase, isCloudUsable } = await import(
+        "@/lib/sync/cloud-status"
+      );
+      const cloud = await pingCloudDatabase({ wake: true });
+      setCloudStatus(cloud.message);
+
+      if (!isCloudUsable(cloud.status)) {
+        setMessage(cloud.message);
+        await refreshCount();
+        return;
+      }
+
       const push = await pushLocalProducts(businessId);
       const flush = await flushSaleSyncQueue(businessId);
       const pull = await pullCloudProducts(businessId);
       await refreshCount();
       await loadContext();
 
-      let text = `${push.message}. ${flush.message}. ${pull.message}`;
+      let text = `${cloud.message}. ${push.message}. ${flush.message}. ${pull.message}`;
       if (
         cloudProductCount === 0 ||
         (typeof pull.updated === "number" &&
@@ -98,7 +111,7 @@ export function TeamSyncStatus({ className }: { className?: string }) {
       }
       setMessage(text);
     } catch {
-      setMessage("Could not sync right now.");
+      setMessage("Could not sync right now - using local storage.");
     } finally {
       setBusy(false);
     }
@@ -218,12 +231,13 @@ export function TeamSyncStatus({ className }: { className?: string }) {
             {role ? ` · ${role}` : ""}
           </span>
           {cloudProductCount != null ? ` · ${cloudProductCount} cloud products` : ""}
+          {cloudStatus ? ` · ${cloudStatus}` : ""}
           {" · "}
           {online
             ? pending > 0
               ? `${pending} sale(s) waiting to sync`
-              : "Team sync on"
-            : "Offline"}
+              : "Hybrid sync on (cloud + local)"
+            : "Offline · local storage only"}
           {message ? ` · ${message}` : ""}
         </span>
         <Button

@@ -155,6 +155,12 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
     void (async () => {
+      const { pingCloudDatabase, isCloudUsable } = await import(
+        "@/lib/sync/cloud-status"
+      );
+      const cloud = await pingCloudDatabase({ wake: true });
+      if (!isCloudUsable(cloud.status)) return;
+
       const { flushSaleSyncQueue, pushLocalProducts, pullCloudProducts } =
         await import("@/lib/sync/sales-sync");
       await pushLocalProducts(businessId);

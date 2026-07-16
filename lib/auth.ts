@@ -117,9 +117,9 @@ export async function getBusinessContext(businessId?: string) {
     let membership = await loadMembershipForUser(userId, businessId);
     if (!membership) return null;
 
-    // Heal cashiers stuck on an empty personal OWNER shop after invite.
-    if (!businessId && membership.role === "OWNER") {
-      const healed = await healTeamBusinessIfNeeded(userId, membership);
+    // Heal anyone stuck on an empty shop when another membership has stock.
+    if (!businessId) {
+      const healed = await healEmptyShopIfNeeded(userId, membership);
       if (healed) membership = healed;
     }
 
@@ -154,18 +154,18 @@ export async function getBusinessContext(businessId?: string) {
 }
 
 /**
- * If this user owns an empty shop but is a cashier/manager elsewhere with stock,
- * switch them onto the team shop (fixes invite + accidental onboarding).
+ * If the active shop has 0 products but another membership has stock,
+ * switch onto the shop with the most products (fixes typo duplicate shops
+ * like "ade pharmcy" vs "ade pharmacy", and invite + empty onboarding).
  */
-async function healTeamBusinessIfNeeded(
+async function healEmptyShopIfNeeded(
   userId: string,
   current: MembershipWithBusiness
 ): Promise<MembershipWithBusiness | null> {
   try {
-    const ownerProductCount = await prisma.product.count({
+    const currentCount = await prisma.product.count({
       where: { businessId: current.businessId, isActive: true },
     });
-    if (ownerProductCount > 0) return null;
 
     const memberships = await prisma.membership.findMany({
       where: { userId },
@@ -173,18 +173,30 @@ async function healTeamBusinessIfNeeded(
       orderBy: { createdAt: "desc" },
     });
 
+    if (memberships.length <= 1) return null;
+
+    let best: MembershipWithBusiness | null = null;
+    let bestCount = currentCount;
+
     for (const row of memberships) {
-      if (row.role === "OWNER") continue;
-      const teamCount = await prisma.product.count({
+      const count = await prisma.product.count({
         where: { businessId: row.businessId, isActive: true },
       });
-      if (teamCount > 0) {
-        await setActiveBusinessId(row.businessId);
-        return row as MembershipWithBusiness;
+      if (count > bestCount) {
+        bestCount = count;
+        best = row as MembershipWithBusiness;
+      }
+    }
+
+    // Only switch away when current shop is empty (or clearly poorer) and another has stock.
+    if (best && best.businessId !== current.businessId && bestCount > 0) {
+      if (currentCount === 0 || bestCount >= currentCount * 2) {
+        await setActiveBusinessId(best.businessId);
+        return best;
       }
     }
   } catch (error) {
-    console.warn("[auth] healTeamBusinessIfNeeded:", error);
+    console.warn("[auth] healEmptyShopIfNeeded:", error);
   }
   return null;
 }

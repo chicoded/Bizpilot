@@ -61,17 +61,23 @@ export async function hydrateLocalStoreFromServer(): Promise<{
 
   const existingProducts = await listLocalProducts(businessId);
 
-  // Always merge the shared team catalog when online — cloud is source of truth.
+  // Always merge the shared team catalog when cloud is awake.
   // Local-only unsynced products are preserved inside pullCloudProducts.
   if (typeof navigator === "undefined" || navigator.onLine) {
     try {
-      const { pushLocalProducts, pullCloudProducts } = await import(
-        "@/lib/sync/products-sync"
+      const { pingCloudDatabase, isCloudUsable } = await import(
+        "@/lib/sync/cloud-status"
       );
-      await pushLocalProducts(businessId);
-      await pullCloudProducts(businessId);
+      const cloud = await pingCloudDatabase({ wake: true });
+      if (isCloudUsable(cloud.status)) {
+        const { pushLocalProducts, pullCloudProducts } = await import(
+          "@/lib/sync/products-sync"
+        );
+        await pushLocalProducts(businessId);
+        await pullCloudProducts(businessId);
+      }
     } catch {
-      // Offline or sync failure — keep whatever local data we have.
+      // Offline or sleeping cloud — keep local IndexedDB data.
     }
   }
 
