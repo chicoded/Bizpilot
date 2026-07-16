@@ -9,6 +9,14 @@ export type AppContextResponse = {
   businessName: string | null;
   currency: string;
   industry?: string | null;
+  role?: string | null;
+  productCount?: number;
+  memberships?: Array<{
+    businessId: string;
+    businessName: string;
+    role: string;
+    productCount: number;
+  }>;
 };
 
 async function fetchJson<T>(url: string): Promise<T | null> {

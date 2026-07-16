@@ -40,10 +40,10 @@ export async function GET(request: Request) {
     const products = await listProductsForApi(ctx.businessId);
     return NextResponse.json({ products });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
+    if (error instanceof Error && /Unauthorized|access/i.test(error.message)) {
       return NextResponse.json(
-        { products: [], error: "Unauthorized" },
-        { status: 401 }
+        { products: [], error: error.message },
+        { status: error.message.includes("Unauthorized") ? 401 : 403 }
       );
     }
 

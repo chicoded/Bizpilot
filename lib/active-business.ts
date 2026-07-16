@@ -28,6 +28,10 @@ export async function setActiveBusinessId(businessId: string) {
   }
 }
 
+/**
+ * Prefer invited team shops over accidental personal OWNER shops.
+ * Common bug: cashier completes onboarding (empty shop) then accepts invite.
+ */
 export function pickActiveMembership(
   memberships: MembershipWithBusiness[],
   preferredBusinessId?: string | null
@@ -35,23 +39,18 @@ export function pickActiveMembership(
   if (memberships.length === 0) return null;
 
   const ownerMemberships = memberships.filter((m) => m.role === Role.OWNER);
-  const teamMemberships = memberships.filter((m) => m.role !== Role.OWNER);
-  const newestTeamMembership =
-    teamMemberships.length > 0
-      ? [...teamMemberships].sort(
-          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-        )[0]
-      : null;
+  const teamMemberships = memberships
+    .filter((m) => m.role !== Role.OWNER)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const newestTeamMembership = teamMemberships[0] ?? null;
 
   if (preferredBusinessId) {
-    const preferred = memberships.find((m) => m.businessId === preferredBusinessId);
+    const preferred = memberships.find(
+      (m) => m.businessId === preferredBusinessId
+    );
     if (preferred) {
-      // Stale cookie from accidental onboarding: prefer the invited company.
-      if (
-        preferred.role === Role.OWNER &&
-        newestTeamMembership &&
-        memberships.length > 1
-      ) {
+      // Stale cookie on a personal OWNER shop while a team invite exists.
+      if (preferred.role === Role.OWNER && newestTeamMembership) {
         return newestTeamMembership;
       }
       return preferred;
@@ -62,7 +61,8 @@ export function pickActiveMembership(
     return memberships[0];
   }
 
-  if (ownerMemberships.length >= 1 && newestTeamMembership) {
+  // Multiple shops: always prefer the invited team role (CASHIER/MANAGER/STAFF).
+  if (newestTeamMembership) {
     return newestTeamMembership;
   }
 

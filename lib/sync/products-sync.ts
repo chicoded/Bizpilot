@@ -68,9 +68,16 @@ function mapCloudToLocal(
 
 async function fetchCloudProducts(): Promise<CloudProductRow[] | null> {
   const response = await fetch("/api/products?sync=1", { cache: "no-store" });
-  if (!response.ok) return null;
-  const data = (await response.json()) as { products?: CloudProductRow[] };
-  return Array.isArray(data.products) ? data.products : [];
+  const data = (await response.json().catch(() => null)) as {
+    products?: CloudProductRow[];
+    error?: string;
+  } | null;
+
+  if (!response.ok) {
+    console.warn("[pullCloudProducts]", response.status, data?.error);
+    return null;
+  }
+  return Array.isArray(data?.products) ? data.products : [];
 }
 
 /** Push local-only / edited products into the shared team database. */
@@ -185,7 +192,7 @@ export async function pullCloudProducts(
         ok: false,
         updated: 0,
         added: 0,
-        message: "Could not refresh team stock",
+        message: "Could not refresh team stock (check shop access)",
       };
     }
 

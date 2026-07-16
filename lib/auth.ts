@@ -9,6 +9,7 @@ import {
 import {
   getActiveBusinessIdFromCookie,
   pickActiveMembership,
+  setActiveBusinessId,
   type MembershipWithBusiness,
 } from "@/lib/active-business";
 
@@ -113,8 +114,14 @@ export async function getBusinessContext(businessId?: string) {
   if (!userId) return null;
 
   try {
-    const membership = await loadMembershipForUser(userId, businessId);
+    let membership = await loadMembershipForUser(userId, businessId);
     if (!membership) return null;
+
+    // Heal cashiers stuck on an empty personal OWNER shop after invite.
+    if (!businessId && membership.role === "OWNER") {
+      const healed = await healTeamBusinessIfNeeded(userId, membership);
+      if (healed) membership = healed;
+    }
 
     return formatBusinessContext(membership, userId);
   } catch (error) {
@@ -144,6 +151,42 @@ export async function getBusinessContext(businessId?: string) {
       userId
     );
   }
+}
+
+/**
+ * If this user owns an empty shop but is a cashier/manager elsewhere with stock,
+ * switch them onto the team shop (fixes invite + accidental onboarding).
+ */
+async function healTeamBusinessIfNeeded(
+  userId: string,
+  current: MembershipWithBusiness
+): Promise<MembershipWithBusiness | null> {
+  try {
+    const ownerProductCount = await prisma.product.count({
+      where: { businessId: current.businessId, isActive: true },
+    });
+    if (ownerProductCount > 0) return null;
+
+    const memberships = await prisma.membership.findMany({
+      where: { userId },
+      include: { business: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    for (const row of memberships) {
+      if (row.role === "OWNER") continue;
+      const teamCount = await prisma.product.count({
+        where: { businessId: row.businessId, isActive: true },
+      });
+      if (teamCount > 0) {
+        await setActiveBusinessId(row.businessId);
+        return row as MembershipWithBusiness;
+      }
+    }
+  } catch (error) {
+    console.warn("[auth] healTeamBusinessIfNeeded:", error);
+  }
+  return null;
 }
 
 export async function requireBusinessContext(businessId?: string) {
