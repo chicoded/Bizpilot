@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getBusinessContext, syncClerkUser } from "@/lib/auth";
+import { userOnlyHasAbandonedShops } from "@/lib/empty-shop";
 import { getPendingInviteForEmail } from "@/lib/team";
 import { OnboardingForm } from "@/features/onboarding/onboarding-form";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -46,7 +47,11 @@ export default async function OnboardingPage() {
 
   try {
     const ctx = await getBusinessContext();
-    hasBusiness = Boolean(ctx);
+    // Empty leftover shops after team removal should not block new setup.
+    if (ctx) {
+      const onlyAbandoned = await userOnlyHasAbandonedShops(userId);
+      hasBusiness = !onlyAbandoned;
+    }
   } catch (error) {
     console.error("[onboarding] getBusinessContext failed:", error);
   }
@@ -85,8 +90,12 @@ export default async function OnboardingPage() {
 
         {syncWarning && (
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm dark:border-amber-800 dark:bg-amber-950/40">
-            <p className="font-medium text-amber-900 dark:text-amber-200">Account sync warning</p>
-            <p className="mt-1 break-words text-amber-800/80 dark:text-amber-300/80">{syncWarning}</p>
+            <p className="font-medium text-amber-900 dark:text-amber-200">
+              Account sync warning
+            </p>
+            <p className="mt-1 break-words text-amber-800/80 dark:text-amber-300/80">
+              {syncWarning}
+            </p>
           </div>
         )}
 

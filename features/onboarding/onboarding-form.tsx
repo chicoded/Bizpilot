@@ -43,7 +43,8 @@ export function OnboardingForm() {
         );
         return;
       }
-      router.push("/get-started");
+      // Full navigation so this device drops any stale empty-shop local data.
+      window.location.assign("/get-started");
     });
   }
 

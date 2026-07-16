@@ -35,16 +35,15 @@ export async function hydrateLocalStoreFromServer(): Promise<{
 }> {
   const context = await fetchJson<AppContextResponse>("/api/context");
   if (!context?.businessId) {
-    const { getActiveBusinessId } = await import("@/lib/local-data/business");
-    const existingId = await getActiveBusinessId();
-    if (!existingId) {
-      return { seeded: false, source: "empty" };
+    // No cloud membership (removed from team / fresh account). Do not keep
+    // showing a stale empty shell like "ade pharmcy" from this device.
+    try {
+      const { getLocalDB } = await import("@/lib/local-db/database");
+      await getLocalDB().businessMeta.clear();
+    } catch {
+      // ignore
     }
-    const existing = await listLocalProducts(existingId);
-    return {
-      seeded: existing.length > 0,
-      source: existing.length > 0 ? "local" : "empty",
-    };
+    return { seeded: false, source: "empty" };
   }
 
   const businessId = context.businessId;

@@ -14,6 +14,7 @@ import {
   validateProductImageFile,
 } from "@/lib/product-images";
 import { Role, Prisma } from "@prisma/client";
+import { abandonEmptyShellShopsForUser } from "@/lib/empty-shop";
 
 export async function createBusiness(formData: FormData) {
   try {
@@ -31,6 +32,10 @@ export async function createBusiness(formData: FormData) {
     });
 
     const email = user.emailAddresses[0]?.emailAddress?.trim().toLowerCase();
+
+    // If the user only has empty leftover shops (e.g. removed from a team but
+    // still owning typo "ade pharmcy"), clear those so they can start fresh.
+    await abandonEmptyShellShopsForUser(user.id);
 
     let existing = await prisma.membership.findFirst({
       where: { userId: user.id },

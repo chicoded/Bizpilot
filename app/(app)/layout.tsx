@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { getBusinessContext } from "@/lib/auth";
+import { userOnlyHasAbandonedShops } from "@/lib/empty-shop";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { AccessGuard } from "@/components/layout/access-guard";
@@ -11,9 +13,15 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { userId } = await auth();
   const ctx = await getBusinessContext();
 
   if (!ctx) {
+    redirect("/onboarding");
+  }
+
+  // Removed from a team but still stuck on an empty personal shell shop.
+  if (userId && (await userOnlyHasAbandonedShops(userId))) {
     redirect("/onboarding");
   }
 
@@ -40,9 +48,7 @@ export default async function AppLayout({
         rolePermissions={ctx.business.rolePermissions}
         sectionOverrides={ctx.sectionOverrides}
       />
-      <div className="md:pl-64">
-        {children}
-      </div>
+      <div className="md:pl-64">{children}</div>
       <MobileNav
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions}
