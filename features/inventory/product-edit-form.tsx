@@ -46,7 +46,7 @@ export function ProductEditForm({
   canDelete = false,
 }: ProductEditFormProps) {
   const router = useRouter();
-  const { businessId, refresh } = useLocalData();
+  const { businessId } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(product.barcode ?? "");
@@ -54,7 +54,6 @@ export function ProductEditForm({
 
   function returnToInventory() {
     router.replace("/inventory");
-    router.refresh();
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -92,7 +91,6 @@ export function ProductEditForm({
         return;
       }
 
-      await refresh();
       returnToInventory();
     });
   }
@@ -129,7 +127,6 @@ export function ProductEditForm({
         return;
       }
 
-      await refresh();
       returnToInventory();
     });
   }

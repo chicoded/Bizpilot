@@ -28,7 +28,7 @@ export function NewProductForm({
   suppliers = [],
 }: NewProductFormProps) {
   const router = useRouter();
-  const { businessId, refresh } = useLocalData();
+  const { businessId } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(initialBarcode);
@@ -65,10 +65,9 @@ export function NewProductForm({
         return;
       }
 
+      // Local save is instant; cloud sync runs in the background.
       await createLocalProduct(businessId, parsed.data);
-      await refresh();
       router.replace("/inventory");
-      router.refresh();
     });
   }
 

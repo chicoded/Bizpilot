@@ -70,15 +70,12 @@ export async function createLocalProduct(
   };
 
   await db.products.put(product);
+  const { notifyLocalDataChanged } = await import("@/lib/sync/events");
+  notifyLocalDataChanged("products");
 
   if (typeof navigator !== "undefined" && navigator.onLine) {
     void import("@/lib/sync/products-sync")
       .then(({ pushLocalProducts }) => pushLocalProducts(businessId))
-      .then(() => {
-        void import("@/lib/sync/events").then(({ notifyLocalDataChanged }) =>
-          notifyLocalDataChanged("products")
-        );
-      })
       .catch(() => null);
   }
 
@@ -112,6 +109,8 @@ export async function updateLocalProduct(
   };
 
   await getLocalDB().products.put(updated);
+  const { notifyLocalDataChanged } = await import("@/lib/sync/events");
+  notifyLocalDataChanged("products");
 
   if (typeof navigator !== "undefined" && navigator.onLine) {
     void import("@/lib/sync/products-sync")
@@ -138,6 +137,8 @@ export async function deleteLocalProduct(
     updatedAt: nowIso(),
     syncedAt: null,
   });
+  const { notifyLocalDataChanged } = await import("@/lib/sync/events");
+  notifyLocalDataChanged("products");
 
   if (typeof navigator !== "undefined" && navigator.onLine) {
     void import("@/lib/sync/products-sync")

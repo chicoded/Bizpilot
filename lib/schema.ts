@@ -107,13 +107,22 @@ export async function getProductSchemaStatus(): Promise<ProductSchemaStatus> {
 /**
  * Ensures product columns exist before inventory reads/writes.
  * Never throws — returns false if repair could not complete.
+ * Cached after first success so sync/API paths stay fast.
  */
+let productSchemaReadyCache: boolean | null = null;
+
 export async function ensureProductSchemaReady(): Promise<boolean> {
+  if (productSchemaReadyCache === true) return true;
+
   try {
     const status = await getProductSchemaStatus();
-    if (status.ok) return true;
+    if (status.ok) {
+      productSchemaReadyCache = true;
+      return true;
+    }
 
     const result = await repairProductSchema();
+    if (result.ok) productSchemaReadyCache = true;
     return result.ok;
   } catch (error) {
     console.error("[schema] ensureProductSchemaReady failed:", error);
