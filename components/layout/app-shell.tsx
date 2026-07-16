@@ -37,7 +37,7 @@ export function AppShell({
       <main
         id="main-content"
         className={cn(
-          "p-4 md:p-6 mobile-page mx-auto",
+          "page-enter p-4 md:p-6 mobile-page mx-auto",
           maxWidthClass[maxWidth],
           className
         )}

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useAuth } from "@clerk/nextjs";
@@ -60,16 +61,24 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("My shop");
   const [currency, setCurrency] = useState("NGN");
+  const statusRef = useRef<LocalDataStatus>("loading");
+  const hydratedSessionRef = useRef(false);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   const refresh = useCallback(async (options?: { quiet?: boolean }) => {
-    if (!options?.quiet) {
+    // Never blank the whole app after the first ready paint (stops nav blink).
+    const quiet =
+      options?.quiet === true || statusRef.current === "ready";
+    if (!quiet) {
       setStatus("loading");
     }
 
     try {
       handleGmailOAuthRedirect();
 
-      // Warm path: if this device already has shop data, become ready immediately.
       const existingMeta = await getLocalBusinessMeta();
       const existingId =
         existingMeta?.businessId ?? (await getActiveBusinessId());
@@ -103,11 +112,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
           setBusinessName,
           setCurrency
         );
-        setStatus("ready");
-        return;
       }
-
-      // No shop yet (onboarding) — not an error.
       setStatus("ready");
     } catch {
       const meta = await getLocalBusinessMeta();
@@ -124,10 +129,8 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
           setBusinessName,
           setCurrency
         );
-        setStatus("ready");
-      } else {
-        setStatus("ready");
       }
+      setStatus("ready");
     }
   }, []);
 
@@ -142,11 +145,20 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (!isSignedIn || isAuthOnlyPath(pathname)) {
+    if (!isSignedIn) {
+      hydratedSessionRef.current = false;
       setStatus("ready");
       return;
     }
 
+    if (isAuthOnlyPath(pathname)) {
+      setStatus("ready");
+      return;
+    }
+
+    // Hydrate once per signed-in session — not on every page navigation.
+    if (hydratedSessionRef.current) return;
+    hydratedSessionRef.current = true;
     void refresh();
   }, [isLoaded, isSignedIn, pathname, refresh]);
 
@@ -220,7 +232,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
       businessName,
       currency,
       storageMode: "local" as const,
-      refresh: () => refresh(),
+      refresh: () => refresh({ quiet: true }),
       runBackupNow,
     }),
     [status, businessId, businessName, currency, refresh, runBackupNow]

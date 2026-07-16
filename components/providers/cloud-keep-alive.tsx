@@ -96,50 +96,51 @@ export function CloudKeepAlive() {
   const isOffline = status.status === "offline";
 
   return (
-    <>
-      <div className="h-11 shrink-0 md:h-10" aria-hidden />
+    <div
+      className={cn(
+        "pointer-events-none fixed inset-x-0 top-0 z-[200] flex justify-center p-2 md:left-64 md:justify-end md:pr-4",
+      )}
+      role="status"
+    >
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[200] border-b px-3 py-2 text-xs shadow-sm md:left-64",
+          "pointer-events-auto flex max-w-lg flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-xs shadow-md",
           isOffline
-            ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/90 dark:text-amber-100"
-            : "border-orange-300 bg-orange-50 text-orange-950 dark:border-orange-800 dark:bg-orange-950/90 dark:text-orange-100"
+            ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/95 dark:text-amber-100"
+            : "border-orange-300 bg-orange-50 text-orange-950 dark:border-orange-800 dark:bg-orange-950/95 dark:text-orange-100"
         )}
-        role="status"
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2">
-          {waking ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-          ) : isOffline ? (
-            <CloudOff className="h-4 w-4 shrink-0" />
-          ) : (
-            <Cloud className="h-4 w-4 shrink-0" />
-          )}
-          <p className="min-w-0 flex-1 font-medium">
-            {waking
-              ? "Waking cloud database… keep this page open (up to ~1 min)"
-              : isOffline
-                ? status.message
-                : "Cloud database sleeping — team sync paused. Sales still work on this device."}
-          </p>
-          {!isOffline && (
-            <Button
-              type="button"
-              size="sm"
-              className="h-8 shrink-0"
-              disabled={waking}
-              onClick={() => void wake()}
-            >
-              {waking ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Zap className="h-3.5 w-3.5" />
-              )}
-              Wake database
-            </Button>
-          )}
-        </div>
+        {waking ? (
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+        ) : isOffline ? (
+          <CloudOff className="h-4 w-4 shrink-0" />
+        ) : (
+          <Cloud className="h-4 w-4 shrink-0" />
+        )}
+        <p className="min-w-0 flex-1 font-medium">
+          {waking
+            ? "Waking cloud database… keep this page open (up to ~1 min)"
+            : isOffline
+              ? status.message
+              : "Cloud database sleeping — team sync paused. Sales still work on this device."}
+        </p>
+        {!isOffline && (
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 shrink-0"
+            disabled={waking}
+            onClick={() => void wake()}
+          >
+            {waking ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Zap className="h-3.5 w-3.5" />
+            )}
+            Wake database
+          </Button>
+        )}
       </div>
-    </>
+    </div>
   );
 }

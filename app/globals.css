@@ -113,6 +113,19 @@
   .mobile-page {
     @apply pb-24 md:pb-6;
   }
+  .page-enter {
+    animation: page-enter 160ms ease-out;
+  }
+  @keyframes page-enter {
+    from {
+      opacity: 0.72;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   .text-brand {
     @apply text-biz-blue dark:text-primary;
   }
