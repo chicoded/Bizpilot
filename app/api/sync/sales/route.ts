@@ -2,16 +2,23 @@ import { NextResponse } from "next/server";
 import { requireBusinessDataAccess } from "@/lib/api-access";
 import { prisma } from "@/lib/db";
 import { allocateReceiptNumber } from "@/lib/receipt-number";
-import { saleSchema } from "@/lib/validations";
+import { saleItemSchema } from "@/lib/validations";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const syncSaleSchema = saleSchema.and(
-  z.object({
+/** Dedicated sync schema — more tolerant than the POS form schema. */
+const syncSaleSchema = z
+  .object({
+    items: z.array(saleItemSchema).min(1, "Add at least one item"),
+    customerId: z.string().optional().nullable(),
+    paymentMethod: z.enum(["CASH", "TRANSFER", "POS", "CREDIT"]),
+    discount: z.coerce.number().min(0).optional().default(0),
+    tax: z.coerce.number().min(0).optional().default(0),
+    isCredit: z.boolean().optional(),
     clientSaleId: z.string().min(8).max(80),
-    createdAt: z.string().datetime().optional(),
-    deviceId: z.string().min(4).max(80).optional(),
+    createdAt: z.string().optional(),
+    deviceId: z.string().min(4).max(80).optional().nullable(),
     customer: z
       .object({
         name: z.string().min(1).max(120),
@@ -26,7 +33,19 @@ const syncSaleSchema = saleSchema.and(
       .optional()
       .nullable(),
   })
-);
+  .superRefine((data, ctx) => {
+    if (
+      data.paymentMethod === "CREDIT" &&
+      !data.customerId &&
+      !data.customer?.name
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Credit sale needs a customer",
+        path: ["customerId"],
+      });
+    }
+  });
 
 export async function POST(request: Request) {
   try {
@@ -35,12 +54,16 @@ export async function POST(request: Request) {
     const parsed = syncSaleSchema.safeParse(body);
 
     if (!parsed.success) {
+      const flat = parsed.error.flatten();
+      const firstField =
+        Object.values(flat.fieldErrors).flat()[0] ??
+        flat.formErrors[0] ??
+        "Invalid sale sync payload";
       return NextResponse.json(
         {
-          error:
-            parsed.error.flatten().fieldErrors.customerId?.[0] ??
-            parsed.error.flatten().fieldErrors.clientSaleId?.[0] ??
-            "Invalid sale sync payload",
+          error: firstField,
+          code: "VALIDATION_ERROR",
+          details: flat.fieldErrors,
         },
         { status: 400 }
       );

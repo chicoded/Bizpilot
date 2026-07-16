@@ -75,8 +75,59 @@ export async function listPendingSaleSyncs(
     .equals(businessId)
     .toArray();
   return rows
-    .filter((row) => row.type === "sale" && (row.status === "pending" || row.status === "error"))
+    .filter(
+      (row) =>
+        row.type === "sale" &&
+        (row.status === "pending" ||
+          row.status === "error" ||
+          row.status === "conflict")
+    )
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function listSaleSyncProblems(
+  businessId: string
+): Promise<{ id: string; status: string; lastError: string | null }[]> {
+  const db = getLocalDB();
+  const rows = await db.syncQueue.where("businessId").equals(businessId).toArray();
+  return rows
+    .filter(
+      (row) =>
+        row.type === "sale" &&
+        (row.status === "error" || row.status === "conflict") &&
+        Boolean(row.lastError)
+    )
+    .map((row) => ({
+      id: row.id,
+      status: row.status,
+      lastError: row.lastError,
+    }));
+}
+
+/** Drop stuck failed sales from the queue (local receipt stays on this device). */
+export async function dismissFailedSaleSyncs(
+  businessId: string
+): Promise<number> {
+  const db = getLocalDB();
+  const rows = await db.syncQueue.where("businessId").equals(businessId).toArray();
+  let cleared = 0;
+  for (const row of rows) {
+    if (
+      row.type === "sale" &&
+      (row.status === "error" || row.status === "conflict")
+    ) {
+      await db.syncQueue.put({
+        ...row,
+        status: "synced",
+        lastError: row.lastError
+          ? `dismissed: ${row.lastError}`
+          : "dismissed",
+        updatedAt: nowIso(),
+      });
+      cleared += 1;
+    }
+  }
+  return cleared;
 }
 
 export async function countUnsyncedSales(businessId: string): Promise<number> {

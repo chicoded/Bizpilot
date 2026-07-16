@@ -9,6 +9,8 @@ import {
   pullCloudProducts,
   pushLocalProducts,
   reloadTeamCatalog,
+  listSaleSyncProblems,
+  dismissFailedSaleSyncs,
 } from "@/lib/sync/sales-sync";
 import { switchActiveBusiness } from "@/actions/switch-business";
 import { Button } from "@/components/ui/button";
@@ -35,14 +37,19 @@ export function TeamSyncStatus({ className }: { className?: string }) {
   const [role, setRole] = useState<string | null>(null);
   const [cloudProductCount, setCloudProductCount] = useState<number | null>(null);
   const [memberships, setMemberships] = useState<MembershipOption[]>([]);
+  const [saleProblems, setSaleProblems] = useState<
+    { id: string; status: string; lastError: string | null }[]
+  >([]);
   const [switching, startSwitch] = useTransition();
 
   const refreshCount = useCallback(async () => {
     if (!businessId) {
       setPending(0);
+      setSaleProblems([]);
       return;
     }
     setPending(await countUnsyncedSales(businessId));
+    setSaleProblems(await listSaleSyncProblems(businessId));
   }, [businessId]);
 
   const loadContext = useCallback(async () => {
@@ -246,6 +253,58 @@ export function TeamSyncStatus({ className }: { className?: string }) {
           Reload from team
         </Button>
       </div>
+
+      {saleProblems.length > 0 && (
+        <div className="rounded-xl border border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-950 dark:border-red-800 dark:bg-red-950/30 dark:text-red-100 space-y-2">
+          <p className="font-semibold">
+            {saleProblems.length} sale(s) could not upload to the team database
+          </p>
+          <ul className="list-disc pl-4 space-y-1">
+            {saleProblems.slice(0, 3).map((p) => (
+              <li key={p.id}>{p.lastError ?? p.status}</li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8"
+              disabled={busy || !online}
+              onClick={() => void runSync()}
+            >
+              Retry upload
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8"
+              disabled={busy}
+              onClick={() => {
+                if (!businessId) return;
+                if (
+                  !window.confirm(
+                    "Clear failed uploads from this device queue? The sales stay on this phone, but will not go to the shared team database."
+                  )
+                ) {
+                  return;
+                }
+                void (async () => {
+                  const n = await dismissFailedSaleSyncs(businessId);
+                  await refreshCount();
+                  toast({
+                    title: "Cleared failed uploads",
+                    description: `${n} sale(s) removed from sync queue`,
+                  });
+                })();
+              }}
+            >
+              Dismiss failed
+            </Button>
+          </div>
+        </div>
+      )}
 
       {looksEmpty && (
         <div className="rounded-xl border border-amber-400/50 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">

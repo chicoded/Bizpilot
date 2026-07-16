@@ -6,6 +6,8 @@ import {
   updateSyncQueueItem,
   type SaleSyncPayload,
   countUnsyncedSales,
+  listSaleSyncProblems,
+  dismissFailedSaleSyncs,
 } from "@/lib/sync/queue";
 import { getLocalCustomer } from "@/lib/local-data/customers";
 import type { LocalSale } from "@/lib/local-db/types";
@@ -82,6 +84,7 @@ export async function flushSaleSyncQueue(
     let synced = 0;
     let conflicts = 0;
     let errors = 0;
+    const failureReasons: string[] = [];
 
     for (const item of pending) {
       await updateSyncQueueItem(item.id, {
@@ -118,27 +121,37 @@ export async function flushSaleSyncQueue(
           continue;
         }
 
-        if (response.status === 409 || data.code === "STOCK_CONFLICT" || data.code === "MISSING_PRODUCTS") {
+        const reason = data.error ?? `HTTP ${response.status}`;
+
+        if (
+          response.status === 409 ||
+          data.code === "STOCK_CONFLICT" ||
+          data.code === "MISSING_PRODUCTS"
+        ) {
           await updateSyncQueueItem(item.id, {
             status: "conflict",
-            lastError: data.error ?? "Sync conflict",
+            lastError: reason,
           });
           conflicts += 1;
+          failureReasons.push(reason);
           continue;
         }
 
         await updateSyncQueueItem(item.id, {
           status: "error",
-          lastError: data.error ?? `HTTP ${response.status}`,
+          lastError: reason,
         });
         errors += 1;
+        failureReasons.push(reason);
       } catch (error) {
+        const reason =
+          error instanceof Error ? error.message : "Network error";
         await updateSyncQueueItem(item.id, {
           status: "error",
-          lastError:
-            error instanceof Error ? error.message : "Network error",
+          lastError: reason,
         });
         errors += 1;
+        failureReasons.push(reason);
       }
     }
 
@@ -147,6 +160,10 @@ export async function flushSaleSyncQueue(
     if (conflicts > 0) messageParts.push(`${conflicts} conflict(s)`);
     if (errors > 0) messageParts.push(`${errors} failed`);
     if (messageParts.length === 0) messageParts.push("Nothing pending");
+    if (failureReasons.length > 0) {
+      const unique = [...new Set(failureReasons)].slice(0, 2);
+      messageParts.push(`Reason: ${unique.join(" · ")}`);
+    }
 
     return {
       ok: conflicts === 0 && errors === 0,
@@ -161,6 +178,8 @@ export async function flushSaleSyncQueue(
 
   return flushInFlight;
 }
+
+export { listSaleSyncProblems, dismissFailedSaleSyncs } from "@/lib/sync/queue";
 
 export {
   pullCloudProducts,
