@@ -81,3 +81,6 @@ SET "sequence" = GREATEST("receipt_counters"."sequence", EXCLUDED."sequence"),
 
 CREATE UNIQUE INDEX IF NOT EXISTS "sales_businessId_receiptNumber_key"
     ON "sales"("businessId", "receiptNumber");
+
+-- Custom industry label when industry = OTHER
+ALTER TABLE "businesses" ADD COLUMN IF NOT EXISTS "industryLabel" TEXT;

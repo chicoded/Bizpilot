@@ -5,6 +5,7 @@ import { requireInternalAdmin } from "@/lib/internal/auth";
 import { canInternal } from "@/lib/internal/permissions";
 import { BusinessActions } from "@/components/internal/business-actions";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { industryDisplayName } from "@/types";
 
 export default async function InternalBusinessDetailPage({
   params,
@@ -60,8 +61,8 @@ export default async function InternalBusinessDetailPage({
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-white">{business.name}</h1>
         <p className="text-sm text-slate-400">
-          {business.industry} · {business.currency} · created{" "}
-          {formatDate(business.createdAt)}
+          {industryDisplayName(business.industry, business.industryLabel)} ·{" "}
+          {business.currency} · created {formatDate(business.createdAt)}
         </p>
       </div>
 

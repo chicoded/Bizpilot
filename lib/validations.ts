@@ -1,46 +1,97 @@
 import { z } from "zod";
 
-export const businessSchema = z.object({
-  name: z.string().min(2, "Business name must be at least 2 characters"),
-  industry: z.enum([
-    "PHARMACY",
-    "RETAIL",
-    "SUPERMARKET",
-    "COSMETICS",
-    "FASHION",
-    "MINI_MART",
-    "ELECTRONICS",
-    "RESTAURANT",
-    "FAST_FOOD",
-    "CAFE",
-    "OTHER",
-  ]),
-  currency: z.string().default("NGN"),
-  address: z.string().optional(),
-  phone: z
-    .string()
-    .trim()
-    .min(7, "Enter a phone number we can reach you on")
-    .max(20, "Phone number is too long")
-    .regex(/^[+\d][\d\s()-]{6,19}$/, "Enter a valid phone number"),
-});
+export const businessSchema = z
+  .object({
+    name: z.string().min(2, "Business name must be at least 2 characters"),
+    industry: z.enum([
+      "PHARMACY",
+      "RETAIL",
+      "SUPERMARKET",
+      "COSMETICS",
+      "FASHION",
+      "MINI_MART",
+      "ELECTRONICS",
+      "RESTAURANT",
+      "FAST_FOOD",
+      "CAFE",
+      "OTHER",
+    ]),
+    industryLabel: z.string().trim().max(80).optional().or(z.literal("")),
+    currency: z.string().default("NGN"),
+    address: z.string().optional(),
+    phone: z
+      .string()
+      .trim()
+      .min(7, "Enter a phone number we can reach you on")
+      .max(20, "Phone number is too long")
+      .regex(/^[+\d][\d\s()-]{6,19}$/, "Enter a valid phone number"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.industry === "OTHER") {
+      const label = (data.industryLabel ?? "").trim();
+      if (label.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["industryLabel"],
+          message: "Enter your industry (e.g. Bakery, Hardware, Salon)",
+        });
+      }
+    }
+  })
+  .transform((data) => ({
+    ...data,
+    industryLabel:
+      data.industry === "OTHER"
+        ? (data.industryLabel ?? "").trim() || undefined
+        : undefined,
+  }));
 
-export const updateBusinessSchema = businessSchema.pick({
-  name: true,
-  industry: true,
-  currency: true,
-  address: true,
-  phone: true,
-}).extend({
-  // Profile edits can keep an empty phone temporarily.
-  phone: z
-    .string()
-    .trim()
-    .max(20)
-    .optional()
-    .or(z.literal(""))
-    .transform((v) => (v ? v : undefined)),
-});
+export const updateBusinessSchema = z
+  .object({
+    name: z.string().min(2, "Business name must be at least 2 characters"),
+    industry: z.enum([
+      "PHARMACY",
+      "RETAIL",
+      "SUPERMARKET",
+      "COSMETICS",
+      "FASHION",
+      "MINI_MART",
+      "ELECTRONICS",
+      "RESTAURANT",
+      "FAST_FOOD",
+      "CAFE",
+      "OTHER",
+    ]),
+    industryLabel: z.string().trim().max(80).optional().or(z.literal("")),
+    currency: z.string().default("NGN"),
+    address: z.string().optional(),
+    phone: z
+      .string()
+      .trim()
+      .max(20)
+      .optional()
+      .or(z.literal(""))
+      .transform((v) => (v ? v : undefined)),
+  })
+  .superRefine((data, ctx) => {
+    if (data.industry === "OTHER") {
+      const label = (data.industryLabel ?? "").trim();
+      if (label.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["industryLabel"],
+          message: "Enter your industry (e.g. Bakery, Hardware, Salon)",
+        });
+      }
+    }
+  })
+  .transform((data) => ({
+    ...data,
+    industryLabel:
+      data.industry === "OTHER"
+        ? (data.industryLabel ?? "").trim() || undefined
+        : undefined,
+  }));
 
 export const productSchema = z.object({
   name: z.string().trim().min(1, "Product name is required"),

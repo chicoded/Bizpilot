@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { createBusiness } from "@/actions/business";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,6 @@ import { INDUSTRIES } from "@/types";
 import { Loader2 } from "lucide-react";
 
 export function OnboardingForm() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [industry, setIndustry] = useState("RETAIL");
@@ -83,6 +81,22 @@ export function OnboardingForm() {
               </SelectContent>
             </Select>
           </div>
+
+          {industry === "OTHER" && (
+            <div className="space-y-2">
+              <Label htmlFor="industryLabel">Your industry *</Label>
+              <Input
+                id="industryLabel"
+                name="industryLabel"
+                required
+                placeholder="e.g. Bakery, Hardware, Salon, Agro shop"
+                autoComplete="organization-title"
+              />
+              <p className="text-xs text-muted-foreground">
+                Type whatever best describes your business.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="currency">Currency</Label>

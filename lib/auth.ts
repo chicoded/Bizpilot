@@ -19,6 +19,7 @@ const BUSINESS_SELECT_FALLBACK = {
   id: true,
   name: true,
   industry: true,
+  industryLabel: true,
   currency: true,
   logo: true,
   address: true,

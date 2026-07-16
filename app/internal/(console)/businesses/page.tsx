@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireInternalAdmin } from "@/lib/internal/auth";
 import { formatDate } from "@/lib/utils";
+import { industryDisplayName } from "@/types";
 
 export default async function InternalBusinessesPage({
   searchParams,
@@ -94,7 +95,9 @@ export default async function InternalBusinessesPage({
                     >
                       {b.name}
                     </Link>
-                    <p className="text-xs text-slate-500">{b.industry}</p>
+                    <p className="text-xs text-slate-500">
+                      {industryDisplayName(b.industry, b.industryLabel)}
+                    </p>
                   </td>
                   <td className="px-3 py-2">
                     {b.phone ? (

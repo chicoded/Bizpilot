@@ -80,6 +80,7 @@ model Business {
   id        String   @id @default(cuid())
   name      String
   industry  Industry @default(OTHER)
+  industryLabel String?
   currency  String   @default("NGN")
   logo      String?
   address   String?

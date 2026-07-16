@@ -49,6 +49,7 @@ export default async function SettingsProfilePage() {
               business={{
                 name: ctx.business.name,
                 industry: ctx.business.industry,
+                industryLabel: ctx.business.industryLabel,
                 currency: ctx.business.currency,
                 address: ctx.business.address,
                 phone: ctx.business.phone,

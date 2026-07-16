@@ -110,6 +110,8 @@ model Business {
   id        String   @id @default(cuid())
   name      String
   industry  Industry @default(OTHER)
+  /// Free-text industry when `industry` is OTHER (or a more specific label).
+  industryLabel String?
   currency  String   @default("NGN")
   logo      String?
   address   String?

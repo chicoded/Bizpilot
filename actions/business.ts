@@ -71,6 +71,7 @@ export async function createBusiness(formData: FormData) {
     const parsed = businessSchema.safeParse({
       name: formData.get("name"),
       industry: formData.get("industry"),
+      industryLabel: formData.get("industryLabel") || undefined,
       currency: formData.get("currency") || "NGN",
       address: formData.get("address") || undefined,
       phone: formData.get("phone") || undefined,
@@ -82,7 +83,12 @@ export async function createBusiness(formData: FormData) {
 
     const business = await prisma.business.create({
       data: {
-        ...parsed.data,
+        name: parsed.data.name,
+        industry: parsed.data.industry,
+        industryLabel: parsed.data.industryLabel ?? null,
+        currency: parsed.data.currency,
+        address: parsed.data.address,
+        phone: parsed.data.phone,
         memberships: {
           create: {
             userId: user.id,
@@ -115,6 +121,16 @@ export async function createBusiness(formData: FormData) {
     return { success: true, businessId: business.id };
   } catch (error) {
     console.error("[createBusiness] failed:", error);
+    const detail = error instanceof Error ? error.message : "";
+    if (/industryLabel|column.*does not exist|P2022/i.test(detail)) {
+      return {
+        error: {
+          _form: [
+            "Database needs a quick update. In Supabase SQL Editor, run database/repair-industry-label.sql, then try again.",
+          ],
+        },
+      };
+    }
     return {
       error: {
         _form: [
@@ -491,6 +507,7 @@ export async function updateBusiness(formData: FormData) {
     const parsed = updateBusinessSchema.safeParse({
       name: formData.get("name"),
       industry: formData.get("industry"),
+      industryLabel: formValue(formData.get("industryLabel")),
       currency: formData.get("currency") || "NGN",
       address: formValue(formData.get("address")),
       phone: formValue(formData.get("phone")),
@@ -505,6 +522,7 @@ export async function updateBusiness(formData: FormData) {
       data: {
         name: parsed.data.name,
         industry: parsed.data.industry,
+        industryLabel: parsed.data.industryLabel ?? null,
         currency: parsed.data.currency,
         address: parsed.data.address ?? null,
         phone: parsed.data.phone ?? null,

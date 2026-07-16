@@ -20,6 +20,7 @@ interface BusinessProfileFormProps {
   business: {
     name: string;
     industry: string;
+    industryLabel?: string | null;
     currency: string;
     address: string | null;
     phone: string | null;
@@ -76,6 +77,18 @@ export function BusinessProfileForm({ business }: BusinessProfileFormProps) {
           </SelectContent>
         </Select>
       </div>
+      {industry === "OTHER" && (
+        <div className="space-y-2">
+          <Label htmlFor="industryLabel">Your industry *</Label>
+          <Input
+            id="industryLabel"
+            name="industryLabel"
+            required
+            defaultValue={business.industryLabel ?? ""}
+            placeholder="e.g. Bakery, Hardware, Salon, Agro shop"
+          />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="currency">Currency</Label>
         <Input id="currency" name="currency" defaultValue={business.currency} />

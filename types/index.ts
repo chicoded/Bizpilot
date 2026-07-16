@@ -209,8 +209,20 @@ export const INDUSTRIES = [
   { value: "RESTAURANT", label: "Restaurant" },
   { value: "FAST_FOOD", label: "Fast Food" },
   { value: "CAFE", label: "Cafe" },
-  { value: "OTHER", label: "Other" },
+  { value: "OTHER", label: "Other (type your own)" },
 ] as const;
+
+export function industryDisplayName(
+  industry: string,
+  industryLabel?: string | null
+): string {
+  if (industry === "OTHER" && industryLabel?.trim()) {
+    return industryLabel.trim();
+  }
+  return (
+    INDUSTRIES.find((item) => item.value === industry)?.label ?? industry
+  );
+}
 
 export const EXPENSE_CATEGORIES = [
   { value: "RENT", label: "Rent" },
