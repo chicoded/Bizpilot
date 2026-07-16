@@ -1,12 +1,17 @@
 import { toWhatsAppWebUrl } from "@/lib/phone";
 
-/** Public support contacts — set on Vercel as NEXT_PUBLIC_* */
+/** Built-in defaults so support works even before Vercel env is set. */
+const DEFAULT_SUPPORT_WHATSAPP = "09167076853";
+const DEFAULT_SUPPORT_EMAIL = "chinazamuoghalu1@gmail.com";
+
+/** Public support contacts — override on Vercel with NEXT_PUBLIC_* if needed */
 export function getSupportContacts() {
   const whatsapp =
     process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.trim() ||
     process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() ||
-    "";
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "";
+    DEFAULT_SUPPORT_WHATSAPP;
+  const email =
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || DEFAULT_SUPPORT_EMAIL;
 
   return {
     whatsapp: whatsapp || null,
