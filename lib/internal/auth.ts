@@ -88,6 +88,11 @@ export async function getInternalAdmin(): Promise<InternalAdminContext | null> {
 export async function requireInternalAdmin(
   permission?: InternalPermission
 ): Promise<InternalAdminContext> {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/internal/sign-in?redirect_url=/internal");
+  }
+
   const admin = await getInternalAdmin();
   if (!admin) {
     redirect("/internal/forbidden");

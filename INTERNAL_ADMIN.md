@@ -4,9 +4,11 @@ Staff-only operations console. It is **not** linked from the customer app.
 
 ## Access
 
-1. Sign in with Clerk using a staff email.
-2. Open `https://www.zaplex.site/internal` (or local `http://localhost:3000/internal`).
-3. Unauthorized users are redirected to `/internal/forbidden` (access denied).
+1. Open **`https://www.zaplex.site/internal/sign-in`** (staff Clerk login).
+2. Sign in with a staff email (same Clerk app as customers — no separate Clerk project needed).
+3. If the email is allowlisted, you land on `/internal`. Otherwise `/internal/forbidden`.
+
+Customer app login remains at `/sign-in`.
 
 ## Bootstrap (first deploy)
 
@@ -16,7 +18,9 @@ Set a comma-separated allowlist of staff emails (becomes `SUPER_ADMIN`):
 INTERNAL_ADMIN_EMAILS=you@company.com,ops@company.com
 ```
 
-On first visit, matching emails are upserted into `internal_admins`.
+On first successful `/internal` visit, matching emails are upserted into `internal_admins`.
+
+Redeploy after changing the env var (`NEXT_PUBLIC_*` not required for this one, but restart/redeploy so the server picks it up).
 
 ## Roles
 

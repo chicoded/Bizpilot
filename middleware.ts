@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   "/offline",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/internal/sign-in(.*)",
+  "/internal/forbidden",
   "/invite/(.*)",
   "/api/health",
   "/api/webhooks(.*)",
@@ -16,8 +18,12 @@ export default clerkMiddleware(async (auth, request) => {
 
   const { userId } = await auth();
   if (!userId) {
-    // Avoid Clerk's default 404 when sign-in URL/domain pairing is incomplete.
-    const signIn = new URL("/sign-in", request.url);
+    // Staff console gets its own Clerk sign-in screen.
+    const isInternal = request.nextUrl.pathname.startsWith("/internal");
+    const signIn = new URL(
+      isInternal ? "/internal/sign-in" : "/sign-in",
+      request.url
+    );
     signIn.searchParams.set("redirect_url", request.url);
     return NextResponse.redirect(signIn);
   }
