@@ -123,6 +123,7 @@ Set these in **Project → Settings → Environment Variables** for Production, 
 | `NEXT_PUBLIC_SENTRY_DSN` | Client-side Sentry |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Analytics |
 | `NEXT_PUBLIC_POSTHOG_HOST` | `https://app.posthog.com` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Gmail + Drive backup OAuth (see `GOOGLE_BACKUP_SETUP.md`) |
 
 ### Optional integrations
 

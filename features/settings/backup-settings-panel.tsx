@@ -373,14 +373,34 @@ export function BackupSettingsPanel() {
               </p>
             )}
             {!isGmailBackupConfigured() && (
-              <p className="text-xs text-muted-foreground">
-                Share/download works without setup. For automatic save, add{" "}
-                <span className="font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>{" "}
-                in Vercel (Google Cloud OAuth: Gmail send + Drive file scopes,
-                redirect URI{" "}
-                <span className="font-mono">/settings/backup</span>), then
-                redeploy.
-              </p>
+              <div className="space-y-2 text-xs text-muted-foreground rounded-lg border border-border/60 p-3">
+                <p className="font-medium text-foreground">
+                  Setup needed (one-time)
+                </p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li>
+                    Google Cloud → enable Gmail API + Drive API → create OAuth
+                    Web client
+                  </li>
+                  <li>
+                    Redirect URI:{" "}
+                    <span className="font-mono text-[11px]">
+                      https://www.zaplex.site/settings/backup
+                    </span>
+                  </li>
+                  <li>
+                    Vercel env:{" "}
+                    <span className="font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>{" "}
+                    = your Client ID → redeploy
+                  </li>
+                  <li>Return here → Connect Google → Backup now</li>
+                </ol>
+                <p>
+                  Full steps:{" "}
+                  <span className="font-mono">GOOGLE_BACKUP_SETUP.md</span> in
+                  the repo.
+                </p>
+              </div>
             )}
           </div>
         </CardContent>
