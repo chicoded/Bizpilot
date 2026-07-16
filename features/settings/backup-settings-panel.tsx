@@ -207,8 +207,18 @@ export function BackupSettingsPanel() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
             Your inventory, sales, customers, and expenses are saved on this
-            device first. Backups keep a copy in Gmail and/or Google Drive so you
-            don&apos;t lose shop data.
+            device first.
+          </p>
+          <p>
+            <strong className="text-foreground">Team cloud</strong> (products +
+            sales for cashiers) uses <strong className="text-foreground">Sync</strong>{" "}
+            on the Sales page — that is separate from this backup.
+          </p>
+          <p>
+            <strong className="text-foreground">Gmail / Drive backup</strong> is
+            a personal safety copy. Automatic send needs{" "}
+            <strong className="text-foreground">Connect Google</strong>. Without
+            it, Backup now still saves on this device and downloads a file.
           </p>
         </CardContent>
       </Card>

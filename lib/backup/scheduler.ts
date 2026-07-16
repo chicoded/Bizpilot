@@ -3,10 +3,23 @@ import {
   isBackupDue,
   saveBackupConfig,
 } from "@/lib/local-db/backup-config";
-import { exportBackupJson, saveBackupSnapshot } from "@/lib/backup/export";
+import {
+  downloadBackupFile,
+  exportBackupJson,
+  saveBackupSnapshot,
+} from "@/lib/backup/export";
 import { deliverBackupToGmail } from "@/lib/backup/gmail";
 import { deliverBackupToDrive } from "@/lib/backup/drive";
 import { getLocalBusinessMeta } from "@/lib/local-data/business";
+
+function hasLiveGoogleSession() {
+  const config = getBackupConfig();
+  if (!config.gmailAccessToken || !config.gmailEmail) return false;
+  if (config.gmailTokenExpiry && Date.now() > config.gmailTokenExpiry - 60_000) {
+    return false;
+  }
+  return true;
+}
 
 export async function runScheduledBackup(
   businessId: string,
@@ -27,18 +40,34 @@ export async function runScheduledBackup(
     };
   }
 
-  if (toGmail && !config.gmailEmail && !options?.force) {
-    return {
-      ok: false,
-      message: "Add your Gmail address in Settings → Backup & storage first.",
-    };
-  }
-
   try {
     const json = await exportBackupJson(businessId);
     await saveBackupSnapshot(businessId);
     const business = await getLocalBusinessMeta();
     const businessName = business?.name ?? "My shop";
+    const googleReady = hasLiveGoogleSession();
+
+    // No Google Connect → always keep a device copy + one download.
+    // Automatic Gmail/Drive needs Connect Google (OAuth).
+    if (!googleReady) {
+      downloadBackupFile(json, businessName);
+      const targets = [
+        toGmail ? "Gmail" : null,
+        toDrive ? "Drive" : null,
+      ].filter(Boolean);
+      const targetText =
+        targets.length > 0 ? targets.join(" + ") : "Gmail/Drive";
+
+      const message = `Backup saved on this device and downloaded. Tap Connect Google to send to ${targetText} automatically. Team catalog/sales still use Sync on the Sales page (cloud database).`;
+
+      saveBackupConfig({
+        lastBackupAt: new Date().toISOString(),
+        lastBackupStatus: "success",
+        lastBackupMessage: message,
+      });
+
+      return { ok: true, message };
+    }
 
     const messages: string[] = [];
     let anyOk = false;
@@ -55,7 +84,8 @@ export async function runScheduledBackup(
       anyOk = anyOk || driveResult.ok;
     }
 
-    const message = messages.join(" · ");
+    const message =
+      messages.join(" · ") || "Backup saved on this device.";
 
     saveBackupConfig({
       lastBackupAt: new Date().toISOString(),
