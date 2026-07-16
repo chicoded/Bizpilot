@@ -70,11 +70,7 @@ export function productTypeLabel(type: string | null | undefined): string {
   return PRODUCT_TYPES.find((t) => t.value === normalized)?.label ?? "Product";
 }
 
-/** Industries that get the hybrid type picker on Add Product. */
-export function usesHybridInventory(industry: string | null | undefined): boolean {
-  return (
-    industry === "RESTAURANT" ||
-    industry === "FAST_FOOD" ||
-    industry === "CAFE"
-  );
+/** Hybrid type picker is available to every shop (classification system). */
+export function usesHybridInventory(_industry?: string | null): boolean {
+  return true;
 }
