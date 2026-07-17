@@ -32,6 +32,17 @@ import {
   SERVICE_TYPES,
   type ServiceTypeValue,
 } from "@/lib/rush-pos/constants";
+import {
+  readPeakModePreference,
+  resolvePeakMode,
+  writePeakModePreference,
+} from "@/lib/rush-pos/peak-mode";
+import {
+  PLATE_STEPS,
+  plateBucketForProduct,
+  type PlateStepId,
+} from "@/lib/rush-pos/plate-builder";
+import { PlateBuilder } from "@/features/rush-pos/plate-builder";
 import type { LocalProduct, LocalSale } from "@/lib/local-db/types";
 import { subscribeLocalDataChanged } from "@/lib/sync/events";
 import {
@@ -46,6 +57,8 @@ import {
   PackageOpen,
   Settings2,
   BarChart3,
+  Zap,
+  UtensilsCrossed,
 } from "lucide-react";
 
 type CartItem = {
@@ -96,8 +109,34 @@ export function RushPosEngine({
   const [flashId, setFlashId] = useState<string | null>(null);
   const [lastTicket, setLastTicket] = useState<string | null>(null);
   const longPressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [peakPref, setPeakPref] = useState<"auto" | "on" | "off">("auto");
+  const [peakActive, setPeakActive] = useState(false);
+  const [posView, setPosView] = useState<"menu" | "plate">("menu");
+  const [plateStep, setPlateStep] = useState<PlateStepId>("rice");
 
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
+  useEffect(() => {
+    const pref = readPeakModePreference();
+    setPeakPref(pref);
+    setPeakActive(resolvePeakMode(pref));
+    const id = window.setInterval(() => {
+      setPeakActive(resolvePeakMode(readPeakModePreference()));
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  function cyclePeakMode() {
+    const order: Array<"auto" | "on" | "off"> = ["auto", "on", "off"];
+    const next = order[(order.indexOf(peakPref) + 1) % order.length];
+    writePeakModePreference(next);
+    setPeakPref(next);
+    setPeakActive(resolvePeakMode(next));
+    if (resolvePeakMode(next)) {
+      setCategory(favoriteIds.length > 0 ? "Favorites" : "Combos");
+      setSearch("");
+    }
+  }
 
   const reload = useCallback(async () => {
     if (!businessId) return;
@@ -140,21 +179,47 @@ export function RushPosEngine({
     const list = ["All"];
     if (favoriteIds.length > 0) list.push("Favorites");
     if (comboMealsEnabled && combos.length > 0) list.push("Combos");
+    if (peakActive) {
+      // Peak: only favorites, combos, drinks — hide long category lists.
+      const hasDrinks = products.some((p) => plateBucketForProduct(p) === "drink");
+      if (hasDrinks) list.push("Drinks");
+      const peakList = list.filter((c) => c !== "All");
+      return peakList.length > 0 ? peakList : ["All"];
+    }
     for (const c of Array.from(fromProducts).sort()) list.push(c);
     return list;
-  }, [products, favoriteIds.length, combos.length, comboMealsEnabled]);
+  }, [
+    products,
+    favoriteIds.length,
+    combos.length,
+    comboMealsEnabled,
+    peakActive,
+  ]);
+
+  useEffect(() => {
+    if (!categories.includes(category)) {
+      setCategory(categories[0] ?? "All");
+    }
+  }, [categories, category]);
 
   const visibleProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
     let list = ranked;
-    if (category === "Favorites") {
+    if (peakActive && category === "Drinks") {
+      list = list.filter((p) => plateBucketForProduct(p) === "drink");
+    } else if (category === "Favorites") {
       list = list.filter((p) => favoriteSet.has(p.id));
-    } else if (category !== "All" && category !== "Combos") {
+    } else if (category !== "All" && category !== "Combos" && category !== "Drinks") {
       list = list.filter(
         (p) => categoryKey(p.category) === categoryKey(category)
       );
+    } else if (peakActive && category === "All") {
+      // Shouldn't happen often — prefer favorites when peak.
+      list = favoriteSet.size
+        ? list.filter((p) => favoriteSet.has(p.id))
+        : list;
     }
-    if (term) {
+    if (term && !peakActive) {
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(term) ||
@@ -162,9 +227,17 @@ export function RushPosEngine({
       );
     }
     return list;
-  }, [ranked, category, search, favoriteSet]);
+  }, [ranked, category, search, favoriteSet, peakActive]);
 
-  const recentOrders = useMemo(() => sales.slice(0, 10), [sales]);
+  const recentOrders = useMemo(() => sales.slice(0, peakActive ? 5 : 10), [sales, peakActive]);
+
+  const todayCashExpected = useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return sales
+      .filter((s) => new Date(s.createdAt) >= start && s.paymentMethod === "CASH")
+      .reduce((sum, s) => sum + s.total, 0);
+  }, [sales]);
 
   const suggestions = useMemo(() => {
     if (!aiSuggestionsEnabled || cart.length === 0) return [];
@@ -186,7 +259,7 @@ export function RushPosEngine({
     window.setTimeout(() => setFlashId((cur) => (cur === id ? null : cur)), 220);
   }
 
-  function addProduct(product: LocalProduct) {
+  function addProduct(product: LocalProduct, advancePlate = false) {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -203,6 +276,21 @@ export function RushPosEngine({
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(8);
     }
+    if (advancePlate && posView === "plate") {
+      advancePlateStep();
+    }
+  }
+
+  function advancePlateStep() {
+    setPlateStep((current) => {
+      const idx = PLATE_STEPS.findIndex((s) => s.id === current);
+      const next = PLATE_STEPS[Math.min(idx + 1, PLATE_STEPS.length - 1)];
+      return next?.id ?? current;
+    });
+  }
+
+  function skipPlateStep() {
+    advancePlateStep();
   }
 
   function addCombo(combo: ComboLite) {
@@ -367,6 +455,7 @@ export function RushPosEngine({
       setNotes([]);
       setSplitCash("");
       setSplitTransfer("");
+      if (posView === "plate") setPlateStep("rice");
       toast({
         title: "Order complete",
         description: kitchenEnabled
@@ -378,27 +467,52 @@ export function RushPosEngine({
     });
   }
 
+  const peakLabel =
+    peakPref === "on" ? "Peak ON" : peakPref === "off" ? "Peak OFF" : "Peak Auto";
+
   return (
     <AppShell
-      title="Rush POS"
-      subtitle={`Adaptive · ${currentDaypart()} rush`}
+      title={peakActive ? "Peak POS" : "Rush POS"}
+      subtitle={
+        peakActive
+          ? "Favorites · combos · drinks only"
+          : `Adaptive · ${currentDaypart()} rush`
+      }
       className={cn("!p-3 md:!p-4", cart.length > 0 && "pb-36")}
       actions={
-        <div className="flex items-center gap-3">
-          <Link
-            href="/sales/rush-setup"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand"
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={cyclePeakMode}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
+              peakActive
+                ? "bg-amber-500 text-white"
+                : "bg-muted text-muted-foreground"
+            )}
+            title="Tap to cycle: Auto → On → Off"
           >
-            <Settings2 className="h-4 w-4" />
-            Menu
-          </Link>
-          <Link
-            href="/sales/rush-insights"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Insights
-          </Link>
+            <Zap className="h-3.5 w-3.5" />
+            {peakLabel}
+          </button>
+          {!peakActive && (
+            <>
+              <Link
+                href="/sales/rush-setup"
+                className="inline-flex items-center gap-1 text-sm font-medium text-brand"
+              >
+                <Settings2 className="h-4 w-4" />
+                Menu
+              </Link>
+              <Link
+                href="/sales/rush-insights"
+                className="hidden items-center gap-1 text-sm font-medium text-brand sm:inline-flex"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Insights
+              </Link>
+            </>
+          )}
           {kitchenEnabled && (
             <Link
               href="/sales/kitchen"
@@ -408,232 +522,308 @@ export function RushPosEngine({
               Kitchen
             </Link>
           )}
-          <Link
-            href="/sales/history"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand"
-          >
-            <History className="h-4 w-4" />
-            History
-          </Link>
+          {!peakActive && (
+            <Link
+              href="/sales/history"
+              className="inline-flex items-center gap-1 text-sm font-medium text-brand"
+            >
+              <History className="h-4 w-4" />
+              History
+            </Link>
+          )}
         </div>
       }
     >
       <div className="space-y-2.5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search menu…"
-            className="h-14 pl-10 text-base"
-            enterKeyHint="search"
-          />
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-          {categories.map((c) => (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex rounded-full bg-muted p-1">
             <button
-              key={c}
               type="button"
-              onClick={() => setCategory(c)}
+              onClick={() => setPosView("menu")}
               className={cn(
-                "min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold transition-colors",
-                category === c
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground"
+                "min-h-[40px] rounded-full px-3 text-xs font-semibold",
+                posView === "menu"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground"
               )}
             >
-              {c}
+              Menu
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => {
+                setPosView("plate");
+                setPlateStep("rice");
+              }}
+              className={cn(
+                "inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 text-xs font-semibold",
+                posView === "plate"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground"
+              )}
+            >
+              <UtensilsCrossed className="h-3.5 w-3.5" />
+              Build plate
+            </button>
+          </div>
+          {todayCashExpected > 0 && (
+            <p className="text-xs font-medium text-muted-foreground">
+              Cash today · {formatCurrency(todayCashExpected)}
+            </p>
+          )}
         </div>
 
-        {recentOrders.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Recent orders
-            </p>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {recentOrders.map((sale) => (
-                <button
-                  key={sale.id}
-                  type="button"
-                  onClick={() => recreateOrder(sale)}
-                  className="min-h-[60px] min-w-[120px] shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-left"
-                >
-                  <p className="text-xs text-muted-foreground">{sale.receiptNumber}</p>
-                  <p className="text-sm font-semibold">
-                    {formatCurrency(sale.total)}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {category === "Combos" && comboMealsEnabled ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {combos.map((combo) => (
-              <button
-                key={combo.id}
-                type="button"
-                onClick={() => addCombo(combo)}
-                className={cn(
-                  "min-h-[140px] overflow-hidden rounded-2xl border border-border bg-card text-left transition-transform active:scale-[0.98]",
-                  flashId === combo.id && "ring-2 ring-emerald-500"
-                )}
-              >
-                <div className="relative h-20 bg-muted">
-                  {combo.imageUrl ? (
-                    <Image
-                      src={combo.imageUrl}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-3xl">
-                      🍱
-                    </div>
-                  )}
-                </div>
-                <div className="p-3">
-                  <p className="font-semibold leading-tight">{combo.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatCurrency(combo.price)}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-[140px] animate-pulse rounded-2xl bg-muted" />
-            ))}
-          </div>
-        ) : visibleProducts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-8 text-center">
-            <PackageOpen className="mx-auto h-10 w-10 text-muted-foreground" />
-            <p className="mt-2 font-medium">No menu items here</p>
-            <Button asChild variant="outline" className="mt-3">
-              <Link href="/inventory/new">Add product</Link>
-            </Button>
-          </div>
+        {posView === "plate" ? (
+          <PlateBuilder
+            products={products}
+            step={plateStep}
+            onStepChange={setPlateStep}
+            onPick={(p) => addProduct(p, true)}
+            onSkip={skipPlateStep}
+            onCheckout={completeSale}
+            cartCount={cartCount}
+            subtotal={subtotal}
+            flashId={flashId}
+            isPending={isPending}
+          />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {visibleProducts.map((product) => (
-              <button
-                key={product.id}
-                type="button"
-                onClick={() => addProduct(product)}
-                className={cn(
-                  "min-h-[140px] overflow-hidden rounded-2xl border border-border bg-card text-left transition-transform active:scale-[0.98]",
-                  flashId === product.id && "ring-2 ring-emerald-500"
-                )}
-              >
-                <div className="relative h-20 bg-muted">
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-2xl font-bold text-muted-foreground">
-                      {product.name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  {favoriteSet.has(product.id) && (
-                    <span className="absolute left-2 top-2 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                      TOP
-                    </span>
-                  )}
-                </div>
-                <div className="p-3">
-                  <p className="line-clamp-2 font-semibold leading-tight">
-                    {product.name}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                    {formatCurrency(product.sellingPrice)}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {product.quantity} left
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+          <>
+            {!peakActive && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search menu…"
+                  className="h-14 pl-10 text-base"
+                  enterKeyHint="search"
+                />
+              </div>
+            )}
 
-        {suggestions.length > 0 && (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Suggest
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {suggestions.map((p) => (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {categories.map((c) => (
                 <button
-                  key={p.id}
+                  key={c}
                   type="button"
-                  onClick={() => addProduct(p)}
-                  className="min-h-[44px] rounded-full bg-background px-3 text-sm font-medium border"
+                  onClick={() => setCategory(c)}
+                  className={cn(
+                    "min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold transition-colors",
+                    category === c
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground"
+                  )}
                 >
-                  + {p.name}
+                  {c}
                 </button>
               ))}
             </div>
-          </div>
+
+            {recentOrders.length > 0 && !peakActive && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Recent orders
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {recentOrders.map((sale) => (
+                    <button
+                      key={sale.id}
+                      type="button"
+                      onClick={() => recreateOrder(sale)}
+                      className="min-h-[60px] min-w-[120px] shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-left"
+                    >
+                      <p className="text-xs text-muted-foreground">
+                        {sale.receiptNumber}
+                      </p>
+                      <p className="text-sm font-semibold">
+                        {formatCurrency(sale.total)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {category === "Combos" && comboMealsEnabled ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {combos.map((combo) => (
+                  <button
+                    key={combo.id}
+                    type="button"
+                    onClick={() => addCombo(combo)}
+                    className={cn(
+                      "min-h-[140px] overflow-hidden rounded-2xl border border-border bg-card text-left transition-transform active:scale-[0.98]",
+                      flashId === combo.id && "ring-2 ring-emerald-500"
+                    )}
+                  >
+                    <div className="relative h-20 bg-muted">
+                      {combo.imageUrl ? (
+                        <Image
+                          src={combo.imageUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-3xl">
+                          🍱
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="font-semibold leading-tight">{combo.name}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {formatCurrency(combo.price)}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : loading ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[140px] animate-pulse rounded-2xl bg-muted"
+                  />
+                ))}
+              </div>
+            ) : visibleProducts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed p-8 text-center">
+                <PackageOpen className="mx-auto h-10 w-10 text-muted-foreground" />
+                <p className="mt-2 font-medium">No menu items here</p>
+                <Button asChild variant="outline" className="mt-3">
+                  <Link href="/inventory/new">Add product</Link>
+                </Button>
+                {peakActive && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Peak mode shows favorites, combos, and drinks. Star top
+                    items in Menu setup.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {visibleProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => addProduct(product)}
+                    className={cn(
+                      "min-h-[140px] overflow-hidden rounded-2xl border border-border bg-card text-left transition-transform active:scale-[0.98]",
+                      flashId === product.id && "ring-2 ring-emerald-500"
+                    )}
+                  >
+                    <div className="relative h-20 bg-muted">
+                      {product.imageUrl ? (
+                        <Image
+                          src={product.imageUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-2xl font-bold text-muted-foreground">
+                          {product.name.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      {favoriteSet.has(product.id) && (
+                        <span className="absolute left-2 top-2 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          TOP
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="line-clamp-2 font-semibold leading-tight">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                        {formatCurrency(product.sellingPrice)}
+                      </p>
+                      {!peakActive && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {product.quantity} left
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {suggestions.length > 0 && !peakActive && (
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Suggest
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {suggestions.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => addProduct(p)}
+                      className="min-h-[44px] rounded-full bg-background px-3 text-sm font-medium border"
+                    >
+                      + {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!peakActive && (
+              <>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Service
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {SERVICE_TYPES.map((s) => (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => setServiceType(s.value)}
+                        className={cn(
+                          "min-h-[52px] rounded-xl text-sm font-semibold",
+                          serviceType === s.value
+                            ? "bg-foreground text-background"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Quick notes
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_NOTE_CHIPS.map((note) => (
+                      <button
+                        key={note}
+                        type="button"
+                        onClick={() => toggleNote(note)}
+                        className={cn(
+                          "min-h-[44px] rounded-full px-3 text-sm font-medium border",
+                          notes.includes(note)
+                            ? "border-foreground bg-foreground text-background"
+                            : "bg-background"
+                        )}
+                      >
+                        {note}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
         )}
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Service
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {SERVICE_TYPES.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                onClick={() => setServiceType(s.value)}
-                className={cn(
-                  "min-h-[52px] rounded-xl text-sm font-semibold",
-                  serviceType === s.value
-                    ? "bg-foreground text-background"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Quick notes
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {QUICK_NOTE_CHIPS.map((note) => (
-              <button
-                key={note}
-                type="button"
-                onClick={() => toggleNote(note)}
-                className={cn(
-                  "min-h-[44px] rounded-full px-3 text-sm font-medium border",
-                  notes.includes(note)
-                    ? "border-foreground bg-foreground text-background"
-                    : "bg-background"
-                )}
-              >
-                {note}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {cart.length > 0 && (
           <div className="space-y-3 rounded-2xl border bg-card p-3">

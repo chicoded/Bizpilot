@@ -12,6 +12,10 @@ import {
   deactivateMealCombo,
   setFavoriteProducts,
 } from "@/actions/rush-pos";
+import {
+  suggestRiceShopCategories,
+  suggestRiceShopComboNames,
+} from "@/lib/rush-pos/plate-builder";
 import { formatCurrency, cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Star, Trash2 } from "lucide-react";
@@ -129,6 +133,43 @@ export function RushSetupClient({
       }
     >
       <div className="space-y-6">
+        <section className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div>
+            <h2 className="font-semibold">Rice shop quick start</h2>
+            <p className="text-sm text-muted-foreground">
+              Name inventory with these categories so Peak Mode and Build plate
+              sort correctly (Jollof → Chicken → Plantain → Water).
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {suggestRiceShopCategories().map((cat) => (
+              <span
+                key={cat}
+                className="rounded-full border bg-background px-3 py-1.5 text-xs font-semibold"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Suggested combo names
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {suggestRiceShopComboNames().map((comboName) => (
+                <button
+                  key={comboName}
+                  type="button"
+                  onClick={() => setName(comboName)}
+                  className="min-h-[40px] rounded-full border bg-background px-3 text-xs font-medium"
+                >
+                  {comboName}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="space-y-3 rounded-2xl border bg-card p-4">
           <div className="flex items-center justify-between gap-2">
             <div>
