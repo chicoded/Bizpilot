@@ -107,6 +107,8 @@ export async function hydrateLocalStoreFromServer(): Promise<{
       sku?: string | null;
       imageUrl?: string | null;
       attributes?: Record<string, string | number | boolean> | null;
+      batchNumber?: string | null;
+      expiryDate?: string | null;
     }> }>("/api/products?sync=1");
 
     const timestamp = new Date().toISOString();
@@ -123,8 +125,8 @@ export async function hydrateLocalStoreFromServer(): Promise<{
         unitsPerPack: product.unitsPerPack ?? 1,
         quantity: product.quantity,
         reorderLevel: product.reorderLevel ?? 5,
-        batchNumber: null,
-        expiryDate: null,
+        batchNumber: product.batchNumber ?? null,
+        expiryDate: product.expiryDate ?? null,
         imageUrl: product.imageUrl ?? null,
         attributes: product.attributes ?? {},
         isActive: true,

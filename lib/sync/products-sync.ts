@@ -28,6 +28,8 @@ export type CloudProductRow = {
   imageUrl?: string | null;
   isActive?: boolean;
   attributes?: Record<string, string | number | boolean> | null;
+  batchNumber?: string | null;
+  expiryDate?: string | null;
 };
 
 async function listUnsyncedLocalProducts(
@@ -57,8 +59,8 @@ function mapCloudToLocal(
     unitsPerPack: product.unitsPerPack ?? existing?.unitsPerPack ?? 1,
     quantity: product.quantity,
     reorderLevel: product.reorderLevel ?? existing?.reorderLevel ?? 5,
-    batchNumber: existing?.batchNumber ?? null,
-    expiryDate: existing?.expiryDate ?? null,
+    batchNumber: product.batchNumber ?? existing?.batchNumber ?? null,
+    expiryDate: product.expiryDate ?? existing?.expiryDate ?? null,
     imageUrl: product.imageUrl ?? existing?.imageUrl ?? null,
     attributes: product.attributes ?? existing?.attributes ?? {},
     isActive: product.isActive !== false,
@@ -142,18 +144,24 @@ export async function pushLocalProducts(
 
     const ids = new Set(data.ids ?? []);
     const timestamp = new Date().toISOString();
+    // What we actually uploaded, so an edit made mid-request isn't marked synced.
+    const pushedRevision = new Map(unsynced.map((p) => [p.id, p.updatedAt]));
     const { getLocalDB } = await import("@/lib/local-db/database");
     const db = getLocalDB();
 
     await db.transaction("rw", db.products, async () => {
       for (const id of ids) {
         const existing = await db.products.get(id);
-        if (existing && existing.businessId === businessId) {
-          await db.products.put({
-            ...existing,
-            syncedAt: timestamp,
-          });
-        }
+        if (!existing || existing.businessId !== businessId) continue;
+
+        // Edited again while the request was in flight — leave it unsynced so
+        // the next push picks the newer version up.
+        if (existing.updatedAt !== pushedRevision.get(id)) continue;
+
+        await db.products.put({
+          ...existing,
+          syncedAt: timestamp,
+        });
       }
     });
 
@@ -235,6 +243,11 @@ export async function pullCloudProducts(
       for (const product of cloudProducts) {
         const existing = await db.products.get(product.id);
         if (existing && existing.businessId === businessId) {
+          // An edit that has not reached the cloud yet outranks what the cloud
+          // currently says. Overwriting here would lose the edit permanently,
+          // because it also stamps syncedAt and the push would never retry it.
+          if (existing.syncedAt == null) continue;
+
           await db.products.put(
             mapCloudToLocal(businessId, product, timestamp, existing)
           );

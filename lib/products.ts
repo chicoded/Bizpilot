@@ -43,8 +43,18 @@ const productApiSelect = {
   reorderLevel: true,
   unitsPerPack: true,
   sku: true,
+  // Devices compute expiry alerts locally, so these have to travel with the
+  // catalog — without them every synced device reports zero expiring stock.
+  batchNumber: true,
+  expiryDate: true,
   isActive: true,
 } as const;
+
+/** Devices store dates as YYYY-MM-DD, which is also what date inputs expect. */
+function toDateInputValue(value: Date | null | undefined): string | null {
+  if (!value) return null;
+  return value.toISOString().slice(0, 10);
+}
 
 function normalizeListProduct(
   product: {
@@ -223,6 +233,8 @@ export async function listProductsForApi(
       unitsPerPack: product.unitsPerPack ?? 1,
       sku: product.sku ?? null,
       isActive: product.isActive,
+      batchNumber: product.batchNumber ?? null,
+      expiryDate: toDateInputValue(product.expiryDate),
       imageUrl:
         withImages && "imageUrl" in product
           ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
@@ -253,6 +265,8 @@ export async function listProductsForApi(
       reorderLevel: product.reorderLevel,
       unitsPerPack: product.unitsPerPack ?? 1,
       sku: product.sku ?? null,
+      batchNumber: product.batchNumber ?? null,
+      expiryDate: toDateInputValue(product.expiryDate),
       isActive: product.isActive,
       imageUrl: null,
       attributes: {},

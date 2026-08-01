@@ -26,6 +26,9 @@ export interface ProductApiItem {
   quantity: number;
   barcode: string | null;
   attributes?: Record<string, unknown>;
+  batchNumber?: string | null;
+  /** YYYY-MM-DD, so devices can compute expiry alerts offline. */
+  expiryDate?: string | null;
   category?: string | null;
   reorderLevel?: number;
   unitsPerPack?: number;
