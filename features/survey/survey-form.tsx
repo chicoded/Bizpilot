@@ -15,7 +15,12 @@ import { VoiceAnswer } from "./voice-answer";
  * a zero-answer one. Partial answers are still worth having, and the form says
  * so rather than nagging.
  */
-export function SurveyForm() {
+export function SurveyForm({
+  /** Shown on the public page, where we do not already know who is writing. */
+  showIdentityFields = false,
+}: {
+  showIdentityFields?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState<{ answered: number; warnings: string[] } | null>(
     null
@@ -101,6 +106,62 @@ export function SurveyForm() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Hidden from people, irresistible to bots. Not display:none, because
+          some bots skip those; off-screen and untabbable instead. */}
+      <div className="absolute left-[-9999px]" aria-hidden>
+        <label htmlFor="website">Leave this empty</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
+
+      {showIdentityFields && (
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <p className="text-sm text-muted-foreground">
+              Only if you want a reply. You can leave all three blank and still
+              send your answers.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="name" className="text-sm font-medium">
+                  Your name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  disabled={pending}
+                  autoComplete="name"
+                  className="h-11 w-full rounded-lg border border-input bg-card px-3.5 text-base text-foreground shadow-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="shop" className="text-sm font-medium">
+                  Shop name
+                </label>
+                <input
+                  id="shop"
+                  name="shop"
+                  disabled={pending}
+                  autoComplete="organization"
+                  className="h-11 w-full rounded-lg border border-input bg-card px-3.5 text-base text-foreground shadow-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="contact" className="text-sm font-medium">
+                WhatsApp number or email
+              </label>
+              <input
+                id="contact"
+                name="contact"
+                disabled={pending}
+                inputMode="text"
+                className="h-11 w-full rounded-lg border border-input bg-card px-3.5 text-base text-foreground shadow-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {SURVEY_QUESTIONS.map((question, index) => (
         <Card key={question.id}>

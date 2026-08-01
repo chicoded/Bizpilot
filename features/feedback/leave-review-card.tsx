@@ -92,13 +92,14 @@ export function LeaveReviewCard() {
               Good or bad. It goes to a person, not a form that nobody opens.
             </p>
 
-            {/* The survey is a bigger ask than this box, so it is offered
-                rather than imposed — someone with one thing to say should not
-                have to open seven questions to say it. */}
+            {/* The survey lives outside the app and opens in its own tab, so
+                nobody loses their place in the shop to answer it. */}
             <p className="mt-2 text-sm text-muted-foreground">
               Got more to say?{" "}
               <Link
                 href="/survey"
+                target="_blank"
+                rel="noopener"
                 className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
               >
                 Answer seven questions instead

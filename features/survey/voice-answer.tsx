@@ -135,12 +135,15 @@ export function VoiceAnswer({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
+        {/* Full size, not sm. This is the primary control for anyone who finds
+            typing hard — the people this whole feature exists for — so it must
+            not be the smallest target on the page. */}
         <Button
           type="button"
           variant={recording ? "destructive" : "outline"}
-          size="sm"
           onClick={recording ? stop : start}
           disabled={disabled}
+          className="min-h-11 touch-manipulation"
         >
           {recording ? (
             <>
@@ -158,7 +161,7 @@ export function VoiceAnswer({
 
         <label
           className={cn(
-            "inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent",
+            "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-within:ring-2 focus-within:ring-ring",
             disabled && "pointer-events-none opacity-50"
           )}
         >

@@ -80,7 +80,8 @@ function extensionFor(file: File): string {
  * the admin side, so a guessed path leaks nothing.
  */
 export async function uploadSurveyAudio(params: {
-  businessId: string;
+  /** Business id when the sender is signed in, "anonymous" when not. */
+  scope: string;
   responseId: string;
   questionId: string;
   file: File;
@@ -92,7 +93,10 @@ export async function uploadSurveyAudio(params: {
   const invalid = validateSurveyAudio(params.file);
   if (invalid) return { error: invalid };
 
-  const path = `${params.businessId}/${params.responseId}/${params.questionId}.${extensionFor(params.file)}`;
+  // Sanitised: scope reaches this from a request, and a path separator in it
+  // would let a crafted value write outside its own folder.
+  const scope = params.scope.replace(/[^a-zA-Z0-9_-]/g, "") || "anonymous";
+  const path = `${scope}/${params.responseId}/${params.questionId}.${extensionFor(params.file)}`;
 
   try {
     const supabase = createServerSupabaseClient();

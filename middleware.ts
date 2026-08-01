@@ -5,6 +5,9 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/offline",
   "/support",
+  // Research form. Open on purpose: the answers worth most come from people
+  // who left or never signed up, and neither can get past sign-in.
+  "/survey",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/internal/sign-in(.*)",
