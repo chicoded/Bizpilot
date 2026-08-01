@@ -13,6 +13,11 @@ export type LocalProduct = {
   batchNumber: string | null;
   expiryDate: string | null;
   imageUrl: string | null;
+  /**
+   * Per-industry fields, shaped by the business's industry pack. Optional
+   * because rows written before this existed have no value on this device.
+   */
+  attributes?: Record<string, string | number | boolean>;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

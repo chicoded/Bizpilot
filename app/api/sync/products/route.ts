@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { requireBusinessDataAccess } from "@/lib/api-access";
 import { prisma } from "@/lib/db";
 import { ensureProductSchemaReady } from "@/lib/schema";
+import { parseProductAttributes } from "@/lib/industries";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,21 @@ type IncomingProduct = {
   imageUrl?: string | null;
   isActive?: boolean;
   updatedAt?: string;
+  attributes?: unknown;
 };
+
+/**
+ * A device can send anything, so attributes are re-validated against this
+ * shop's industry pack. Invalid values are dropped rather than failing the
+ * whole sync — losing one odd field beats blocking a day of offline sales.
+ */
+function safeAttributes(
+  industry: string,
+  raw: unknown
+): Record<string, string | number | boolean> {
+  const parsed = parseProductAttributes(industry, raw);
+  return parsed.success ? parsed.data : {};
+}
 
 /**
  * Upsert local device products into the shared team database.
@@ -61,6 +76,7 @@ export async function POST(request: Request) {
         batchNumber: product.batchNumber?.trim() || null,
         expiryDate: product.expiryDate ? new Date(product.expiryDate) : null,
         imageUrl: product.imageUrl ?? null,
+        attributes: safeAttributes(ctx.business.industry, product.attributes),
         isActive: product.isActive !== false,
       };
 

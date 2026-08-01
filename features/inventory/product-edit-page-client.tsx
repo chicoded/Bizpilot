@@ -33,6 +33,7 @@ export function ProductEditPageClient({
     expiryDate: string | null;
     imageUrl: string | null;
     supplierId: string | null;
+    attributes?: Record<string, unknown>;
   } | null>(null);
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export function ProductEditPageClient({
         expiryDate: row.expiryDate,
         imageUrl: row.imageUrl,
         supplierId: null,
+        attributes: row.attributes,
       });
       setLoading(false);
     })();

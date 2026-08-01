@@ -15,6 +15,7 @@ export type ProductInput = {
   batchNumber?: string | null;
   expiryDate?: string | null;
   imageUrl?: string | null;
+  attributes?: Record<string, string | number | boolean>;
 };
 
 function nowIso() {
@@ -63,6 +64,7 @@ export async function createLocalProduct(
     batchNumber: input.batchNumber?.trim() || null,
     expiryDate: input.expiryDate || null,
     imageUrl: input.imageUrl ?? null,
+    attributes: input.attributes ?? {},
     isActive: true,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -104,6 +106,7 @@ export async function updateLocalProduct(
         ? input.category?.trim() || null
         : existing.category,
     unitsPerPack: input.unitsPerPack ?? existing.unitsPerPack,
+    attributes: input.attributes ?? existing.attributes ?? {},
     updatedAt: nowIso(),
     syncedAt: null,
   };

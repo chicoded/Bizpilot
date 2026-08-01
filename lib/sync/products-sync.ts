@@ -27,6 +27,7 @@ export type CloudProductRow = {
   sku?: string | null;
   imageUrl?: string | null;
   isActive?: boolean;
+  attributes?: Record<string, string | number | boolean> | null;
 };
 
 async function listUnsyncedLocalProducts(
@@ -59,6 +60,7 @@ function mapCloudToLocal(
     batchNumber: existing?.batchNumber ?? null,
     expiryDate: existing?.expiryDate ?? null,
     imageUrl: product.imageUrl ?? existing?.imageUrl ?? null,
+    attributes: product.attributes ?? existing?.attributes ?? {},
     isActive: product.isActive !== false,
     createdAt: existing?.createdAt ?? timestamp,
     updatedAt: timestamp,
@@ -116,6 +118,7 @@ export async function pushLocalProducts(
           batchNumber: p.batchNumber,
           expiryDate: p.expiryDate,
           imageUrl: p.imageUrl,
+          attributes: p.attributes ?? {},
           isActive: p.isActive,
           updatedAt: p.updatedAt,
         })),

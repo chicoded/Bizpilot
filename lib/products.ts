@@ -198,14 +198,17 @@ export async function listProductsForApi(
   businessId: string
 ): Promise<ProductApiItem[]> {
   const withImages = await checkProductColumn("imageUrl");
+  const withAttributes = await checkProductColumn("attributes");
 
   try {
     const products = await prisma.product.findMany({
       where: { businessId, isActive: true },
       orderBy: { name: "asc" },
-      select: withImages
-        ? { ...productApiSelect, imageUrl: true }
-        : productApiSelect,
+      select: {
+        ...productApiSelect,
+        ...(withImages ? { imageUrl: true } : {}),
+        ...(withAttributes ? { attributes: true } : {}),
+      },
     });
 
     return products.map((product) => ({
@@ -224,6 +227,9 @@ export async function listProductsForApi(
         withImages && "imageUrl" in product
           ? ((product as { imageUrl?: string | null }).imageUrl ?? null)
           : null,
+      attributes: normalizeAttributes(
+        (product as { attributes?: unknown }).attributes
+      ),
     }));
   } catch (error) {
     console.error("listProductsForApi failed:", error);
@@ -249,6 +255,7 @@ export async function listProductsForApi(
       sku: product.sku ?? null,
       isActive: product.isActive,
       imageUrl: null,
+      attributes: {},
     }));
   }
 }

@@ -20,6 +20,7 @@ import {
   updateLocalProduct,
 } from "@/lib/local-data/products";
 import { parseProductFormData } from "@/lib/local-data/form";
+import { ProductAttributeFields } from "@/features/inventory/product-attribute-fields";
 
 interface ProductEditFormProps {
   product: {
@@ -35,6 +36,7 @@ interface ProductEditFormProps {
     expiryDate: string | null;
     imageUrl: string | null;
     supplierId: string | null;
+    attributes?: Record<string, unknown>;
   };
   suppliers?: { id: string; name: string }[];
   canDelete?: boolean;
@@ -46,7 +48,7 @@ export function ProductEditForm({
   canDelete = false,
 }: ProductEditFormProps) {
   const router = useRouter();
-  const { businessId } = useLocalData();
+  const { businessId, industry } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(product.barcode ?? "");
@@ -75,7 +77,7 @@ export function ProductEditForm({
         return;
       }
 
-      const parsed = await parseProductFormData(formData);
+      const parsed = await parseProductFormData(formData, industry);
       if ("error" in parsed) {
         setError(parsed.error);
         return;
@@ -222,6 +224,12 @@ export function ProductEditForm({
                   />
                 </div>
               </div>
+
+              <ProductAttributeFields
+                industry={industry}
+                values={product.attributes}
+                disabled={isPending}
+              />
 
               {error && (
                 <p

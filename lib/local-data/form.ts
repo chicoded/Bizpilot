@@ -1,5 +1,6 @@
 import { productSchema } from "@/lib/validations";
 import { parseMoneyInput } from "@/lib/pack-pricing";
+import { readProductAttributesFromForm } from "@/lib/industries";
 import type { ProductInput } from "@/lib/local-data/products";
 
 function formValue(value: FormDataEntryValue | null): string | undefined {
@@ -26,7 +27,8 @@ async function imageFromForm(formData: FormData): Promise<string | null | undefi
 }
 
 export async function parseProductFormData(
-  formData: FormData
+  formData: FormData,
+  industry?: string | null
 ): Promise<{ data: ProductInput } | { error: string }> {
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
@@ -49,6 +51,13 @@ export async function parseProductFormData(
     return { error: message ?? "Please check your inputs" };
   }
 
+  const attributes = readProductAttributesFromForm(industry, (name) =>
+    formValue(formData.get(name))
+  );
+  if (!attributes.success) {
+    return { error: attributes.message };
+  }
+
   const imageUrl = await imageFromForm(formData);
 
   return {
@@ -65,6 +74,7 @@ export async function parseProductFormData(
       batchNumber: parsed.data.batchNumber ?? null,
       expiryDate: parsed.data.expiryDate || null,
       ...(imageUrl !== undefined ? { imageUrl } : {}),
+      ...(attributes.attributes ? { attributes: attributes.attributes } : {}),
     },
   };
 }

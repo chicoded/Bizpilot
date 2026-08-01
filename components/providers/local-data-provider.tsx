@@ -23,6 +23,8 @@ type LocalDataContextValue = {
   businessId: string | null;
   businessName: string;
   currency: string;
+  /** Drives industry-specific fields and presets while offline. */
+  industry: string | null;
   storageMode: "local";
   refresh: () => Promise<void>;
   runBackupNow: () => Promise<{ ok: boolean; message: string }>;
@@ -34,12 +36,14 @@ function applyMeta(
   meta: Awaited<ReturnType<typeof getLocalBusinessMeta>>,
   setBusinessId: (id: string | null) => void,
   setBusinessName: (name: string) => void,
-  setCurrency: (currency: string) => void
+  setCurrency: (currency: string) => void,
+  setIndustry: (industry: string | null) => void
 ) {
   const id = meta?.businessId ?? null;
   setBusinessId(id);
   setBusinessName(meta?.name ?? "My shop");
   setCurrency(meta?.currency ?? "NGN");
+  setIndustry(meta?.industry ?? null);
   return id;
 }
 
@@ -61,6 +65,7 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("My shop");
   const [currency, setCurrency] = useState("NGN");
+  const [industry, setIndustry] = useState<string | null>(null);
   const statusRef = useRef<LocalDataStatus>("loading");
   const hydratedSessionRef = useRef(false);
 
@@ -92,7 +97,8 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
           },
           setBusinessId,
           setBusinessName,
-          setCurrency
+          setCurrency,
+          setIndustry
         );
         setStatus("ready");
       }
@@ -110,7 +116,8 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
           },
           setBusinessId,
           setBusinessName,
-          setCurrency
+          setCurrency,
+          setIndustry
         );
       }
       setStatus("ready");
@@ -127,7 +134,8 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
           },
           setBusinessId,
           setBusinessName,
-          setCurrency
+          setCurrency,
+          setIndustry
         );
       }
       setStatus("ready");
@@ -231,11 +239,12 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
       businessId,
       businessName,
       currency,
+      industry,
       storageMode: "local" as const,
       refresh: () => refresh({ quiet: true }),
       runBackupNow,
     }),
-    [status, businessId, businessName, currency, refresh, runBackupNow]
+    [status, businessId, businessName, currency, industry, refresh, runBackupNow]
   );
 
   return (

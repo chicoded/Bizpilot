@@ -25,6 +25,7 @@ export interface ProductApiItem {
   purchasePrice?: number;
   quantity: number;
   barcode: string | null;
+  attributes?: Record<string, unknown>;
   category?: string | null;
   reorderLevel?: number;
   unitsPerPack?: number;

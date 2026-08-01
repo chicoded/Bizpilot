@@ -12,8 +12,6 @@ function sub(
   return {
     id: "sub_1",
     businessId: "biz_1",
-    plan: overrides.plan,
-    status: overrides.status,
     currentPeriodEnd: overrides.currentPeriodEnd ?? new Date("2099-01-01"),
     paystackCustomerCode: null,
     paystackSubCode: null,

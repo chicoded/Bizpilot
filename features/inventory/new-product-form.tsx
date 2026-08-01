@@ -14,6 +14,7 @@ import { BarcodeScanField } from "@/features/inventory/barcode-scan-field";
 import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { parseMoneyInput } from "@/lib/pack-pricing";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
+import { ProductAttributeFields } from "@/features/inventory/product-attribute-fields";
 import { useLocalData } from "@/components/providers/local-data-provider";
 import { createLocalProduct } from "@/lib/local-data/products";
 import { parseProductFormData } from "@/lib/local-data/form";
@@ -28,7 +29,7 @@ export function NewProductForm({
   suppliers = [],
 }: NewProductFormProps) {
   const router = useRouter();
-  const { businessId } = useLocalData();
+  const { businessId, industry } = useLocalData();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [barcode, setBarcode] = useState(initialBarcode);
@@ -59,7 +60,7 @@ export function NewProductForm({
         return;
       }
 
-      const parsed = await parseProductFormData(formData);
+      const parsed = await parseProductFormData(formData, industry);
       if ("error" in parsed) {
         setError(parsed.error);
         return;
@@ -143,6 +144,8 @@ export function NewProductForm({
                   <Input id="expiryDate" name="expiryDate" type="date" />
                 </div>
               </div>
+
+              <ProductAttributeFields industry={industry} disabled={isPending} />
 
               {error && (
                 <p
