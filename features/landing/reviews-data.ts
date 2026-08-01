@@ -38,3 +38,46 @@ export type Review = {
 };
 
 export const reviews: Review[] = [];
+
+/**
+ * Placeholder copy for looking at the design — development only.
+ *
+ * `process.env.NODE_ENV` is statically replaced at build time, so this array is
+ * an empty literal in the production bundle and these words cannot reach a real
+ * visitor. That is the whole reason it is written this way rather than as a
+ * flag someone could flip.
+ *
+ * They are also deliberately not written as testimonials. No shop names, no
+ * people, no praise — just the right shape and length so the layout can be
+ * judged. A convincing fake is exactly what must not exist, because the moment
+ * it looks real, someone ships it.
+ */
+export const sampleReviews: Review[] =
+  process.env.NODE_ENV === "development"
+    ? [
+        {
+          quote:
+            "Placeholder text standing in for a real quote, roughly the length a shop owner writes when asked what changed since they started.",
+          name: "Placeholder name",
+          shop: "Example shop",
+          location: "City",
+          trade: "Pharmacy",
+        },
+        {
+          quote:
+            "Second placeholder, deliberately shorter, so the carousel can be checked against quotes of uneven length.",
+          name: "Placeholder name",
+          shop: "Example shop",
+          location: "City",
+          trade: "Restaurant",
+        },
+        {
+          quote:
+            "Third placeholder. Longer again, running past two lines on a narrow screen so the card growing taller is visible while laying the section out.",
+          name: "Placeholder name",
+          shop: "Example shop",
+          location: "City",
+          trade: "Supermarket",
+        },
+      ]
+    : [];

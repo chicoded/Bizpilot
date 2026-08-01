@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { reviews } from "@/features/landing/reviews-data";
+import { reviews, sampleReviews } from "@/features/landing/reviews-data";
+
+/**
+ * Real reviews when there are any; placeholders while laying the section out in
+ * development, and nothing at all in production until a real one is added.
+ */
+const shown = reviews.length > 0 ? reviews : sampleReviews;
+const isPlaceholder = reviews.length === 0 && shown.length > 0;
 
 /**
  * Auto-rotating glass cards — but only over reviews that exist.
@@ -19,7 +26,7 @@ export function Testimonials() {
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || reviews.length < 2) return;
+    if (!node || shown.length < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let timer = 0;
@@ -28,7 +35,7 @@ export function Testimonials() {
         window.clearInterval(timer);
         if (entry.isIntersecting) {
           timer = window.setInterval(
-            () => setActive((i) => (i + 1) % reviews.length),
+            () => setActive((i) => (i + 1) % shown.length),
             5000
           );
         }
@@ -43,7 +50,7 @@ export function Testimonials() {
     };
   }, []);
 
-  if (reviews.length === 0) return null;
+  if (shown.length === 0) return null;
 
   return (
     <section className="border-y border-border bg-secondary/40">
@@ -52,8 +59,18 @@ export function Testimonials() {
           From shops already running on it
         </h2>
 
+        {/* Only ever rendered in development, alongside placeholder copy. It
+            exists so nobody can screenshot this section and mistake it for
+            live social proof. */}
+        {isPlaceholder && (
+          <p className="mx-auto mt-4 max-w-md rounded-lg border border-warning/40 bg-warning/10 px-3.5 py-2 text-center text-sm font-medium text-warning">
+            Placeholder text — layout preview only. Nothing here ships; add real
+            quotes to reviews-data.ts.
+          </p>
+        )}
+
         <div className="relative mt-12 min-h-[15rem]">
-          {reviews.map((review, index) => (
+          {shown.map((review, index) => (
             <figure
               key={`${review.shop}-${review.name}`}
               aria-hidden={index !== active}
@@ -78,9 +95,9 @@ export function Testimonials() {
           ))}
         </div>
 
-        {reviews.length > 1 && (
+        {shown.length > 1 && (
           <div className="mt-6 flex justify-center gap-1.5">
-            {reviews.map((review, index) => (
+            {shown.map((review, index) => (
               <button
                 key={`${review.shop}-dot`}
                 type="button"

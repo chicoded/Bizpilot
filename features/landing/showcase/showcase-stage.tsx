@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhoneFrame, LaptopFrame } from "./device-frames";
-import { timelineFor } from "./assembly";
+import { playFor } from "./motion";
 import {
   ScanScreen,
   PayScreen,
@@ -72,7 +72,10 @@ const CHAPTERS: Chapter[] = [
 export function ShowcaseStage() {
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  /** Progress within the current chapter — drives the screen. */
   const [local, setLocal] = useState(0);
+  /** Progress across the whole tour — drives the two turns. */
+  const [tour, setTour] = useState(0);
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
@@ -97,12 +100,15 @@ export function ShowcaseStage() {
       const within = (p - index * span) / span;
 
       setActive((current) => (current === index ? current : index));
-      // Quantised, but finely: the assembly happens in the first fifth of a
-      // chapter, so a coarse step count would make the snap stutter. 140 steps
-      // is smooth there while still bounding re-renders — a chapter spans a
-      // whole viewport of scrolling, so this is far below one per frame.
+      // Two quantised values, because they move at different rates. The turn
+      // happens in the first twentieth of the whole tour, so it needs a fine
+      // step count; the workflow spans a whole chapter and does not.
+      setTour((current) => {
+        const next = Math.round(p * 600) / 600;
+        return current === next ? current : next;
+      });
       setLocal((current) => {
-        const next = Math.round(within * 140) / 140;
+        const next = Math.round(within * 90) / 90;
         return current === next ? current : next;
       });
     }
@@ -125,12 +131,16 @@ export function ShowcaseStage() {
   }, []);
 
   const chapter = CHAPTERS[active];
-  // Reduced motion skips the assembly entirely: the device is simply present,
-  // with its workflow finished, rather than flying together and apart.
-  const p = reduced ? 0.5 : local;
-  // The workflow runs on its own clock inside the chapter, so it starts after
-  // the shell has landed and finishes before it comes apart.
-  const play = reduced ? 1 : timelineFor(local).play;
+
+  // Where the phone gives way to the laptop, as a fraction of the whole tour.
+  // Derived rather than hardcoded so reordering chapters cannot desync it.
+  const swapIndex = CHAPTERS.findIndex((c) => c.device === "laptop");
+  const swapAt = swapIndex > 0 ? swapIndex / CHAPTERS.length : undefined;
+
+  // Reduced motion skips the turns entirely: the device sits square with its
+  // workflow finished, rather than spinning in and out.
+  const spinProgress = reduced ? 0.5 : tour;
+  const play = reduced ? 1 : playFor(local);
 
   return (
     <section
@@ -196,16 +206,15 @@ export function ShowcaseStage() {
                 chapter.device === "laptop" && "lg:order-1"
               )}
             >
-              {/* Keyed by chapter, not by device type: each chapter's device
-                  should assemble from nothing and leave again, so a phone
-                  chapter following a phone chapter still rebuilds rather than
-                  swapping its screen behind an unchanged shell. */}
+              {/* Keyed by device, not by chapter: the hardware stays put while
+                  features change, and is only rebuilt when the phone actually
+                  gives way to the laptop. */}
               {chapter.device === "phone" ? (
-                <PhoneFrame key={`phone-${active}`} progress={p}>
+                <PhoneFrame key="phone" progress={spinProgress} swapAt={swapAt}>
                   {chapter.render(play)}
                 </PhoneFrame>
               ) : (
-                <LaptopFrame key={`laptop-${active}`} progress={p}>
+                <LaptopFrame key="laptop" progress={spinProgress} swapAt={swapAt}>
                   {chapter.render(play)}
                 </LaptopFrame>
               )}
