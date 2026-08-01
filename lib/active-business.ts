@@ -4,8 +4,19 @@ import { Role } from "@prisma/client";
 
 export const ACTIVE_BUSINESS_COOKIE = "bizpilot_active_business";
 
+/**
+ * Columns older databases may not have. `loadMembershipForUser` drops these
+ * from its select and retries when the column is missing, so the type has to
+ * allow their absence — otherwise the fallback paths don't compile.
+ */
+type OptionalBusinessColumns =
+  | "industryLabel"
+  | "rolePermissions"
+  | "suspendedAt";
+
 export type MembershipWithBusiness = Membership & {
-  business: Business;
+  business: Omit<Business, OptionalBusinessColumns> &
+    Partial<Pick<Business, OptionalBusinessColumns>>;
 };
 
 export async function getActiveBusinessIdFromCookie(): Promise<string | null> {
