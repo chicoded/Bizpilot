@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductImage } from "@/components/product/product-image";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { AlertTriangle, Ban } from "lucide-react";
 import type { InventoryListProduct } from "@/lib/products";
 
 interface ProductCardProps {
@@ -19,7 +19,10 @@ interface ProductCardProps {
   >;
   currency: string;
   isLowStock: boolean;
+  /** Within the warning window and still sellable. */
   isExpiring: boolean;
+  /** Already past its date — a different problem, and a worse one. */
+  isExpired?: boolean;
 }
 
 export function ProductCard({
@@ -27,51 +30,84 @@ export function ProductCard({
   currency,
   isLowStock,
   isExpiring,
+  isExpired = false,
 }: ProductCardProps) {
+  const outOfStock = product.quantity === 0;
+
   return (
     <Link
       href={`/inventory/${product.id}`}
-      className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biz-blue focus-visible:ring-offset-2 touch-manipulation"
+      className="block rounded-lg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      <Card className="hover:shadow-glass transition-shadow cursor-pointer h-full active:scale-[0.99] overflow-hidden">
-        <div className="relative aspect-[4/3] w-full bg-muted">
-          <ProductImage
-            imageUrl={product.imageUrl}
-            alt={product.name}
-          />
-          {isLowStock && (
-            <div className="absolute top-2 right-2 rounded-full bg-amber-100 p-1.5 shadow-sm">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-            </div>
+      <Card className="h-full overflow-hidden transition-colors hover:border-primary active:scale-[0.99]">
+        {/* Shorter than the old 4:3 so more of the shelf fits on one screen —
+            on this page the facts are what get scanned, not the photograph. */}
+        <div className="relative aspect-[16/9] w-full bg-muted">
+          <ProductImage imageUrl={product.imageUrl} alt={product.name} />
+
+          {/* Worded, not just an icon: a lone triangle does not say whether the
+              problem is the stock level or the expiry date. */}
+          {(isExpired || isLowStock || outOfStock) && (
+            <span
+              className={cn(
+                "absolute right-2 top-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold shadow-sm",
+                isExpired || outOfStock
+                  ? "bg-destructive text-destructive-foreground"
+                  : "bg-warning text-warning-foreground"
+              )}
+            >
+              {isExpired || outOfStock ? (
+                <Ban className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {isExpired ? "Expired" : outOfStock ? "Out of stock" : "Low"}
+            </span>
           )}
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-semibold truncate mb-1">{product.name}</h3>
+
+        <CardContent className="p-3.5">
+          <h3 className="line-clamp-2 font-semibold leading-snug text-foreground">
+            {product.name}
+          </h3>
           {product.category && (
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {product.category}
             </p>
           )}
-          <div className="flex items-end justify-between gap-2">
-            <div>
-              <p className="text-lg font-bold text-brand">
+
+          <div className="mt-2.5 flex items-end justify-between gap-2">
+            <div className="min-w-0">
+              <p className="tnum text-lg font-bold leading-tight text-foreground">
                 {formatCurrency(product.sellingPrice, currency)}
               </p>
               <p
-                className={`text-sm font-medium ${
-                  isLowStock ? "text-amber-600" : "text-muted-foreground"
-                }`}
+                className={cn(
+                  "tnum text-sm font-medium",
+                  outOfStock
+                    ? "text-destructive"
+                    : isLowStock
+                      ? "text-warning"
+                      : "text-muted-foreground"
+                )}
               >
                 {product.quantity} in stock
               </p>
             </div>
+
             {product.expiryDate && (
               <p
-                className={`text-xs shrink-0 ${
-                  isExpiring ? "text-red-500 font-medium" : "text-muted-foreground"
-                }`}
+                className={cn(
+                  "shrink-0 text-right text-xs font-medium",
+                  isExpired
+                    ? "text-destructive"
+                    : isExpiring
+                      ? "text-warning"
+                      : "text-muted-foreground"
+                )}
               >
-                Exp: {formatDate(product.expiryDate)}
+                <span className="block">{isExpired ? "Expired" : "Expires"}</span>
+                <span className="tnum">{formatDate(product.expiryDate)}</span>
               </p>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -29,17 +29,42 @@ export function InventoryList({ products, currency }: InventoryListProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
+  /**
+   * Expiry state, kept in one place so the card and the filter cannot disagree.
+   *
+   * The filter used to require expiryDate >= now, which quietly excluded stock
+   * that had already expired — so filtering for expiry problems hid the worst
+   * ones. Expired stock is a problem you must see, not one you have missed.
+   */
+  const expiryStateOf = useCallback((expiryDate: Date | null) => {
+    if (!expiryDate) return { isExpiring: false, isExpired: false };
+    const now = new Date();
+    if (expiryDate < now) return { isExpiring: false, isExpired: true };
+    return {
+      isExpiring: expiryDate <= addDays(now, 30),
+      isExpired: false,
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    let low = 0;
+    let expiring = 0;
+    for (const product of products) {
+      if (product.quantity <= product.reorderLevel) low += 1;
+      const { isExpiring, isExpired } = expiryStateOf(product.expiryDate);
+      if (isExpiring || isExpired) expiring += 1;
+    }
+    return { low, expiring };
+  }, [products, expiryStateOf]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return products.filter((product) => {
       const isLowStock = product.quantity <= product.reorderLevel;
-      const isExpiring =
-        product.expiryDate &&
-        product.expiryDate <= addDays(new Date(), 30) &&
-        product.expiryDate >= new Date();
+      const { isExpiring, isExpired } = expiryStateOf(product.expiryDate);
 
       if (filter === "low" && !isLowStock) return false;
-      if (filter === "expiring" && !isExpiring) return false;
+      if (filter === "expiring" && !isExpiring && !isExpired) return false;
 
       if (!q) return true;
       return (
@@ -47,7 +72,7 @@ export function InventoryList({ products, currency }: InventoryListProps) {
         product.category?.toLowerCase().includes(q)
       );
     });
-  }, [products, search, filter]);
+  }, [products, search, filter, expiryStateOf]);
 
   return (
     <div className="space-y-4">
@@ -66,10 +91,11 @@ export function InventoryList({ products, currency }: InventoryListProps) {
         label="Inventory filter"
         value={filter}
         onChange={setFilter}
+        // Counts on the tab, so you know whether it is worth opening.
         options={[
-          { value: "all", label: "All" },
-          { value: "low", label: "Low stock" },
-          { value: "expiring", label: "Expiring" },
+          { value: "all", label: `All ${products.length}` },
+          { value: "low", label: `Low stock ${counts.low}` },
+          { value: "expiring", label: `Expiring ${counts.expiring}` },
         ]}
       />
 
@@ -82,18 +108,16 @@ export function InventoryList({ products, currency }: InventoryListProps) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((product) => {
-            const isLowStock = product.quantity <= product.reorderLevel;
-            const isExpiring =
-              product.expiryDate &&
-              product.expiryDate <= addDays(new Date(), 30);
+            const { isExpiring, isExpired } = expiryStateOf(product.expiryDate);
 
             return (
               <ProductCard
                 key={product.id}
                 product={product}
                 currency={currency}
-                isLowStock={isLowStock}
-                isExpiring={!!isExpiring}
+                isLowStock={product.quantity <= product.reorderLevel}
+                isExpiring={isExpiring}
+                isExpired={isExpired}
               />
             );
           })}

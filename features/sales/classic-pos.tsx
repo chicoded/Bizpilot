@@ -59,9 +59,9 @@ interface CartItem {
 
 function ProductSkeletonGrid() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <Skeleton key={i} className="h-[72px]" />
+        <Skeleton key={i} className="h-[88px]" />
       ))}
     </div>
   );
@@ -475,15 +475,33 @@ export function ClassicPos() {
                     type="button"
                     onClick={() => addToCart(product)}
                     disabled={product.quantity === 0}
-                    className="rounded-xl border border-border bg-card p-3 text-left hover:border-primary hover:shadow-soft transition-all disabled:opacity-40 active:scale-[0.97] touch-manipulation min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex min-h-[88px] flex-col justify-between rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary disabled:opacity-50 active:scale-[0.97] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <p className="font-semibold text-sm truncate text-foreground">{product.name}</p>
-                    <p className="text-brand font-bold mt-1">
-                      {formatCurrency(product.sellingPrice)}
+                    {/* Two lines, not one truncated: half the stock in a
+                        Nigerian shop shares a first word, so "Paracetamol…"
+                        against "Paracetamol…" is a guess, not a choice. */}
+                    <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                      {product.name}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {product.quantity} left
-                    </p>
+                    <div className="mt-2 flex items-baseline justify-between gap-2">
+                      <span className="tnum text-base font-bold text-foreground">
+                        {formatCurrency(product.sellingPrice)}
+                      </span>
+                      <span
+                        className={cn(
+                          "tnum shrink-0 text-xs font-semibold",
+                          product.quantity === 0
+                            ? "text-destructive"
+                            : product.quantity <= 5
+                              ? "text-warning"
+                              : "text-muted-foreground"
+                        )}
+                      >
+                        {product.quantity === 0
+                          ? "Out"
+                          : `${product.quantity} left`}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -527,19 +545,22 @@ export function ClassicPos() {
                             {formatCurrency(item.product.sellingPrice)} each
                           </p>
                         </div>
-                        <div className="flex items-center gap-1">
+                        {/* The most-tapped controls in the app. They were 36px
+                            with 12px glyphs — smaller than anything else on
+                            screen, and hit repeatedly while a queue waits. */}
+                        <div className="flex shrink-0 items-center gap-1">
                           <Button
                             type="button"
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 touch-manipulation"
+                            className="h-11 w-11 touch-manipulation"
                             onClick={() => updateQty(item.product.id, -1)}
                             aria-label={`Decrease quantity of ${item.product.name}`}
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-4 w-4" strokeWidth={2.5} />
                           </Button>
                           <span
-                            className="w-6 text-center text-sm font-bold"
+                            className="tnum w-8 text-center text-base font-bold"
                             aria-label={`Quantity: ${item.quantity}`}
                           >
                             {item.quantity}
@@ -548,11 +569,11 @@ export function ClassicPos() {
                             type="button"
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 touch-manipulation"
+                            className="h-11 w-11 touch-manipulation"
                             onClick={() => updateQty(item.product.id, 1)}
                             aria-label={`Increase quantity of ${item.product.name}`}
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-4 w-4" strokeWidth={2.5} />
                           </Button>
                         </div>
                       </div>
@@ -560,7 +581,7 @@ export function ClassicPos() {
                     <button
                       type="button"
                       onClick={clearCart}
-                      className="w-full text-center text-xs font-medium text-destructive py-1 touch-manipulation"
+                      className="min-h-11 w-full rounded-lg text-center text-sm font-medium text-destructive touch-manipulation hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
                     >
                       Clear cart
                     </button>
@@ -568,9 +589,13 @@ export function ClassicPos() {
                 )}
 
                 <div className="border-t pt-4 space-y-3">
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-brand">
+                  {/* The one number the cashier and the customer both check.
+                      It was set at the same size as a section heading. */}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Total
+                    </span>
+                    <span className="tnum text-3xl font-bold leading-none text-foreground">
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
@@ -692,11 +717,11 @@ export function ClassicPos() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 shrink-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                    className="h-11 w-11 shrink-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                     onClick={() => removeFromCart(item.product.id)}
                     aria-label={`Remove ${item.product.name}`}
                   >
-                    <X className="h-4 w-4" strokeWidth={2.75} />
+                    <X className="h-5 w-5" strokeWidth={2.5} />
                   </Button>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.product.name}</p>
@@ -710,21 +735,27 @@ export function ClassicPos() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 touch-manipulation"
+                      className="h-11 w-11 touch-manipulation"
                       onClick={() => updateQty(item.product.id, -1)}
                       aria-label={`Decrease ${item.product.name}`}
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-4 w-4" strokeWidth={2.5} />
                     </Button>
+                    <span
+                      className="tnum w-7 shrink-0 text-center text-base font-bold"
+                      aria-hidden
+                    >
+                      {item.quantity}
+                    </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 touch-manipulation"
+                      className="h-11 w-11 touch-manipulation"
                       onClick={() => updateQty(item.product.id, 1)}
                       aria-label={`Increase ${item.product.name}`}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-4 w-4" strokeWidth={2.5} />
                     </Button>
                   </div>
                 </div>
@@ -735,12 +766,12 @@ export function ClassicPos() {
               <button
                 type="button"
                 onClick={scrollToCart}
-                className="flex-1 min-w-0 text-left touch-manipulation rounded-xl px-1"
+                className="min-h-14 flex-1 min-w-0 rounded-lg px-1 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs font-medium text-muted-foreground">
                   {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
                 </p>
-                <p className="text-lg font-bold text-brand leading-tight">
+                <p className="tnum text-2xl font-bold leading-tight text-foreground">
                   {formatCurrency(subtotal)}
                 </p>
               </button>
@@ -748,12 +779,12 @@ export function ClassicPos() {
                 type="button"
                 variant="success"
                 size="lg"
-                className="h-12 min-w-[120px] shrink-0 touch-manipulation text-base font-semibold"
+                className="h-14 min-w-[8.5rem] shrink-0 text-base font-bold touch-manipulation"
                 onClick={completeSale}
                 disabled={isPending}
               >
                 {isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-label="Processing sale" />
+                  <Loader2 className="h-5 w-5 animate-spin" aria-label="Processing sale" />
                 ) : (
                   "Pay"
                 )}
