@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhoneFrame, LaptopFrame } from "./device-frames";
+import { timelineFor } from "./assembly";
 import {
   ScanScreen,
   PayScreen,
@@ -96,11 +97,12 @@ export function ShowcaseStage() {
       const within = (p - index * span) / span;
 
       setActive((current) => (current === index ? current : index));
-      // Quantised to 40 steps: the animation still reads as continuous, but
-      // React re-renders forty times across a chapter rather than sixty times
-      // a second, which is what a raw scroll-to-state binding costs.
+      // Quantised, but finely: the assembly happens in the first fifth of a
+      // chapter, so a coarse step count would make the snap stutter. 140 steps
+      // is smooth there while still bounding re-renders — a chapter spans a
+      // whole viewport of scrolling, so this is far below one per frame.
       setLocal((current) => {
-        const next = Math.round(within * 40) / 40;
+        const next = Math.round(within * 140) / 140;
         return current === next ? current : next;
       });
     }
@@ -123,8 +125,12 @@ export function ShowcaseStage() {
   }, []);
 
   const chapter = CHAPTERS[active];
-  // Reduced motion gets each screen resolved, not mid-animation.
-  const p = reduced ? 1 : local;
+  // Reduced motion skips the assembly entirely: the device is simply present,
+  // with its workflow finished, rather than flying together and apart.
+  const p = reduced ? 0.5 : local;
+  // The workflow runs on its own clock inside the chapter, so it starts after
+  // the shell has landed and finishes before it comes apart.
+  const play = reduced ? 1 : timelineFor(local).play;
 
   return (
     <section
@@ -190,10 +196,18 @@ export function ShowcaseStage() {
                 chapter.device === "laptop" && "lg:order-1"
               )}
             >
+              {/* Keyed by chapter, not by device type: each chapter's device
+                  should assemble from nothing and leave again, so a phone
+                  chapter following a phone chapter still rebuilds rather than
+                  swapping its screen behind an unchanged shell. */}
               {chapter.device === "phone" ? (
-                <PhoneFrame key="phone">{chapter.render(p)}</PhoneFrame>
+                <PhoneFrame key={`phone-${active}`} progress={p}>
+                  {chapter.render(play)}
+                </PhoneFrame>
               ) : (
-                <LaptopFrame key="laptop">{chapter.render(p)}</LaptopFrame>
+                <LaptopFrame key={`laptop-${active}`} progress={p}>
+                  {chapter.render(play)}
+                </LaptopFrame>
               )}
             </div>
           </div>
