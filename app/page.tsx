@@ -5,7 +5,8 @@ import {
   BarChart3,
   Package,
   Shield,
-  Smartphone,
+  WifiOff,
+  Store,
   ArrowRight,
   CheckCircle2,
   AlertTriangle,
@@ -14,146 +15,207 @@ import {
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/features/landing/landing-nav";
 
+/**
+ * Ordered by how hard each one is for a competitor to copy. Offline selling
+ * and per-trade setup are the claims that actually distinguish this product;
+ * an AI assistant is table stakes now and sits further down deliberately.
+ */
 const features = [
   {
-    icon: Sparkles,
-    title: "AI Business Advisor",
+    icon: WifiOff,
+    title: "Keeps selling when the network drops",
     description:
-      "Ask anything — earnings, stock levels, who owes you. Get instant answers in plain English.",
+      "Sales, stock and receipts are recorded on the phone itself. When signal returns, everything syncs to your other devices on its own.",
   },
   {
-    icon: BarChart3,
-    title: "Business Health Score",
+    icon: Store,
+    title: "Set up for your kind of shop",
     description:
-      "One number tells you how your business is doing. Strengths, warnings, and actions — instantly.",
+      "A pharmacy tracks NAFDAC numbers and expiry. A restaurant gets combos and a kitchen screen. You are not handed a spreadsheet and left to adapt.",
   },
   {
     icon: Package,
-    title: "Smart Inventory",
+    title: "Stock that warns you first",
     description:
-      "Track stock, expiry dates, barcodes. AI alerts you before you run out or lose money.",
+      "Expiry dates, batch numbers, reorder levels and barcodes. You hear about the problem while you can still return the goods.",
   },
   {
     icon: Shield,
-    title: "Fraud Detection",
+    title: "Shows you where money leaks",
     description:
-      "Catch stock theft, cash leakage, and suspicious patterns before they hurt your business.",
+      "Damage, theft, expiry and returns are recorded separately, so a shortfall has a reason attached instead of quietly becoming your loss.",
   },
   {
-    icon: Smartphone,
-    title: "Mobile-First POS",
+    icon: BarChart3,
+    title: "One number for how you are doing",
     description:
-      "Sell fast with large buttons, barcode scanning, and multiple payment methods.",
+      "A health score built from your real sales, costs and debts — with the two or three things worth fixing this week.",
   },
+  {
+    icon: Sparkles,
+    title: "Ask in plain English",
+    description:
+      "What did I earn today? Who owes me? What should I restock? Answers drawn from your own records, not guesses.",
+  },
+];
+
+/** Trades with their own setup, not a generic template with the name changed. */
+const trades = [
+  "Pharmacy",
+  "Restaurant",
+  "Supermarket",
+  "Fashion",
+  "Electronics",
+  "Mini mart",
+  "Cafe",
+  "Cosmetics",
+];
+
+const kpis = [
+  { label: "Sales Today", value: "₦124,500" },
+  { label: "Profit", value: "₦31,600" },
+  { label: "Expenses", value: "₦38,200" },
+  { label: "Debt", value: "₦52,000" },
 ];
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20">
+    <div className="min-h-screen bg-background">
       <LandingNav />
 
       {/* Hero */}
-      <section className="px-4 py-16 md:py-24 max-w-6xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-biz-emerald/10 px-4 py-1.5 text-sm font-medium text-biz-emerald mb-6">
-          <Sparkles className="h-4 w-4" />
-          AI Operating System for African SMEs
-        </div>
-        <h1 className="mb-6 text-4xl font-bold tracking-tight text-biz-blue dark:text-foreground md:text-6xl">
-          Your AI employee for
-          <br />
-          <span className="text-biz-emerald">Nigerian business</span>
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-          Not bookkeeping. Not just inventory. Zaplex is your accountant,
-          inventory manager, sales analyst, and business advisor — in one app.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <SignedOut>
-            <Link href="/sign-up">
-              <Button size="lg" className="w-full sm:w-auto min-w-[200px]">
-                Start Free Trial
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard">
-              <Button size="lg" variant="success" className="w-full sm:w-auto min-w-[200px]">
-                Open Dashboard
-              </Button>
-            </Link>
-          </SignedIn>
-          <p className="text-sm text-muted-foreground">
-            From ₦5,000/month · 14-day free trial
+      <section className="mx-auto max-w-5xl px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Store className="h-3.5 w-3.5" />
+            Built for shops in Nigeria
           </p>
-        </div>
 
-        {/* Health score preview */}
-        <div className="mx-auto mt-16 max-w-md rounded-2xl border border-emerald-200/50 bg-white/80 p-6 text-left shadow-glass backdrop-blur-xl dark:border-emerald-800/40 dark:bg-card/80">
-          <p className="mb-3 text-sm font-semibold text-biz-emerald">
-            Business Health Score
+          <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight text-foreground md:text-6xl">
+            Run the shop, even when
+            <br className="hidden sm:block" />{" "}
+            <span className="text-brand">the network is down</span>
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
+            Zaplex is a till, stock book and account book in one app — set up
+            for your trade, and built to keep working when the signal doesn&rsquo;t.
           </p>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="text-4xl font-bold text-biz-emerald">78</div>
-            <div className="text-sm text-muted-foreground">/100 · Good</div>
-          </div>
-          <div className="space-y-2 text-sm">
-            <p className="text-success flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              Strong sales this week
-            </p>
-            <p className="text-warning flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              High generator fuel costs
-            </p>
-            <p className="flex items-center gap-2 text-biz-blue dark:text-primary">
-              <CircleDot className="h-4 w-4 shrink-0" />
-              Restock Vitamin C · Follow up debtors
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <SignedOut>
+              <Link href="/sign-up" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto sm:min-w-[13rem]">
+                  Start free trial
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto sm:min-w-[13rem]">
+                  Open dashboard
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedIn>
+            <p className="text-sm text-muted-foreground">
+              <span className="tnum">₦5,000</span>/month · 14 days free
             </p>
           </div>
         </div>
 
-        <div className="mt-10 mx-auto max-w-4xl rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-glass overflow-hidden text-left">
-          <div className="border-b px-4 py-3 flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-destructive/80" />
-            <div className="h-3 w-3 rounded-full bg-warning/80" />
-            <div className="h-3 w-3 rounded-full bg-success/80" />
-            <span className="text-xs text-muted-foreground ml-2">Zaplex Dashboard</span>
+        {/* Product proof */}
+        <div className="mx-auto mt-14 max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-glass">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-destructive/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
+            <span className="ml-2 text-xs font-medium text-muted-foreground">
+              Today at a glance
+            </span>
           </div>
-          <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: "Sales Today", value: "₦124,500" },
-              { label: "Profit", value: "₦31,600" },
-              { label: "Expenses", value: "₦38,200" },
-              { label: "Debt", value: "₦52,000" },
-            ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl border bg-background p-3">
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="mt-1 text-lg font-bold text-biz-blue dark:text-primary tabular-nums">{value}</p>
+
+          <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
+            {kpis.map((kpi) => (
+              <div key={kpi.label} className="bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {kpi.label}
+                </p>
+                <p className="tnum mt-1 text-lg font-bold text-foreground">
+                  {kpi.value}
+                </p>
               </div>
             ))}
+          </div>
+
+          <div className="border-t border-border p-4 md:p-5">
+            <div className="flex items-baseline gap-3">
+              <span className="tnum text-3xl font-bold text-success">78</span>
+              <span className="text-sm text-muted-foreground">
+                Business health · Good
+              </span>
+            </div>
+            <ul className="mt-3 space-y-1.5 text-sm">
+              <li className="flex items-center gap-2 text-success">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                Sales up on last week
+              </li>
+              <li className="flex items-center gap-2 text-warning">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Generator fuel is running high
+              </li>
+              <li className="flex items-center gap-2 text-muted-foreground">
+                <CircleDot className="h-4 w-4 shrink-0" />
+                Vitamin C expires in 3 weeks · 4 customers owe you
+              </li>
+            </ul>
           </div>
         </div>
       </section>
 
+      {/* Trades */}
+      <section className="border-y border-border bg-secondary/50">
+        <div className="mx-auto max-w-5xl px-4 py-10 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Different trades, different setup
+          </p>
+          <p className="mx-auto mt-2 max-w-xl text-pretty text-sm text-muted-foreground">
+            A chemist and a rice shop do not run the same way, so they do not
+            get the same app.
+          </p>
+          <ul className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {trades.map((trade) => (
+              <li
+                key={trade}
+                className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-foreground"
+              >
+                {trade}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       {/* Features */}
-      <section className="px-4 py-16 max-w-6xl mx-auto">
-        <h2 className="mb-12 text-center text-2xl font-bold text-biz-blue dark:text-foreground md:text-3xl">
-          Everything your business needs
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <h2 className="text-balance text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          What you actually get
         </h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-2xl border border-border/50 bg-white/80 p-6 shadow-soft backdrop-blur-xl dark:bg-card/80"
+              className="rounded-xl border border-border bg-card p-5 shadow-soft"
             >
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-biz-blue/10 text-biz-blue dark:bg-primary/15 dark:text-primary">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <feature.icon className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">
+              <h3 className="text-balance font-semibold leading-snug text-foreground">
                 {feature.title}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
                 {feature.description}
               </p>
             </div>
@@ -162,36 +224,50 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="px-4 py-16 max-w-6xl mx-auto text-center">
-        <div className="rounded-3xl bg-biz-gradient p-8 md:p-12 text-white">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Ready to run your business smarter?
+      <section className="mx-auto max-w-5xl px-4 pb-16">
+        <div className="rounded-2xl bg-biz-gradient px-6 py-12 text-center md:px-12">
+          <h2 className="text-balance text-2xl font-bold tracking-tight text-white md:text-3xl">
+            Start with today&rsquo;s takings
           </h2>
-          <p className="text-white/80 mb-6 max-w-lg mx-auto">
-            Join pharmacies, retail shops, and supermarkets across Nigeria using
-            Zaplex.
+          <p className="mx-auto mt-3 max-w-md text-pretty text-white/85">
+            Add your stock, ring up one sale, and see where the day stands. It
+            takes about ten minutes.
           </p>
           <SignedOut>
-            <Link href="/sign-up">
+            <Link href="/sign-up" className="mt-7 inline-block">
               <Button
                 size="lg"
-                variant="secondary"
                 className="bg-white text-biz-blue hover:bg-white/90"
               >
-                Get Started Free
+                Create your shop
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
           </SignedOut>
+          <SignedIn>
+            <Link href="/dashboard" className="mt-7 inline-block">
+              <Button
+                size="lg"
+                className="bg-white text-biz-blue hover:bg-white/90"
+              >
+                Open dashboard
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </Link>
+          </SignedIn>
         </div>
       </section>
 
-      <footer className="px-4 py-8 text-center text-sm text-muted-foreground border-t">
-        <p>© {new Date().getFullYear()} Zaplex. Built for African SMEs.</p>
-        <p className="mt-2">
-          <Link href="/support" className="underline hover:text-foreground">
-            Report a bug / Contact support
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} Zaplex</p>
+          <Link
+            href="/support"
+            className="font-medium underline underline-offset-4 hover:text-foreground"
+          >
+            Report a bug or contact support
           </Link>
-        </p>
+        </div>
       </footer>
     </div>
   );

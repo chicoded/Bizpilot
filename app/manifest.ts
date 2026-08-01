@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     display_override: ["standalone", "fullscreen"],
     orientation: "portrait",
-    background_color: "#f8fafc",
-    theme_color: "#1e3a5f",
+    background_color: "#f4f7f9",
+    theme_color: "#0f2c4d",
     categories: ["business", "finance", "productivity"],
     lang: "en",
     dir: "ltr",
@@ -24,7 +24,9 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/icons/icon.svg",
+        // Its own artwork: a maskable icon is cropped to the launcher's shape,
+        // so the mark needs the safe zone the standard icon doesn't have.
+        src: "/icons/icon-maskable.svg",
         sizes: "512x512",
         type: "image/svg+xml",
         purpose: "maskable",

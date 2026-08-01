@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Zaplex">
+  <!--
+    Maskable variant. Android crops icons to its own shape, so the mark sits
+    inside the 80% safe circle and the field bleeds to the edges. Using the
+    standard icon here got the Z clipped on round launchers.
+  -->
+  <rect width="512" height="512" fill="#0f2c4d"/>
+  <path
+    d="M172 196 H340 L172 316 H340"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="40"
+    stroke-linecap="butt"
+    stroke-linejoin="miter"
+  />
+</svg>

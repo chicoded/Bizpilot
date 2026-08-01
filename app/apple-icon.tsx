@@ -3,22 +3,24 @@ import { ImageResponse } from "next/og";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
+/**
+ * iOS applies its own rounded mask, so the field is drawn square and full
+ * bleed — a pre-rounded corner would show a dark halo inside the mask.
+ */
 export default function AppleIcon() {
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 50%, #10b981 100%)",
-          borderRadius: 36,
-        }}
-      >
-        <span style={{ color: "white", fontSize: 72, fontWeight: 800 }}>Z</span>
-      </div>
+      <svg width={180} height={180} viewBox="0 0 512 512">
+        <rect width="512" height="512" fill="#0f2c4d" />
+        <path
+          d="M156 186 H356 L156 326 H356"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="50"
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+        />
+      </svg>
     ),
     { ...size }
   );

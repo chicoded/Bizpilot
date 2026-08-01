@@ -260,7 +260,10 @@ export async function verifyAndActivatePayment(
     },
   });
 
-  return { success: true, subscription };
+  // alreadyProcessed is stated on both success paths so callers can read it
+  // without checking which one they got. Omitting it here left the property
+  // missing from half the union, so the callback page failed to typecheck.
+  return { success: true, alreadyProcessed: false, subscription };
 }
 
 export async function handleFlutterwaveWebhookEvent(

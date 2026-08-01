@@ -2,62 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Tuned for a cashier holding a cheap Android phone in daylight, not for a
+ * designer on a calibrated monitor. Text colours clear WCAG AA at minimum and
+ * body text clears AAA; borders are dark enough to survive glare; semantic
+ * colours are dark enough to be read as text, not just seen as fills.
+ */
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Off-white rather than pure white — full white glares under sun. */
+    --background: 210 24% 97%;
+    --foreground: 216 33% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 216 33% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
-    --primary: 213 52% 24%;
+    --popover-foreground: 216 33% 11%;
+    /* Saturated enough to read as "tap this" at arm's length. */
+    --primary: 214 90% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 215 25% 25%;
-    --muted: 210 15% 92%;
-    --muted-foreground: 215 10% 45%;
-    --accent: 210 20% 94%;
-    --accent-foreground: 215 25% 15%;
-    --destructive: 0 84% 60%;
+    --secondary: 210 22% 93%;
+    --secondary-foreground: 216 30% 18%;
+    --muted: 210 20% 92%;
+    /* 45% → 36%: secondary text was failing AA outdoors. */
+    --muted-foreground: 215 14% 36%;
+    --accent: 210 22% 93%;
+    --accent-foreground: 216 33% 11%;
+    /* Darkened so status text is legible, not just the fill. */
+    --destructive: 0 74% 43%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 213 52% 24%;
-    --radius: 0.75rem;
-    --success: 160 84% 39%;
+    /* 90% → 82%: the old border was invisible in daylight. */
+    --border: 214 17% 82%;
+    --input: 214 17% 72%;
+    --ring: 214 90% 38%;
+    --radius: 0.625rem;
+    --success: 152 64% 28%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 26 83% 14%;
-    --info: 213 52% 24%;
+    --warning: 30 92% 34%;
+    --warning-foreground: 0 0% 100%;
+    --info: 214 90% 38%;
     --info-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 25% 96%;
-    --card: 222 35% 12%;
-    --card-foreground: 210 25% 96%;
-    --popover: 222 35% 12%;
-    --popover-foreground: 210 25% 96%;
-    --primary: 213 70% 62%;
-    --primary-foreground: 222 47% 7%;
-    --secondary: 222 28% 16%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 222 28% 16%;
-    --muted-foreground: 215 15% 72%;
-    --accent: 222 28% 18%;
-    --accent-foreground: 210 25% 96%;
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 222 22% 22%;
-    --input: 222 22% 22%;
-    --ring: 213 70% 62%;
-    --success: 160 70% 42%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 55%;
-    --warning-foreground: 26 83% 14%;
-    --info: 213 70% 62%;
-    --info-foreground: 222 47% 7%;
+    --background: 220 28% 8%;
+    --foreground: 210 22% 97%;
+    --card: 220 24% 12%;
+    --card-foreground: 210 22% 97%;
+    --popover: 220 24% 12%;
+    --popover-foreground: 210 22% 97%;
+    --primary: 211 92% 64%;
+    --primary-foreground: 220 28% 8%;
+    --secondary: 220 20% 17%;
+    --secondary-foreground: 210 20% 94%;
+    --muted: 220 20% 17%;
+    --muted-foreground: 214 16% 70%;
+    --accent: 220 20% 20%;
+    --accent-foreground: 210 22% 97%;
+    --destructive: 0 76% 62%;
+    --destructive-foreground: 220 28% 8%;
+    --border: 220 15% 27%;
+    --input: 220 15% 34%;
+    --ring: 211 92% 64%;
+    --success: 152 56% 48%;
+    --success-foreground: 220 28% 8%;
+    --warning: 38 92% 58%;
+    --warning-foreground: 220 28% 8%;
+    --info: 211 92% 64%;
+    --info-foreground: 220 28% 8%;
   }
 }
 
@@ -74,6 +85,22 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Never let the browser shrink text in landscape on Android. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Every figure in the app is money or a count — line them up by default. */
+  table,
+  output,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A visible focus ring is a usability feature on cheap touch devices too. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 
   html {
@@ -129,6 +156,15 @@
   .text-brand {
     @apply text-biz-blue dark:text-primary;
   }
+  /* Money and counts. Digits must line up in columns and never reflow. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  /* Minimum comfortable target for a thumb on a moving bus. */
+  .tap-target {
+    @apply min-h-12 min-w-12;
+  }
   .pill-filter {
     @apply rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
   }
@@ -169,12 +205,15 @@
   aside,
   nav,
   header,
-  .print\\:hidden,
+  /* Single backslash: `\:` is the CSS escape for a colon in a class name.
+     The doubled form parsed under webpack but breaks Turbopack, which is what
+     `npm run dev` runs — so the dev server was returning 500 on every page. */
+  .print\:hidden,
   [data-print-hide] {
     display: none !important;
   }
 
-  .md\\:pl-64 {
+  .md\:pl-64 {
     padding-left: 0 !important;
   }
 

@@ -1,18 +1,42 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
-const inter = Inter({
+/**
+ * IBM Plex Sans is built for data-dense technical interfaces: open apertures
+ * that survive glare, and tabular figures that hold a money column steady.
+ * Plex Mono pairs with it for receipt numbers, SKUs and barcodes.
+ */
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Zaplex — The AI Operating System for African SMEs",
+  // Matches the page's own promise. The previous title claimed an "AI
+  // Operating System", which says nothing a shop owner searches for.
+  title: "Zaplex — Shop till and stock book that works offline",
   description:
-    "AI-powered business management for pharmacies, retail shops, supermarkets and more. Inventory, POS, expenses, debt tracking, and AI insights.",
-  keywords: ["SME", "Nigeria", "POS", "inventory", "AI", "business", "Zaplex"],
+    "Till, stock book and account book in one app for Nigerian shops. Keeps selling when the network drops, and sets up for your trade — pharmacy, restaurant, supermarket, fashion and more.",
+  keywords: [
+    "POS Nigeria",
+    "offline POS",
+    "inventory app",
+    "pharmacy software Nigeria",
+    "shop management",
+    "SME",
+    "Zaplex",
+  ],
   applicationName: "Zaplex",
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
@@ -56,7 +80,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${plexSans.variable} ${plexMono.variable} font-sans antialiased`}
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
