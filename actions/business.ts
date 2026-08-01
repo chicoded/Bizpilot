@@ -5,6 +5,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { allocateReceiptNumber } from "@/lib/receipt-number";
 import { prisma } from "@/lib/db";
 import { updateProductImageUrl, getInventoryProduct, createInventoryProduct, updateInventoryProduct, deactivateInventoryProduct } from "@/lib/products";
+import { readProductAttributesFromForm } from "@/lib/industries";
 import { businessSchema, productSchema, expenseSchema, saleSchema, customerSchema, debtPaymentSchema, updateBusinessSchema } from "@/lib/validations";
 import { syncClerkUser, requireBusinessContext, requireSectionAccess, hasPermission } from "@/lib/auth";
 import { setActiveBusinessId } from "@/lib/active-business";
@@ -266,6 +267,14 @@ export async function createProduct(formData: FormData) {
       resolvedSupplierId = supplier.id;
     }
 
+    const attributes = readProductAttributesFromForm(
+      ctx.business.industry,
+      (name) => formValue(formData.get(name))
+    );
+    if (!attributes.success) {
+      return { error: attributes.message };
+    }
+
     const product = await createInventoryProduct({
       ...rest,
       sku: sku ?? null,
@@ -275,6 +284,7 @@ export async function createProduct(formData: FormData) {
       supplierId: resolvedSupplierId,
       businessId: ctx.businessId,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
+      ...(attributes.attributes ? { attributes: attributes.attributes } : {}),
     });
 
     const imageResult = await applyProductImageFromForm(
@@ -293,10 +303,8 @@ export async function createProduct(formData: FormData) {
       };
     }
 
-    if (!imageResult.unchanged && imageResult.imageUrl !== null) {
-      await updateProductImageUrl(product.id, imageResult.imageUrl);
-    } else if (!imageResult.unchanged && imageResult.imageUrl === null) {
-      await updateProductImageUrl(product.id, null);
+    if (!imageResult.unchanged) {
+      await updateProductImageUrl(product.id, ctx.businessId, imageResult.imageUrl);
     }
 
     revalidatePath("/inventory");
@@ -372,6 +380,14 @@ export async function updateProduct(productId: string, formData: FormData) {
       imageWarning = `Product saved, but image upload failed: ${imageResult.error}`;
     }
 
+    const attributes = readProductAttributesFromForm(
+      ctx.business.industry,
+      (name) => formValue(formData.get(name))
+    );
+    if (!attributes.success) {
+      return { error: attributes.message };
+    }
+
     await prisma.$transaction(async (tx) => {
       await updateInventoryProduct(
         productId,
@@ -384,6 +400,7 @@ export async function updateProduct(productId: string, formData: FormData) {
           batchNumber: batchNumber ?? null,
           supplierId: resolvedSupplierId,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
+          ...(attributes.attributes ? { attributes: attributes.attributes } : {}),
         },
         tx
       );
@@ -403,7 +420,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     });
 
     if (!imageResult.error && !imageResult.unchanged) {
-      await updateProductImageUrl(productId, imageResult.imageUrl);
+      await updateProductImageUrl(productId, ctx.businessId, imageResult.imageUrl);
     }
 
     revalidatePath("/inventory");

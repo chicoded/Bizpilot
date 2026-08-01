@@ -12,6 +12,7 @@ import {
   setActiveBusinessId,
   type MembershipWithBusiness,
 } from "@/lib/active-business";
+import { forBusiness } from "@/lib/tenant-db";
 
 const BUSINESS_SELECT_SAFE = {
   id: true,
@@ -58,6 +59,8 @@ function formatBusinessContext(
     userId,
     businessId: membership.businessId,
     role: membership.role,
+    /** Prisma client pinned to this shop — prefer over the bare `prisma` import. */
+    db: forBusiness(membership.businessId),
     sectionOverrides:
       (membership as Membership & { sectionOverrides?: Prisma.JsonValue | null })
         .sectionOverrides ?? null,

@@ -71,6 +71,14 @@ function normalizeListProduct(
   };
 }
 
+/** JSON from the database is unknown-shaped; only keep plain objects. */
+function normalizeAttributes(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
 function normalizeDetailProduct(
   product: {
     id: string;
@@ -85,6 +93,7 @@ function normalizeDetailProduct(
     expiryDate: Date | null;
     supplierId?: string | null;
     imageUrl?: string | null;
+    attributes?: unknown;
   },
   withImages: boolean
 ): InventoryDetailProduct {
@@ -94,6 +103,7 @@ function normalizeDetailProduct(
     purchasePrice: Number(product.purchasePrice),
     unitsPerPack: product.unitsPerPack ?? 1,
     supplierId: product.supplierId ?? null,
+    attributes: normalizeAttributes(product.attributes),
   };
 }
 
@@ -150,13 +160,16 @@ export async function getInventoryProduct(
   await ensureProductSchemaReady();
 
   const withImages = await checkProductColumn("imageUrl");
+  const withAttributes = await checkProductColumn("attributes");
 
   try {
     const product = await prisma.product.findFirst({
       where: { id: productId, businessId, isActive: true },
-      select: withImages
-        ? { ...inventoryDetailSelect, imageUrl: true }
-        : inventoryDetailSelect,
+      select: {
+        ...inventoryDetailSelect,
+        ...(withImages ? { imageUrl: true } : {}),
+        ...(withAttributes ? { attributes: true } : {}),
+      },
     });
 
     if (!product) return null;
@@ -242,6 +255,7 @@ export async function listProductsForApi(
 
 export async function updateProductImageUrl(
   productId: string,
+  businessId: string,
   imageUrl: string | null
 ): Promise<boolean> {
   if (!(await checkProductColumn("imageUrl"))) {
@@ -249,12 +263,13 @@ export async function updateProductImageUrl(
   }
 
   try {
-    await prisma.product.update({
-      where: { id: productId },
+    // updateMany, not update: scoping by businessId means a product belonging
+    // to another shop matches nothing instead of being written to.
+    const result = await prisma.product.updateMany({
+      where: { id: productId, businessId },
       data: { imageUrl },
-      select: { id: true },
     });
-    return true;
+    return result.count > 0;
   } catch {
     return false;
   }

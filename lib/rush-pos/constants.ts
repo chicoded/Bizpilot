@@ -1,13 +1,12 @@
 import type { Industry } from "@prisma/client";
+import { foodServicePack } from "@/lib/industries/packs";
+import { hasCapability } from "@/lib/industries";
 
-export const RUSH_POS_INDUSTRIES: Industry[] = [
-  "RESTAURANT",
-  "FAST_FOOD",
-  "CAFE",
-];
+export const RUSH_POS_INDUSTRIES: readonly Industry[] = foodServicePack.industries;
 
+/** Now a capability question, not a list of trade names. */
 export function isRushPosIndustry(industry: string | Industry | null | undefined) {
-  return RUSH_POS_INDUSTRIES.includes(industry as Industry);
+  return hasCapability(industry, "rush_pos");
 }
 
 export function shouldUseRushPos(
@@ -19,18 +18,7 @@ export function shouldUseRushPos(
 }
 
 /** Default category chips for restaurant menus (matched case-insensitively). */
-export const RUSH_CATEGORY_PRESETS = [
-  "Favorites",
-  "Combos",
-  "Rice",
-  "Proteins",
-  "Drinks",
-  "Sides",
-  "Desserts",
-  "Breakfast",
-  "Snacks",
-  "Specials",
-] as const;
+export const RUSH_CATEGORY_PRESETS = foodServicePack.categoryPresets;
 
 export const QUICK_NOTE_CHIPS = [
   "No Pepper",

@@ -14,6 +14,8 @@ export interface InventoryDetailProduct extends InventoryListProduct {
   purchasePrice: number;
   unitsPerPack: number;
   supplierId: string | null;
+  /** Per-industry fields; shape is declared by the business's industry pack. */
+  attributes: Record<string, unknown>;
 }
 
 export interface ProductApiItem {

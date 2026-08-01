@@ -253,6 +253,9 @@ model Product {
   batchNumber    String?
   expiryDate     DateTime?
   imageUrl       String?
+  /// Per-industry fields (NAFDAC number, size/colour, serial…). Shape is
+  /// declared by the industry pack in lib/industries, not by this schema.
+  attributes     Json?
   isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

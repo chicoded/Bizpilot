@@ -19,6 +19,10 @@ export const PRODUCT_OPTIONAL_COLUMNS = [
     name: "unitsPerPack",
     sql: 'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "unitsPerPack" INTEGER NOT NULL DEFAULT 1;',
   },
+  {
+    name: "attributes",
+    sql: 'ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "attributes" JSONB;',
+  },
 ] as const;
 
 export type ProductColumnName = (typeof PRODUCT_OPTIONAL_COLUMNS)[number]["name"];
@@ -42,6 +46,8 @@ const COLUMN_PROBES: Record<ProductColumnName, () => Promise<unknown>> = {
   sku: () => prisma.$queryRaw`SELECT "sku" FROM "products" LIMIT 0`,
   unitsPerPack: () =>
     prisma.$queryRaw`SELECT "unitsPerPack" FROM "products" LIMIT 0`,
+  attributes: () =>
+    prisma.$queryRaw`SELECT "attributes" FROM "products" LIMIT 0`,
 };
 
 function directPrisma(): PrismaClient {
