@@ -110,18 +110,27 @@ export function readProductAttributesFromForm(
 }
 
 /**
- * Drops nav entries this trade has no use for. Role filtering runs separately
- * and both only ever remove, so the order they run in doesn't matter.
+ * Drops nav entries this trade has no use for, in both directions: sections a
+ * pack hides, and sections that exist only for a capability it doesn't declare.
+ *
+ * Role filtering runs separately and both only ever remove, so the order they
+ * run in doesn't matter.
  */
-export function filterNavItemsByIndustry<T extends { href: string }>(
+export function filterNavItemsByIndustry<
+  T extends { href: string; requiresCapability?: Capability },
+>(
   items: T[],
   industry: IndustryKey,
-  sectionForHref: (href: string) => AppSectionId | null
+  sectionForHref?: (href: string) => AppSectionId | null
 ): T[] {
-  const hidden = getIndustryPack(industry).hiddenSections;
-  if (!hidden || hidden.length === 0) return items;
+  const pack = getIndustryPack(industry);
+  const hidden = pack.hiddenSections;
 
   return items.filter((item) => {
+    if (item.requiresCapability && !pack.capabilities.includes(item.requiresCapability)) {
+      return false;
+    }
+    if (!hidden || hidden.length === 0 || !sectionForHref) return true;
     const section = sectionForHref(item.href);
     if (!section) return true;
     return !hidden.includes(section);

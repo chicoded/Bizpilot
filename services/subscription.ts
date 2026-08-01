@@ -1,7 +1,7 @@
 import { addDays } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getAppUrl } from "@/lib/env";
-import type { SubscriptionPlan } from "@prisma/client";
+import type { Subscription, SubscriptionPlan } from "@prisma/client";
 import type { SubscriptionPlanId } from "@/types";
 import {
   generatePaymentReference,
@@ -160,11 +160,21 @@ export async function initializePlanCheckout(
   };
 }
 
+/**
+ * Stated explicitly rather than inferred. With several return sites TypeScript
+ * widens `success` to boolean, which stops callers narrowing on it — the
+ * billing callback page has broken on this twice, appearing and vanishing with
+ * Prisma client regeneration. Literal types make the union discriminable.
+ */
+export type VerifyPaymentResult =
+  | { success: true; alreadyProcessed: boolean; subscription: Subscription | null }
+  | { success: false; error: string };
+
 export async function verifyAndActivatePayment(
   reference: string,
   transactionId?: string,
   options?: { forceFail?: boolean }
-) {
+): Promise<VerifyPaymentResult> {
   const existing = await prisma.paymentTransaction.findUnique({
     where: { reference },
   });

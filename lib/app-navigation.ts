@@ -12,13 +12,20 @@ import {
   Settings,
   History,
   LayoutGrid,
+  ClipboardList,
 } from "lucide-react";
+import type { Capability } from "@/lib/industries/types";
 
 export interface AppNavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   description?: string;
+  /**
+   * Only shown to trades whose industry pack declares this capability.
+   * Role permissions still apply on top — this only ever removes.
+   */
+  requiresCapability?: Capability;
 }
 
 export const mainNavItems: AppNavItem[] = [
@@ -31,6 +38,13 @@ export const mainNavItems: AppNavItem[] = [
   { href: "/debts", label: "Debts", icon: CreditCard, description: "Credit & payments" },
   { href: "/suppliers", label: "Suppliers", icon: Truck, description: "Supplier contacts" },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Business reports" },
+  {
+    href: "/prescriptions",
+    label: "Controlled register",
+    icon: ClipboardList,
+    description: "Controlled drugs and dispensing",
+    requiresCapability: "controlled_register",
+  },
   { href: "/ai", label: "AI Assistant", icon: Sparkles, description: "Ask your AI advisor" },
   { href: "/settings", label: "Settings", icon: Settings, description: "Business & billing" },
 ];

@@ -9,6 +9,7 @@ import {
   getBusinessSubscription,
   initializePlanCheckout,
   verifyAndActivatePayment,
+  type VerifyPaymentResult,
 } from "@/services/subscription";
 import { isFlutterwaveConfigured } from "@/services/flutterwave";
 import type { SubscriptionPlanId } from "@/types";
@@ -78,7 +79,7 @@ export async function verifyCheckout(
   reference: string,
   transactionId?: string,
   options?: { forceFail?: boolean }
-) {
+): Promise<VerifyPaymentResult> {
   if (!reference) {
     return { success: false, error: "Missing payment reference" };
   }

@@ -13,6 +13,8 @@ export type AppSectionId =
   | "suppliers"
   | "reports"
   | "ai"
+  /** Pharmacy only — gated by the prescription_log capability, not by role alone. */
+  | "prescriptions"
   | "settings"
   | "billing";
 
@@ -85,6 +87,12 @@ export const APP_SECTIONS: {
     label: "Reports",
     description: "Business reports and exports",
     pathPrefix: "/reports",
+  },
+  {
+    id: "prescriptions",
+    label: "Controlled register",
+    description: "Controlled drugs and dispensing record",
+    pathPrefix: "/prescriptions",
   },
   {
     id: "ai",

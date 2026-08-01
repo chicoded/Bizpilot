@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  ClipboardList,
   CreditCard,
   History,
   Home,
@@ -29,6 +30,7 @@ export const SECTION_ICONS: Record<AppSectionId, LucideIcon> = {
   suppliers: Truck,
   reports: BarChart3,
   ai: Sparkles,
+  prescriptions: ClipboardList,
   settings: Settings,
   billing: CreditCard,
 };

@@ -23,6 +23,7 @@ export default async function MenuPage({
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions ?? null}
         sectionOverrides={ctx.sectionOverrides}
+        industry={ctx.business.industry}
       />
     </AppShell>
   );

@@ -47,6 +47,7 @@ export default async function AppLayout({
         role={ctx.role}
         rolePermissions={ctx.business.rolePermissions}
         sectionOverrides={ctx.sectionOverrides}
+        industry={ctx.business.industry}
       />
       <div className="md:pl-64">{children}</div>
       <MobileNav
