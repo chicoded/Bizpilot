@@ -121,10 +121,15 @@ export default function LandingPage() {
             <span className="text-xs text-muted-foreground ml-2">Zaplex Dashboard</span>
           </div>
           <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {["Sales Today", "Profit", "Expenses", "Debt"].map((label) => (
+            {[
+              { label: "Sales Today", value: "₦124,500" },
+              { label: "Profit", value: "₦31,600" },
+              { label: "Expenses", value: "₦38,200" },
+              { label: "Debt", value: "₦52,000" },
+            ].map(({ label, value }) => (
               <div key={label} className="rounded-xl border bg-background p-3">
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="mt-1 text-lg font-bold text-biz-blue dark:text-primary">₦124,500</p>
+                <p className="mt-1 text-lg font-bold text-biz-blue dark:text-primary tabular-nums">{value}</p>
               </div>
             ))}
           </div>
