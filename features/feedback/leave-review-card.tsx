@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,20 @@ export function LeaveReviewCard() {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Good or bad. It goes to a person, not a form that nobody opens.
+            </p>
+
+            {/* The survey is a bigger ask than this box, so it is offered
+                rather than imposed — someone with one thing to say should not
+                have to open seven questions to say it. */}
+            <p className="mt-2 text-sm text-muted-foreground">
+              Got more to say?{" "}
+              <Link
+                href="/survey"
+                className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                Answer seven questions instead
+              </Link>{" "}
+              — you can record your answers rather than typing.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
