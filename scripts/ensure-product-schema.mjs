@@ -56,7 +56,7 @@ try {
     await prisma.$executeRawUnsafe(sql);
   }
   console.log(
-    "✓ Ensured products.imageUrl, barcode, sku, and unitsPerPack columns exist"
+    "✓ Ensured products.imageUrl, barcode, sku, unitsPerPack, and attributes columns exist"
   );
 } catch (error) {
   console.warn(
