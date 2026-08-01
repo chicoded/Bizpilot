@@ -3,7 +3,7 @@ export type GeminiChatMessage = {
   parts: { text: string }[];
 };
 
-function resolveGeminiApiKey(): string | undefined {
+export function resolveGeminiApiKey(): string | undefined {
   const candidates = [
     process.env.GEMINI_API_KEY,
     process.env.GOOGLE_API_KEY,
@@ -65,4 +65,8 @@ export async function geminiGenerateText(params: {
 
 export function isGeminiConfigured(): boolean {
   return Boolean(resolveGeminiApiKey());
+}
+
+export function geminiModel(): string {
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
 }

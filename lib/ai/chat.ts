@@ -28,81 +28,11 @@ export function getChatProviderLabel(provider: ChatProvider): string {
   return "Offline assistant";
 }
 
-export async function completeBusinessChat(params: {
-  systemPrompt: string;
-  contextBlock: string;
-  message: string;
-  history?: ChatMessage[];
-  usageContext?: AiUsageContext;
-}): Promise<ChatCompletionResult | null> {
-  const history = params.history ?? [];
-  const provider = getActiveChatProvider();
-
-  if (provider === "none") {
-    return null;
-  }
-
-  if (params.usageContext) {
-    const limit = await guardAiPrompt(params.usageContext);
-    if (!limit.allowed) {
-      return { rateLimited: true, message: limit.message! };
-    }
-  }
-
-  if (provider === "gemini") {
-    const contents = [
-      ...history.slice(-6).map((entry) => ({
-        role: entry.role === "assistant" ? ("model" as const) : ("user" as const),
-        parts: [{ text: entry.content }],
-      })),
-      {
-        role: "user" as const,
-        parts: [
-          {
-            text: `Business context:\n${params.contextBlock}\n\nUser question: ${params.message}`,
-          },
-        ],
-      },
-    ];
-
-    const text = await geminiGenerateText({
-      systemPrompt: params.systemPrompt,
-      contents,
-    });
-
-    if (text) return { text, provider: "gemini" };
-  }
-
-  if (provider === "openai") {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
-        messages: [
-          { role: "system", content: params.systemPrompt },
-          {
-            role: "user",
-            content: `Business context:\n${params.contextBlock}\n\nUser question: ${params.message}`,
-          },
-          ...history.slice(-6).map((entry) => ({
-            role: entry.role,
-            content: entry.content,
-          })),
-        ],
-        max_tokens: 800,
-        temperature: 0.7,
-      });
-
-      const text = response.choices[0]?.message?.content?.trim();
-      if (text) return { text, provider: "openai" };
-    } catch (error) {
-      console.error("OpenAI chat error:", error);
-    }
-  }
-
-  return null;
-}
+/**
+ * completeBusinessChat used to live here: it pasted a pre-computed block of
+ * figures into the prompt and hoped the question was about something in it.
+ * Replaced by lib/ai/tool-chat.ts, where the model looks things up instead.
+ */
 
 export async function completeJsonChat(params: {
   systemPrompt: string;

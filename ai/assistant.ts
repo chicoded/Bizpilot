@@ -1,120 +1,29 @@
-import { prisma } from "@/lib/db";
+﻿import { prisma } from "@/lib/db";
+import { getDashboardKPIs } from "@/services/dashboard";
 import {
-  calculateBusinessHealth,
-  getDashboardKPIs,
-  generateAIInsights,
-} from "@/services/dashboard";
-import {
-  completeBusinessChat,
   completeJsonChat,
   getActiveChatProvider,
   type ChatMessage,
 } from "@/lib/ai/chat";
+import { chatWithTools } from "@/lib/ai/tool-chat";
 
-const SYSTEM_PROMPT = `You are Zaplex AI, an expert business advisor for African small and medium enterprises (SMEs) in Nigeria.
+const SYSTEM_PROMPT = `You are Zaplex AI, a business advisor for a shop owner in Nigeria.
 
-You help business owners with:
-- Sales analysis and trends
-- Inventory management and restocking advice
-- Expense tracking and cost reduction
-- Customer debt follow-up
-- Cashflow forecasting
-- Fraud and anomaly detection
-- Business health recommendations
+You have tools that read this shop's own records. Use them. Look things up
+before answering anything about sales, stock, debts, expenses or health â€” do
+not answer from memory or from what sounds typical for a shop like this one.
 
-Always respond in clear, simple English. Use Nigerian Naira (₦) for currency.
-Be concise, actionable, and empathetic. African SME owners are busy — give them direct answers.
-When you don't have data, say so and suggest what they should track.
+Rules about numbers, which matter more than anything else here:
+- Every figure you state must come from a tool result in this conversation.
+- If a tool returns nothing, or fails, say plainly that you could not find it.
+- Never estimate, extrapolate or fill a gap with a plausible number. A wrong
+  figure about someone's money is worse than no answer.
+- If a question needs data the tools cannot reach, say what is missing and
+  what they would need to start recording.
 
-Format responses with short paragraphs. Use bullet points for lists.
-Never make up specific numbers — only use data provided in context.`;
-
-export async function getBusinessContextForAI(businessId: string) {
-  const [business, kpis, health, insights, topProducts, recentSales] =
-    await Promise.all([
-      prisma.business.findUnique({ where: { id: businessId } }),
-      getDashboardKPIs(businessId),
-      calculateBusinessHealth(businessId),
-      generateAIInsights(businessId),
-      prisma.saleItem.groupBy({
-        by: ["productId"],
-        where: { sale: { businessId } },
-        _sum: { quantity: true },
-        orderBy: { _sum: { quantity: "desc" } },
-        take: 5,
-      }),
-      prisma.sale.findMany({
-        where: { businessId },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        include: {
-          items: {
-            include: {
-              product: { select: { name: true } },
-            },
-          },
-        },
-      }),
-    ]);
-
-  const productIds = topProducts.map((p) => p.productId);
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-    select: { id: true, name: true },
-  });
-
-  const productMap = Object.fromEntries(products.map((p) => [p.id, p.name]));
-
-  return {
-    business,
-    kpis,
-    health,
-    insights,
-    topProducts: topProducts.map((p) => ({
-      name: productMap[p.productId] ?? "Unknown",
-      quantity: p._sum.quantity,
-    })),
-    recentSales: recentSales.map((s) => ({
-      total: Number(s.total),
-      profit: Number(s.profit),
-      date: s.createdAt,
-      items: s.items.map((i) => `${i.quantity}x ${i.product.name}`),
-    })),
-  };
-}
-
-function buildContextMessage(
-  context: Awaited<ReturnType<typeof getBusinessContextForAI>>
-) {
-  const insightLines = context.insights
-    .slice(0, 3)
-    .map((i) => `- ${i.title}: ${i.message}`)
-    .join("\n");
-
-  return `
-Business: ${context.business?.name} (${context.business?.industry})
-Currency: ${context.business?.currency ?? "NGN"}
-
-Today's KPIs:
-- Revenue: ₦${context.kpis.revenueToday.toLocaleString()}
-- Expenses: ₦${context.kpis.expensesToday.toLocaleString()}
-- Profit: ₦${context.kpis.profitToday.toLocaleString()}
-- Low stock items: ${context.kpis.lowStockCount}
-- Expiring products: ${context.kpis.expiringCount}
-- Debtors: ${context.kpis.debtorsCount} (₦${context.kpis.totalDebt.toLocaleString()} total)
-
-Business Health Score: ${context.health.score}/100
-Strengths: ${context.health.strengths.join(", ") || "None"}
-Warnings: ${context.health.warnings.join(", ") || "None"}
-
-Top selling products: ${context.topProducts.map((p) => `${p.name} (${p.quantity} sold)`).join(", ") || "No data"}
-
-Recent sales: ${context.recentSales.map((s) => `₦${s.total} - ${s.items.join(", ")}`).join("; ") || "No recent sales"}
-
-Active alerts:
-${insightLines || "None"}
-`.trim();
-}
+Answer in clear, simple English with Naira (â‚¦). Be brief â€” the person asking is
+usually standing behind a counter. Short paragraphs, bullets for lists, and
+lead with the answer rather than the working.`;
 
 export function isAIProviderConfigured(): boolean {
   return getActiveChatProvider() !== "none";
@@ -126,13 +35,10 @@ export async function chatWithAI(
   history: ChatMessage[] = [],
   subscription: import("@prisma/client").Subscription | null = null
 ) {
-  const context = await getBusinessContextForAI(businessId);
-  const contextMessage = buildContextMessage(context);
-
-  const result = await completeBusinessChat({
+  const result = await chatWithTools({
     systemPrompt: SYSTEM_PROMPT,
-    contextBlock: contextMessage,
     message,
+    businessId,
     history,
     usageContext: { businessId, subscription },
   });
@@ -145,49 +51,73 @@ export async function chatWithAI(
     return result.text;
   }
 
-  return getFallbackResponse(message, context);
+  // No provider configured, or the provider failed. Report what is actually
+  // known rather than keyword-matching the question into a canned sentence â€”
+  // guessing which of five topics was meant is how the old fallback answered
+  // "why was Tuesday bad?" with today's revenue.
+  return getOfflineSummary(businessId);
 }
 
-function getFallbackResponse(
+/**
+ * Same shape as a chat reply, but carries what was looked up so the caller can
+ * show the shop owner where each figure came from.
+ */
+export async function chatWithAIDetailed(
+  businessId: string,
   message: string,
-  context: Awaited<ReturnType<typeof getBusinessContextForAI>>
-) {
-  const lower = message.toLowerCase();
+  history: ChatMessage[] = [],
+  subscription: import("@prisma/client").Subscription | null = null
+): Promise<{ text: string; sources: string[] }> {
+  const result = await chatWithTools({
+    systemPrompt: SYSTEM_PROMPT,
+    message,
+    businessId,
+    history,
+    usageContext: { businessId, subscription },
+  });
 
-  if (lower.includes("earn") || lower.includes("revenue") || lower.includes("sales today")) {
-    return `Today you earned ₦${context.kpis.revenueToday.toLocaleString()} in revenue with ₦${context.kpis.profitToday.toLocaleString()} profit. ${context.kpis.revenueToday > 0 ? "Good work!" : "No sales recorded yet today — time to make some sales!"}`;
+  if (result && "rateLimited" in result) {
+    return { text: result.message, sources: [] };
   }
 
-  if (lower.includes("owe") || lower.includes("debt")) {
-    if (context.kpis.debtorsCount === 0) {
-      return "Great news — no customers currently owe you money!";
-    }
-    return `You have ${context.kpis.debtorsCount} customers who owe a total of ₦${context.kpis.totalDebt.toLocaleString()}. Check the Debt Management page to follow up.`;
+  if (result?.text) {
+    return {
+      text: result.text,
+      sources: [...new Set(result.toolCalls.map((call) => call.name))],
+    };
   }
 
-  if (lower.includes("reorder") || lower.includes("restock") || lower.includes("stock")) {
-    if (context.kpis.lowStockCount === 0) {
-      return "Your inventory levels look good — no urgent restocking needed.";
-    }
-    return `${context.kpis.lowStockCount} products need restocking. Head to Inventory to review and place orders.`;
-  }
+  return { text: await getOfflineSummary(businessId), sources: [] };
+}
 
-  if (lower.includes("health") || lower.includes("score")) {
-    return `Your Business Health Score is ${context.health.score}/100.\n\nStrengths: ${context.health.strengths.join(", ") || "Building up"}\nWarnings: ${context.health.warnings.join(", ") || "None"}\n\nRecommendations:\n${context.health.recommendations.map((r) => `• ${r}`).join("\n")}`;
-  }
+/**
+ * What we can say without a model: today's real figures, and an honest note
+ * that the question itself was not answered.
+ *
+ * This replaces a keyword matcher that guessed which of five topics a question
+ * was about and returned a canned sentence â€” so "why was last Tuesday bad?"
+ * came back with today's revenue, phrased as though it were an answer.
+ */
+async function getOfflineSummary(businessId: string): Promise<string> {
+  const kpis = await getDashboardKPIs(businessId);
+  const configured = isAIProviderConfigured();
 
-  if (lower.includes("expir")) {
-    if (context.kpis.expiringCount === 0) {
-      return "No products expiring in the next 30 days.";
-    }
-    return `${context.kpis.expiringCount} products are expiring within 30 days. Check Inventory to sell or discount them before they expire.`;
-  }
+  const snapshot = [
+    `Today: â‚¦${kpis.revenueToday.toLocaleString()} in, â‚¦${kpis.expensesToday.toLocaleString()} out, â‚¦${kpis.profitToday.toLocaleString()} profit.`,
+    kpis.lowStockCount > 0 ? `${kpis.lowStockCount} product(s) low on stock.` : null,
+    kpis.expiringCount > 0 ? `${kpis.expiringCount} expiring within 30 days.` : null,
+    kpis.debtorsCount > 0
+      ? `${kpis.debtorsCount} customer(s) owe â‚¦${kpis.totalDebt.toLocaleString()}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-  if (!isAIProviderConfigured()) {
-    return `I'm running in offline mode. Add a free GEMINI_API_KEY from Google AI Studio for smarter answers.\n\nQuick snapshot: health ${context.health.score}/100, today ₦${context.kpis.revenueToday.toLocaleString()} revenue, ₦${context.kpis.expensesToday.toLocaleString()} expenses.`;
-  }
+  const reason = configured
+    ? "I could not reach the assistant just now, so I have not answered your question."
+    : "No AI provider is set up, so I cannot answer questions yet. Add a free GEMINI_API_KEY from Google AI Studio.";
 
-  return `Your business health is ${context.health.score}/100. Today: ₦${context.kpis.revenueToday.toLocaleString()} revenue, ₦${context.kpis.expensesToday.toLocaleString()} expenses. Ask me about sales, inventory, debts, or expenses!`;
+  return `${reason}\n\nHere is what the records show right now:\n${snapshot}`;
 }
 
 export async function parseVoiceSale(
