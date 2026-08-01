@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/features/landing/landing-nav";
+import { Reveal } from "@/features/landing/reveal";
+import { OfflineStory } from "@/features/landing/sections/offline-story";
+import { HowItWorks } from "@/features/landing/sections/how-it-works";
+import { Reviews } from "@/features/landing/sections/reviews";
 
 /**
  * Ordered by how hard each one is for a competitor to copy. Offline selling
@@ -174,6 +178,15 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* The claim worth showing rather than stating */}
+      <section className="border-t border-border bg-secondary/40">
+        <div className="mx-auto max-w-5xl px-4 py-16">
+          <OfflineStory />
+        </div>
+      </section>
+
+      <HowItWorks />
+
       {/* Trades */}
       <section className="border-y border-border bg-secondary/50">
         <div className="mx-auto max-w-5xl px-4 py-10 text-center">
@@ -204,24 +217,25 @@ export default function LandingPage() {
         </h2>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-xl border border-border bg-card p-5 shadow-soft"
-            >
-              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <feature.icon className="h-5 w-5" />
+          {features.map((feature, index) => (
+            <Reveal key={feature.title} delay={(index % 3) * 80}>
+              <div className="h-full rounded-xl border border-border bg-card p-5 shadow-soft">
+                <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <feature.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-balance font-semibold leading-snug text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-balance font-semibold leading-snug text-foreground">
-                {feature.title}
-              </h3>
-              <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-                {feature.description}
-              </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
+
+      <Reviews />
 
       {/* CTA */}
       <section className="mx-auto max-w-5xl px-4 pb-16">

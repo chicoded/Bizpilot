@@ -6,6 +6,7 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ZaplexMark } from "@/components/brand/zaplex-mark";
 
 export function LandingNav() {
   const [open, setOpen] = useState(false);
@@ -13,11 +14,9 @@ export function LandingNav() {
   return (
     <>
       <nav className="flex items-center justify-between px-4 py-4 md:px-8 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-biz-gradient text-white font-bold">
-            Z
-          </div>
-          <span className="text-xl font-bold text-biz-blue dark:text-foreground">
+        <div className="flex items-center gap-2.5">
+          <ZaplexMark className="h-9 w-9" title={null} />
+          <span className="text-xl font-bold tracking-tight text-biz-blue dark:text-foreground">
             Zaplex
           </span>
         </div>
@@ -46,7 +45,7 @@ export function LandingNav() {
           <ThemeToggle />
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card"
+            className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card touch-manipulation"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
@@ -66,7 +65,12 @@ export function LandingNav() {
           <div className="absolute right-0 top-0 flex h-full w-72 flex-col gap-3 border-l border-border bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <ThemeToggle variant="full" />
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+                className="flex h-12 w-12 items-center justify-center rounded-lg text-muted-foreground touch-manipulation hover:bg-accent hover:text-foreground"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>

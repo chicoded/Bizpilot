@@ -30,7 +30,7 @@ export function NotificationCenter() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative flex h-12 w-12 items-center justify-center rounded-lg hover:bg-accent transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={count > 0 ? `${count} notifications` : "Notifications"}
         aria-expanded={open}
       >

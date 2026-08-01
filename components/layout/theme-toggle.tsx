@@ -41,7 +41,7 @@ export function ThemeToggle({
               type="button"
               onClick={() => setTheme(opt.value)}
               className={cn(
-                "inline-flex min-h-[40px] items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors",
+                "inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3.5 text-xs font-semibold transition-colors touch-manipulation",
                 active
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground"
@@ -62,7 +62,7 @@ export function ThemeToggle({
       type="button"
       onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-card/80 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors touch-manipulation hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className
       )}
       aria-label={
