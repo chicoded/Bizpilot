@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import { ZaplexMark } from "@/components/brand/zaplex-mark";
-import { CinemaStage } from "@/features/landing/cinema/cinema-stage";
+import { ShowcaseStage } from "@/features/landing/showcase/showcase-stage";
 import {
   ChaosToControl,
   AiAssistant,
@@ -21,8 +21,11 @@ import { Testimonials } from "@/features/landing/cinematic/testimonials";
  * The app itself stays theme-aware; only this page is fixed.
  */
 export default function LandingPage() {
+  // `dark` is scoped on the wrapper rather than left to the app's theme class:
+  // this page commits to one dark treatment, and without it a visitor whose app
+  // theme is light would get light panels inside a black page.
   return (
-    <div className="min-h-screen bg-[#050505] text-white antialiased">
+    <div className="dark min-h-screen bg-[#050505] text-white antialiased">
       {/* Reveal-on-scroll starts elements at opacity 0 and waits for
           IntersectionObserver. Without scripting that observer never runs, so
           everything below the hero would stay invisible. */}
@@ -76,7 +79,32 @@ export default function LandingPage() {
       </header>
 
       <main id="main">
-        <CinemaStage />
+        {/* Static hero, then the scroll-driven tour. The WebGL stage in
+            features/landing/cinema is no longer rendered: its fallback layered
+            a device mockup underneath this headline, and a tour you can read
+            beats a scene most of this audience's phones would not run. */}
+        <section className="mx-auto max-w-6xl px-5 pb-4 pt-28 sm:pt-36">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              The business operating system
+            </p>
+            <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-6xl">
+              Run your entire business.
+              <br className="hidden sm:block" />{" "}
+              <span className="bg-gradient-to-r from-indigo-300 via-white to-emerald-300 bg-clip-text text-transparent">
+                Anywhere.
+              </span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed text-white/60">
+              Inventory, point of sale, customers, accounting, analytics and an
+              assistant that reads your own books. One platform — and it keeps
+              working when the signal doesn&rsquo;t.
+            </p>
+          </div>
+        </section>
+
+        <ShowcaseStage />
         <ChaosToControl />
         <AiAssistant />
         <Analytics />
