@@ -15,6 +15,7 @@ import { PackPricingFields } from "@/features/inventory/pack-pricing-fields";
 import { parseMoneyInput } from "@/lib/pack-pricing";
 import { SupplierSelectField } from "@/features/inventory/supplier-select-field";
 import { ProductAttributeFields } from "@/features/inventory/product-attribute-fields";
+import { CategoryField } from "@/features/inventory/category-field";
 import { useLocalData } from "@/components/providers/local-data-provider";
 import { createLocalProduct } from "@/lib/local-data/products";
 import { parseProductFormData } from "@/lib/local-data/form";
@@ -126,10 +127,7 @@ export function NewProductForm({
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input id="category" name="category" placeholder="Medicine, Drinks, etc." />
-              </div>
+              <CategoryField industry={industry} disabled={isPending} />
               {suppliers.length > 0 && (
                 <SupplierSelectField suppliers={suppliers} disabled={isPending} />
               )}

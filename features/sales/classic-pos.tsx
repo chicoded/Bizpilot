@@ -25,6 +25,7 @@ import {
   lookupProductByBarcode,
 } from "@/features/sales/scan-product-button";
 import { useBarcodeScannerWedge } from "@/hooks/use-barcode-scanner-wedge";
+import { posMode } from "@/lib/industries";
 import { looksLikeBarcode } from "@/lib/barcode-product-lookup";
 import { subscribeLocalDataChanged } from "@/lib/sync/events";
 import {
@@ -67,7 +68,10 @@ function ProductSkeletonGrid() {
 }
 
 export function ClassicPos() {
-  const { businessId, status } = useLocalData();
+  const { businessId, status, industry } = useLocalData();
+  // Pharmacies and electronics shops reach for the barcode before the keyboard:
+  // nearly everything they sell is printed with one, and the names are long.
+  const scanFirst = posMode(industry) === "scan_first";
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [totalInStock, setTotalInStock] = useState(0);
   const [productViewMode, setProductViewMode] = useState<"quick" | "search">(
@@ -364,7 +368,9 @@ export function ClassicPos() {
       >
         <div className="grid gap-3 lg:grid-cols-5">
           <div className="lg:col-span-3 space-y-3">
-            <ScanProductButton onProductFound={addToCart} disabled={isPending} />
+            {scanFirst && (
+              <ScanProductButton onProductFound={addToCart} disabled={isPending} />
+            )}
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
@@ -372,7 +378,11 @@ export function ClassicPos() {
               />
               <Input
                 ref={searchInputRef}
-                placeholder="Search products or scan barcode..."
+                placeholder={
+                  scanFirst
+                    ? "Or type the name…"
+                    : "Search products or scan barcode…"
+                }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -383,7 +393,9 @@ export function ClassicPos() {
                 }}
                 data-barcode-wedge="true"
                 className="pl-10 h-14 text-base"
-                autoFocus
+                // Where scanning leads, stealing focus pops the keyboard over
+                // the product grid before the cashier has scanned anything.
+                autoFocus={!scanFirst}
                 enterKeyHint="done"
                 aria-label="Search products or scan barcode"
                 disabled={barcodeLookupPending}
@@ -395,6 +407,9 @@ export function ClassicPos() {
                 />
               )}
             </div>
+            {!scanFirst && (
+              <ScanProductButton onProductFound={addToCart} disabled={isPending} />
+            )}
 
             {!productsLoading && !productsError && displayProducts.length > 0 && (
               <div className="flex items-center justify-between gap-2">

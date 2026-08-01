@@ -21,6 +21,7 @@ import {
 } from "@/lib/local-data/products";
 import { parseProductFormData } from "@/lib/local-data/form";
 import { ProductAttributeFields } from "@/features/inventory/product-attribute-fields";
+import { CategoryField } from "@/features/inventory/category-field";
 
 interface ProductEditFormProps {
   product: {
@@ -192,14 +193,11 @@ export function ProductEditForm({
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  defaultValue={product.category ?? ""}
-                />
-              </div>
+              <CategoryField
+                industry={industry}
+                defaultValue={product.category}
+                disabled={isPending}
+              />
               {suppliers.length > 0 && (
                 <SupplierSelectField
                   suppliers={suppliers}
