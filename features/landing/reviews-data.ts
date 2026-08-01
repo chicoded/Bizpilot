@@ -7,6 +7,14 @@
  * treated as false advertising under the FCCPA in Nigeria and equivalent
  * consumer-protection rules elsewhere — the risk is not worth the section.
  *
+ * Where they come from
+ * --------------------
+ * Settings → Help & support has a "How is Zaplex working for your shop?" card.
+ * What an owner writes there arrives in the support inbox tagged [REVIEW], with
+ * a line recording whether they agreed to be quoted publicly. Nothing reaches
+ * this file automatically: a person reads it, checks the shop is still happy to
+ * be named, and copies it across. That gap is deliberate.
+ *
  * To publish one, get the shop owner's permission to use their words and name,
  * then add an entry:
  *

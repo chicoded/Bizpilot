@@ -102,13 +102,13 @@ export function Industries() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-28">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-indigo-300/80">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary">
           Industries
         </p>
-        <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           A chemist and a rice shop do not run the same way
         </h2>
-        <p className="mt-4 text-pretty leading-relaxed text-white/55">
+        <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
           So they do not get the same app. Pick a trade to see what changes.
         </p>
       </Reveal>
@@ -127,10 +127,10 @@ export function Industries() {
             aria-controls="trade-panel"
             onClick={() => setActive(index)}
             className={cn(
-              "min-h-11 rounded-full border px-4 text-sm font-medium transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]",
+              "min-h-11 rounded-full border px-4 text-sm font-medium transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               index === active
-                ? "border-indigo-400/60 bg-indigo-500/15 text-white"
-                : "border-white/12 bg-white/[0.03] text-white/60 hover:border-white/25 hover:text-white"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
             )}
           >
             {item.label}
@@ -142,21 +142,23 @@ export function Industries() {
         id="trade-panel"
         role="tabpanel"
         aria-live="polite"
-        className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md"
+        className="mt-8 overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-md"
       >
-        <div className="grid gap-px bg-white/[0.06] sm:grid-cols-3">
+        {/* The gap colour is the divider. It has to differ from the cells, or
+            the three metrics run together into one block. */}
+        <div className="grid gap-px bg-border sm:grid-cols-3">
           {trade.metrics.map((metric) => (
-            <div key={metric.k} className="bg-[#08080c] p-5">
-              <p className="text-sm text-white/45">{metric.k}</p>
-              <p className="tnum mt-1.5 text-xl font-semibold text-white">
+            <div key={metric.k} className="bg-card p-5">
+              <p className="text-sm text-muted-foreground">{metric.k}</p>
+              <p className="tnum mt-1.5 text-xl font-semibold text-foreground">
                 {metric.v}
               </p>
             </div>
           ))}
         </div>
         <div className="p-6">
-          <p className="text-sm font-semibold text-indigo-300">{trade.label}</p>
-          <p className="mt-1.5 text-pretty text-white/70">{trade.line}</p>
+          <p className="text-sm font-semibold text-primary">{trade.label}</p>
+          <p className="mt-1.5 text-pretty text-muted-foreground">{trade.line}</p>
         </div>
       </div>
     </section>

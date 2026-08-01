@@ -20,13 +20,13 @@ export function Pricing() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-28">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-indigo-300/80">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary">
           Pricing
         </p>
-        <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Priced for a shop, not a corporation
         </h2>
-        <p className="mt-4 text-pretty leading-relaxed text-white/55">
+        <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
           Two weeks free, no card to start. Change plan or leave whenever you
           like.
         </p>
@@ -37,26 +37,26 @@ export function Pricing() {
           <Reveal key={plan.id} delay={index * 80}>
             <TiltCard highlighted={plan.id === RECOMMENDED}>
               {plan.id === RECOMMENDED && (
-                <p className="mb-4 inline-flex rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-300">
+                <p className="mb-4 inline-flex rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-primary">
                   Most shops choose this
                 </p>
               )}
-              <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
               <p className="mt-4 flex items-baseline gap-1.5">
-                <span className="tnum text-4xl font-semibold text-white">
+                <span className="tnum text-4xl font-semibold text-foreground">
                   ₦{plan.price.toLocaleString("en-NG")}
                 </span>
-                <span className="text-sm text-white/45">/month</span>
+                <span className="text-sm text-muted-foreground">/month</span>
               </p>
 
               <ul className="mt-6 space-y-2.5">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2.5 text-sm">
                     <Check
-                      className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-success"
                       aria-hidden
                     />
-                    <span className="text-white/70">{feature}</span>
+                    <span className="text-muted-foreground">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -64,10 +64,12 @@ export function Pricing() {
               <Link
                 href="/sign-up"
                 className={cn(
-                  "mt-7 inline-flex h-12 w-full items-center justify-center rounded-lg text-sm font-semibold transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]",
+                  "mt-7 inline-flex h-12 w-full items-center justify-center rounded-lg text-sm font-semibold transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   plan.id === RECOMMENDED
-                    ? "bg-indigo-500 text-white hover:bg-indigo-400 focus-visible:ring-indigo-300"
-                    : "border border-white/15 bg-white/[0.05] text-white hover:bg-white/[0.1] focus-visible:ring-white/60"
+                    ? // Stays white: this sits on indigo in both themes, so it
+                      // must not follow the foreground token.
+                      "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring"
+                    : "border border-border bg-card text-foreground hover:bg-accent focus-visible:ring-ring"
                 )}
               >
                 Start free trial
@@ -77,7 +79,7 @@ export function Pricing() {
         ))}
       </div>
 
-      <p className="mt-8 text-center text-sm text-white/40">
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         Prices in naira, billed monthly through Paystack.
       </p>
     </section>
@@ -123,7 +125,7 @@ function TiltCard({
         "h-full rounded-2xl border p-6 backdrop-blur-md transition-transform duration-200 ease-out will-change-transform motion-reduce:transform-none",
         highlighted
           ? "border-indigo-400/40 bg-indigo-500/[0.07] shadow-[0_0_60px_-24px_rgba(99,102,241,0.9)]"
-          : "border-white/10 bg-white/[0.035]"
+          : "border-border bg-card"
       )}
     >
       {children}

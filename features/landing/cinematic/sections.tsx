@@ -28,14 +28,14 @@ function SectionHead({
 }) {
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
-      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-indigo-300/80">
+      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary">
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+      <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
         {title}
       </h2>
       {body && (
-        <p className="mt-4 text-pretty leading-relaxed text-white/55">{body}</p>
+        <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">{body}</p>
       )}
     </Reveal>
   );
@@ -67,24 +67,24 @@ export function ChaosToControl() {
       <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((module, index) => (
           <Reveal key={module.name} delay={(index % 3) * 70}>
-            <div className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-6 backdrop-blur-md transition-[transform,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-indigo-400/40 hover:bg-white/[0.06] motion-reduce:hover:translate-y-0">
+            <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-6 backdrop-blur-md transition-[transform,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-indigo-400/40 hover:bg-card motion-reduce:hover:translate-y-0">
               <span
                 className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-500/10 blur-2xl transition-opacity duration-500 group-hover:bg-indigo-500/20"
                 aria-hidden
               />
-              <module.icon className="h-6 w-6 text-indigo-300" aria-hidden />
-              <h3 className="mt-4 font-semibold text-white">{module.name}</h3>
-              <p className="mt-1 text-sm text-white/50">{module.note}</p>
+              <module.icon className="h-6 w-6 text-primary" aria-hidden />
+              <h3 className="mt-4 font-semibold text-foreground">{module.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{module.note}</p>
             </div>
           </Reveal>
         ))}
 
         <Reveal delay={140}>
-          <div className="flex h-full flex-col justify-center rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-6 backdrop-blur-md">
-            <p className="text-sm font-semibold text-emerald-300">
+          <div className="flex h-full flex-col justify-center rounded-2xl border border-success/30 bg-success/[0.07] p-6 backdrop-blur-md">
+            <p className="text-sm font-semibold text-success">
               Connected, not merely bundled
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-white/55">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Seven apps that each hold their own copy of the truth is how the
               numbers stop agreeing by Friday.
             </p>
@@ -150,7 +150,7 @@ export function AiAssistant() {
   const current = PROMPTS[active];
 
   return (
-    <section className="relative overflow-hidden border-y border-white/[0.07] bg-white/[0.015]">
+    <section className="relative overflow-hidden border-y border-border bg-secondary/40">
       <div ref={ref} className="mx-auto max-w-6xl px-5 py-28">
         <SectionHead
           eyebrow="Ask, don't dig"
@@ -174,6 +174,7 @@ export function AiAssistant() {
               aria-hidden
             />
             <span className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400/90 to-indigo-600/70 shadow-[0_0_60px_-10px_rgba(99,102,241,0.9)]">
+              {/* On the indigo sphere in both themes, so it stays white. */}
               <Sparkles className="h-9 w-9 text-white" aria-hidden />
             </span>
           </div>
@@ -181,17 +182,17 @@ export function AiAssistant() {
           {/* Conversation */}
           <div className="space-y-4">
             <div
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md"
+              className="rounded-2xl border border-border bg-card p-5 backdrop-blur-md"
               aria-live="polite"
             >
-              <p className="text-sm font-medium text-white/45">You asked</p>
-              <p className="mt-1.5 text-lg font-semibold text-white">
+              <p className="text-sm font-medium text-muted-foreground">You asked</p>
+              <p className="mt-1.5 text-lg font-semibold text-foreground">
                 {current.q}
               </p>
 
-              <div className="mt-5 rounded-xl border border-white/[0.07] bg-[#0a0a0f] p-4">
+              <div className="mt-5 rounded-xl border border-border bg-background p-4">
                 <MiniViz kind={current.kind} seed={active} />
-                <p className="mt-3 text-sm text-white/60">{current.a}</p>
+                <p className="mt-3 text-sm text-muted-foreground">{current.a}</p>
               </div>
             </div>
 
@@ -206,12 +207,12 @@ export function AiAssistant() {
                   aria-selected={index === active}
                   aria-label={prompt.q}
                   onClick={() => setActive(index)}
-                  className="flex h-11 items-center px-1 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] rounded"
+                  className="flex h-11 items-center px-1 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
                 >
                   <span
                     className={cn(
                       "block h-1.5 rounded-full transition-all duration-300",
-                      index === active ? "w-10 bg-indigo-400" : "w-4 bg-white/20"
+                      index === active ? "w-10 bg-primary" : "w-4 bg-muted-foreground/30"
                     )}
                   />
                 </button>
@@ -249,7 +250,7 @@ function MiniViz({ kind, seed }: { kind: "bars" | "dots" | "curve"; seed: number
             key={i}
             className={cn(
               "aspect-square rounded-full motion-safe:animate-[fade_400ms_ease-out_both]",
-              i % 7 === 0 ? "bg-emerald-400" : "bg-white/12"
+              i % 7 === 0 ? "bg-success" : "bg-muted-foreground/20"
             )}
             style={{ animationDelay: `${i * 14}ms` }}
           />
@@ -341,10 +342,10 @@ export function Analytics() {
       </div>
 
       <Reveal delay={120}>
-        <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card p-6 backdrop-blur-md sm:p-8">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <p className="font-semibold text-white">Revenue, last 12 weeks</p>
-            <p className="text-sm text-emerald-300">Trending up</p>
+            <p className="font-semibold text-foreground">Revenue, last 12 weeks</p>
+            <p className="text-sm text-success">Trending up</p>
           </div>
           <div className="mt-6 flex h-44 items-end gap-1.5 sm:gap-2.5">
             {[38, 44, 40, 52, 48, 61, 57, 68, 64, 79, 74, 91].map((h, i) => (
@@ -376,9 +377,9 @@ function StatTile({
 }) {
   const shown = useCountUp(value, live);
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 backdrop-blur-md">
-      <p className="text-sm text-white/45">{label}</p>
-      <p className="tnum mt-2 text-2xl font-semibold text-white sm:text-3xl">
+    <div className="rounded-2xl border border-border bg-card p-5 backdrop-blur-md">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="tnum mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
         {prefix}
         {shown.toLocaleString("en-NG")}
         {suffix}
@@ -403,7 +404,7 @@ const FLOW = [
 
 export function Automation() {
   return (
-    <section className="relative overflow-hidden border-y border-white/[0.07] bg-white/[0.015]">
+    <section className="relative overflow-hidden border-y border-border bg-secondary/40">
       <div className="mx-auto max-w-4xl px-5 py-28">
         <SectionHead
           eyebrow="Automation"
@@ -414,13 +415,13 @@ export function Automation() {
         <ol className="mt-14 space-y-2.5">
           {FLOW.map((step, index) => (
             <Reveal key={step} delay={index * 70}>
-              <li className="relative flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-md">
-                <span className="tnum flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-sm font-bold text-indigo-300">
+              <li className="relative flex items-center gap-4 rounded-xl border border-border bg-card p-4 backdrop-blur-md">
+                <span className="tnum flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-sm font-bold text-primary">
                   {index + 1}
                 </span>
-                <span className="font-medium text-white">{step}</span>
+                <span className="font-medium text-foreground">{step}</span>
                 {index === FLOW.length - 1 && (
-                  <Check className="ml-auto h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+                  <Check className="ml-auto h-5 w-5 shrink-0 text-success" aria-hidden />
                 )}
               </li>
             </Reveal>
@@ -444,16 +445,16 @@ export function FinalCta() {
       />
       <div className="relative mx-auto max-w-3xl px-5 py-32 text-center">
         <Reveal>
-          <h2 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+          <h2 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Your business deserves better software
           </h2>
-          <p className="mx-auto mt-5 max-w-lg text-pretty leading-relaxed text-white/55">
+          <p className="mx-auto mt-5 max-w-lg text-pretty leading-relaxed text-muted-foreground">
             Add your stock, ring up one sale, and see where the day stands. It
             takes about ten minutes, and nothing is charged for two weeks.
           </p>
           <a
             href="/sign-up"
-            className="group mt-9 inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-white px-8 text-base font-semibold text-[#050505] transition-shadow hover:shadow-[0_0_44px_-6px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
+            className="group mt-9 inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground transition-shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Start using Zaplex today
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />

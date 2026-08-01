@@ -46,9 +46,9 @@ export function Testimonials() {
   if (reviews.length === 0) return null;
 
   return (
-    <section className="border-y border-white/[0.07] bg-white/[0.015]">
+    <section className="border-y border-border bg-secondary/40">
       <div ref={ref} className="mx-auto max-w-4xl px-5 py-28">
-        <h2 className="text-balance text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h2 className="text-balance text-center text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           From shops already running on it
         </h2>
 
@@ -58,19 +58,19 @@ export function Testimonials() {
               key={`${review.shop}-${review.name}`}
               aria-hidden={index !== active}
               className={cn(
-                "absolute inset-0 rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-md transition-all duration-700",
+                "absolute inset-0 rounded-2xl border border-border bg-card p-7 backdrop-blur-md transition-all duration-700",
                 index === active
                   ? "translate-y-0 opacity-100 blur-0"
                   : "pointer-events-none translate-y-3 opacity-0 blur-[2px]"
               )}
             >
-              <Quote className="h-6 w-6 text-indigo-300/70" aria-hidden />
-              <blockquote className="mt-4 text-pretty text-lg leading-relaxed text-white/85">
+              <Quote className="h-6 w-6 text-primary" aria-hidden />
+              <blockquote className="mt-4 text-pretty text-lg leading-relaxed text-foreground">
                 {review.quote}
               </blockquote>
               <figcaption className="mt-6 text-sm">
-                <span className="font-semibold text-white">{review.name}</span>
-                <span className="mt-0.5 block text-white/45">
+                <span className="font-semibold text-foreground">{review.name}</span>
+                <span className="mt-0.5 block text-muted-foreground">
                   {review.shop} · {review.location} · {review.trade}
                 </span>
               </figcaption>
@@ -86,12 +86,12 @@ export function Testimonials() {
                 type="button"
                 aria-label={`Show review from ${review.name}`}
                 onClick={() => setActive(index)}
-                className="flex h-11 items-center px-1 rounded touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
+                className="flex h-11 items-center px-1 rounded touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <span
                   className={cn(
                     "block h-1.5 rounded-full transition-all duration-300",
-                    index === active ? "w-8 bg-indigo-400" : "w-3 bg-white/20"
+                    index === active ? "w-8 bg-primary" : "w-3 bg-muted-foreground/30"
                   )}
                 />
               </button>

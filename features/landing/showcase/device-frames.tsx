@@ -170,11 +170,11 @@ export function LaptopFrame({
       style={{ perspective: "1600px", opacity: t.presence }}
     >
       <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-        {/* Lid */}
+        {/* Lid, hinging open from behind */}
         <Fragment
-          piece={{ from: { x: 0, y: -90, z: -200, rx: -45 } }}
+          piece={{ from: { x: 0, y: -90, z: -200, rx: -55 } }}
           t={t}
-          className="rounded-t-xl border border-b-0 border-slate-300 bg-slate-900 p-2 shadow-2xl dark:border-white/15"
+          className="relative rounded-t-xl border border-b-0 border-slate-300 bg-slate-900 p-2 shadow-2xl dark:border-white/15"
         >
           <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-white dark:bg-[#0d121b]">
             <div className="absolute inset-0" style={{ opacity: t.power }}>
@@ -182,19 +182,78 @@ export function LaptopFrame({
             </div>
             <PowerOn t={t} />
           </div>
+
+          {/* Lid rails, closing in around the screen */}
+          <Fragment
+            piece={{ from: { x: 0, y: -80, rz: -8 }, delay: 0.14 }}
+            t={t}
+            className={cn(RAIL, "left-2 right-2 top-0 h-1 rounded-full")}
+          />
+          <Fragment
+            piece={{ from: { x: -120, y: 0, ry: -40 }, delay: 0.2 }}
+            t={t}
+            className={cn(RAIL, "bottom-2 left-0 top-2 w-1 rounded-full")}
+          />
+          <Fragment
+            piece={{ from: { x: 120, y: 0, ry: 40 }, delay: 0.2 }}
+            t={t}
+            className={cn(RAIL, "bottom-2 right-0 top-2 w-1 rounded-full")}
+          />
+          {/* Camera dot */}
+          <Fragment
+            piece={{ from: { x: 0, y: -50, z: 90 }, delay: 0.34 }}
+            t={t}
+            className="absolute left-1/2 top-0.5 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-600"
+          />
         </Fragment>
+
+        {/* Hinge, landing before the deck it joins */}
+        <Fragment
+          piece={{ from: { x: 0, y: 40, z: -90 }, delay: 0.08 }}
+          t={t}
+          className="relative mx-auto h-1 w-[92%] rounded-b bg-slate-950/60 dark:bg-black/50"
+        />
 
         {/* Deck, arriving from below */}
         <Fragment
-          piece={{ from: { x: 0, y: 110, rx: 40 }, delay: 0.12 }}
+          piece={{ from: { x: 0, y: 130, rx: 50 }, delay: 0.12 }}
           t={t}
-          className="relative h-3 rounded-b-xl bg-gradient-to-b from-slate-700 to-slate-800 shadow-lg dark:from-slate-700 dark:to-slate-900"
+          className="relative h-6 rounded-b-xl bg-gradient-to-b from-slate-700 to-slate-800 shadow-lg dark:from-slate-700 dark:to-slate-900"
         >
-          {/* Hinge notch */}
-          <div className="absolute left-1/2 top-0 h-1 w-16 -translate-x-1/2 rounded-b-md bg-black/30" />
+          {/* Keyboard bed */}
+          <Fragment
+            piece={{ from: { x: -70, y: 40, rz: -14 }, delay: 0.3 }}
+            t={t}
+            className="absolute left-1/2 top-1 h-2 w-[62%] -translate-x-1/2 rounded-sm bg-slate-900/70"
+          >
+            <div className="flex h-full w-full items-center justify-evenly px-1">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <span key={i} className="h-[3px] w-[3px] rounded-[1px] bg-white/25" />
+              ))}
+            </div>
+          </Fragment>
+
+          {/* Trackpad */}
+          <Fragment
+            piece={{ from: { x: 70, y: 46, rz: 16 }, delay: 0.38 }}
+            t={t}
+            className="absolute bottom-0.5 left-1/2 h-1.5 w-[22%] -translate-x-1/2 rounded-[2px] bg-slate-900/50 ring-1 ring-white/10"
+          />
+
+          {/* Ports, one each side */}
+          <Fragment
+            piece={{ from: { x: -100, y: 0, ry: -50 }, delay: 0.44 }}
+            t={t}
+            className="absolute left-1 top-2 h-1 w-2 rounded-sm bg-black/40"
+          />
+          <Fragment
+            piece={{ from: { x: 100, y: 0, ry: 50 }, delay: 0.44 }}
+            t={t}
+            className="absolute right-1 top-2 h-1 w-2 rounded-sm bg-black/40"
+          />
         </Fragment>
 
-        {/* Foot */}
+        {/* Shadow foot */}
         <Fragment
           piece={{ from: { x: -60, y: 70, rz: -12 }, delay: 0.26 }}
           t={t}

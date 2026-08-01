@@ -2,6 +2,7 @@ import { requirePageAccess } from "@/lib/auth";
 import { canAccessSection } from "@/lib/permissions";
 import { SettingsShell } from "@/components/layout/settings-shell";
 import { SupportBugReportForm } from "@/features/support/support-bug-report-form";
+import { LeaveReviewCard } from "@/features/feedback/leave-review-card";
 import { getSupportContacts } from "@/lib/support-contact";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Mail } from "lucide-react";
@@ -54,6 +55,10 @@ export default async function SettingsSupportPage() {
           supportEmail={contacts.email}
           supportWhatsAppDisplay={contacts.whatsapp}
         />
+
+        {/* Sits below the bug report on purpose: someone who came here with a
+            problem should reach the problem form first. */}
+        <LeaveReviewCard />
       </div>
     </SettingsShell>
   );
