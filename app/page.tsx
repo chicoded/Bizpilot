@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import { ZaplexMark } from "@/components/brand/zaplex-mark";
-import { CinematicHero } from "@/features/landing/cinematic/hero";
+import { CinemaStage } from "@/features/landing/cinema/cinema-stage";
 import {
   ChaosToControl,
   AiAssistant,
@@ -76,7 +76,7 @@ export default function LandingPage() {
       </header>
 
       <main id="main">
-        <CinematicHero />
+        <CinemaStage />
         <ChaosToControl />
         <AiAssistant />
         <Analytics />
