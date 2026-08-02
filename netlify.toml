@@ -19,6 +19,19 @@
   NODE_VERSION = "22"
   # Prisma's postinstall needs to run; skipping dev deps would break the build.
   NPM_FLAGS = "--include=dev"
+  # Netlify fails the build if it finds any env var's value in the output. Every
+  # NEXT_PUBLIC_* value is in the browser bundle *on purpose* — that prefix is
+  # Next.js's instruction to ship it to the client — so the scanner flags them
+  # all and the build dies on correct behaviour.
+  #
+  # Naming the public keys here rather than setting SECRETS_SCAN_ENABLED=false
+  # is the whole point: the scan keeps running, so if CLERK_SECRET_KEY or
+  # SUPABASE_SERVICE_ROLE_KEY ever reaches a client chunk the build still stops.
+  # Add to this list only after checking the value is genuinely public.
+  #
+  # GEMINI_MODEL is a model name and TWILIO_WHATSAPP_NUMBER is the shared
+  # sandbox number; both are committed in .env.example already.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,NEXT_PUBLIC_CLERK_SIGN_IN_URL,NEXT_PUBLIC_CLERK_SIGN_UP_URL,NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,NEXT_PUBLIC_SUPPORT_EMAIL,NEXT_PUBLIC_SUPPORT_WHATSAPP,GEMINI_MODEL,TWILIO_WHATSAPP_NUMBER"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
