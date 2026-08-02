@@ -8,6 +8,21 @@ import { AccessGuard } from "@/components/layout/access-guard";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { AnalyticsIdentity } from "@/components/monitoring/analytics-identity";
 
+/**
+ * Nothing under (app) may be prerendered at build time.
+ *
+ * Every page in this group is behind sign-in and reads a live business context,
+ * so a static shell is worthless at best. It is also actively fragile: Next
+ * tried to prerender /sales/kitchen during a build where the Clerk key was not
+ * present yet, Clerk threw "Missing publishableKey", and the whole build died —
+ * on a page that can never be served statically anyway.
+ *
+ * Declared on the layout because route segment config cascades: one line here
+ * covers all twenty-odd pages, and a new page added tomorrow inherits it rather
+ * than having to remember.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: {
