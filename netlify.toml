@@ -11,7 +11,12 @@
 
 [build.environment]
   # Pinned so a Netlify default bump cannot change the runtime under us.
-  NODE_VERSION = "20"
+  #
+  # Must not contradict "engines" in package.json — Netlify reads both, and a
+  # disagreement either fails the build or quietly picks the other one. engines
+  # is deliberately loose (>=20) so this pin is the single source of truth, and
+  # so Vercel is free to use its own default.
+  NODE_VERSION = "22"
   # Prisma's postinstall needs to run; skipping dev deps would break the build.
   NPM_FLAGS = "--include=dev"
 
