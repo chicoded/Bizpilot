@@ -17,6 +17,7 @@ import {
   syncTeamProducts,
   reloadTeamCatalog,
 } from "@/lib/sync/products-sync";
+import { checkForChanges, invalidateSyncState } from "@/lib/sync/state";
 
 export type SyncFlushResult = {
   ok: boolean;
@@ -306,13 +307,55 @@ export async function pullCloudSales(
   }
 }
 
-/** Push products, flush sales, pull stock + recent team sales. */
+/**
+ * Push products, flush sales, then pull stock and recent team sales — but only
+ * pull when the server says something actually moved.
+ *
+ * Pushes always run: this device may be holding the only copy of a sale. The
+ * two pulls are the expensive half (a full catalogue plus fifty sales, ~105 KB)
+ * and used to run every twenty-five seconds regardless, which is what drained
+ * the hosting transfer quota. The check in front of them costs about sixty
+ * bytes and fails toward pulling, so a broken check wastes bandwidth rather
+ * than leaving a till with stale stock.
+ */
 export async function syncTeamData(businessId: string) {
   const push = await pushLocalProducts(businessId);
   const flush = await flushSaleSyncQueue(businessId);
+
+  // Anything we just pushed changes server state, so do not trust a state
+  // snapshot taken before it.
+  if (push.pushed > 0 || flush.synced > 0) {
+    invalidateSyncState(businessId);
+  }
+
+  const check = await checkForChanges(businessId);
+  if (!check.changed) {
+    return {
+      push,
+      flush,
+      pullProducts: {
+        ok: true as const,
+        updated: 0,
+        added: 0,
+        message: "Team stock already up to date",
+      },
+      pullSales: {
+        ok: true as const,
+        added: 0,
+        message: "Team sales already up to date",
+      },
+      skipped: true as const,
+    };
+  }
+
   const pullProducts = await pullCloudProducts(businessId);
   const pullSales = await pullCloudSales(businessId);
-  return { push, flush, pullProducts, pullSales };
+
+  // Only remember this state once both pulls landed, or a failed pull would
+  // convince the next poll there was nothing to fetch.
+  if (pullProducts.ok && pullSales.ok) check.commit();
+
+  return { push, flush, pullProducts, pullSales, skipped: false as const };
 }
 
 export { listSaleSyncProblems, dismissFailedSaleSyncs } from "@/lib/sync/queue";

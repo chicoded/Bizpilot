@@ -179,6 +179,11 @@ export function LocalDataProvider({ children }: { children: React.ReactNode }) {
     async function runTeamSync() {
       if (cancelled) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      // A backgrounded tab was still polling every 25 seconds all day. Nothing
+      // is being read on a hidden tab, and it syncs on becoming visible again.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
 
       const { pingCloudDatabase, isCloudUsable } = await import(
         "@/lib/sync/cloud-status"
