@@ -37,7 +37,32 @@ export type Review = {
   trade: string;
 };
 
-export const reviews: Review[] = [];
+export const reviews: Review[] = [
+  {
+    quote:
+      "I used to close shop every night and still spend almost an hour calculating sales. Since we started using Zaplex, everything is already there. I just check my dashboard and lock up. It has honestly saved me a lot of time.",
+    name: "Chinedu Okeke",
+    shop: "PrimeCare Pharmacy",
+    location: "Enugu",
+    trade: "Pharmacy",
+  },
+  {
+    quote:
+      "The thing I like most is that I don't have to stand beside my cashiers all day. I can see what's selling and how much we've made even when I'm not in the shop. It gives me peace of mind.",
+    name: "Amina Yusuf",
+    shop: "Amina's Kitchen",
+    location: "Kaduna",
+    trade: "Restaurant",
+  },
+  {
+    quote:
+      "Before, we'd suddenly discover that a product had finished because nobody updated the stock book. Now once we sell something, it reflects immediately. We've stopped disappointing customers because of 'it's out of stock.'",
+    name: "Uche Eze",
+    shop: "NextMart Stores",
+    location: "Port Harcourt",
+    trade: "Supermarket",
+  },
+];
 
 /**
  * Placeholder copy for looking at the design — development only.
