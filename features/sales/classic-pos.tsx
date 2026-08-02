@@ -355,7 +355,13 @@ export function ClassicPos() {
       <AppShell
         title="Point of Sale"
         subtitle="Tap products to add to cart"
-        className={cn("!p-3 md:!p-4", cart.length > 0 && "pb-56 lg:pb-6")}
+        className={cn(
+          "!p-3 md:!p-4",
+          // Clearance for the floating Pay bar: it sits 5.75rem up (above the
+          // bottom nav) and is ~4.75rem tall now that it no longer repeats the
+          // item list. Breakpoint tracks the bar's own md:hidden.
+          cart.length > 0 && "pb-44 md:pb-6"
+        )}
         actions={
           <Link
             href="/sales/history"
@@ -673,10 +679,13 @@ export function ClassicPos() {
                     </div>
                   )}
 
+                  {/* md, not lg. The floating Pay bar is md:hidden, so pairing
+                      it with lg:flex left 768–1023px — every tablet, and a
+                      phone in landscape — with no way to finish a sale at all. */}
                   <Button
                     size="lg"
                     variant="success"
-                    className="w-full h-14 text-base hidden lg:flex"
+                    className="w-full h-14 text-base hidden md:flex"
                     onClick={completeSale}
                     disabled={cart.length === 0 || isPending}
                   >
@@ -707,61 +716,11 @@ export function ClassicPos() {
           }}
         >
           <div className="max-w-7xl mx-auto space-y-2">
-            <div className="max-h-28 overflow-y-auto space-y-1.5">
-              {[...cart].reverse().map((item) => (
-                <div
-                  key={item.product.id}
-                  className="flex items-center gap-2 rounded-xl bg-muted/70 px-2 py-1.5"
-                >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 shrink-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
-                    onClick={() => removeFromCart(item.product.id)}
-                    aria-label={`Remove ${item.product.name}`}
-                  >
-                    <X className="h-5 w-5" strokeWidth={2.5} />
-                  </Button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      ×{item.quantity} ·{" "}
-                      {formatCurrency(item.product.sellingPrice * item.quantity)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-11 w-11 touch-manipulation"
-                      onClick={() => updateQty(item.product.id, -1)}
-                      aria-label={`Decrease ${item.product.name}`}
-                    >
-                      <Minus className="h-4 w-4" strokeWidth={2.5} />
-                    </Button>
-                    <span
-                      className="tnum w-7 shrink-0 text-center text-base font-bold"
-                      aria-hidden
-                    >
-                      {item.quantity}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-11 w-11 touch-manipulation"
-                      onClick={() => updateQty(item.product.id, 1)}
-                      aria-label={`Increase ${item.product.name}`}
-                    >
-                      <Plus className="h-4 w-4" strokeWidth={2.5} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
+            {/* Summary only — deliberately not a second copy of the cart.
+                This bar used to repeat the whole item list, so on a phone the
+                cashier saw every line twice: once here and once in the Cart
+                card behind it, in opposite orders. Tapping the total scrolls
+                to the real list, which is the one place quantities are edited. */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
