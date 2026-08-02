@@ -67,7 +67,7 @@ Then set `RUN_PRISMA_MIGRATE=true` in Vercel to auto-apply future migrations on 
 1. **Push your latest code** to `https://github.com/chicoded/Bizpilot`
 2. Go to [vercel.com/new](https://vercel.com/new) → **Import** the `Bizpilot` repo
 3. Framework: **Next.js** (auto-detected)
-4. Build command: leave default — uses `vercel.json` → `node scripts/vercel-build.mjs`
+4. Build command: leave default — uses `vercel.json` → `node scripts/deploy-build.mjs`
 5. Copy env vars from [`vercel.env.example`](./vercel.env.example) into **Environment Variables**
 6. Click **Deploy**
 

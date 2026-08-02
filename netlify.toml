@@ -1,0 +1,45 @@
+# Netlify deployment config.
+#
+# Runs Next.js on Netlify's Node runtime, so Prisma talks to Postgres exactly
+# as it does on Vercel — no driver adapter, no edge port. The build command is
+# the same host-neutral script both platforms use: it generates the Prisma
+# client, brings optional database columns up to date, then builds.
+
+[build]
+  command = "node scripts/deploy-build.mjs"
+  publish = ".next"
+
+[build.environment]
+  # Pinned so a Netlify default bump cannot change the runtime under us.
+  NODE_VERSION = "20"
+  # Prisma's postinstall needs to run; skipping dev deps would break the build.
+  NPM_FLAGS = "--include=dev"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Health is a liveness probe. A cached answer is a useless answer.
+[[headers]]
+  for = "/api/health"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0"
+
+# The service worker must never be served stale, or a device can be pinned to
+# an old build and stop receiving updates.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# Auth pages must not be cached — a cached signed-out page shown to a signed-in
+# user looks like being logged out at random.
+[[headers]]
+  for = "/sign-in/*"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/sign-up/*"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"

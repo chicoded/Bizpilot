@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     {
       status,
       version: process.env.npm_package_version ?? "0.1.0",
-      environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
+      environment: process.env.VERCEL_ENV ?? process.env.CONTEXT ?? process.env.NODE_ENV ?? "development",
       appUrl: getAppUrl(),
       checks: {
         env: envCheck.valid ? "ok" : "error",

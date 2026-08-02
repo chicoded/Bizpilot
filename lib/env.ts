@@ -40,6 +40,17 @@ export function getPublicEnv() {
   });
 }
 
+/**
+ * Netlify already provides full URLs including the scheme, where Vercel gives
+ * bare hostnames — so these are kept apart rather than blindly prefixed with
+ * https://, which would produce https://https://… on Netlify.
+ */
+function netlifyUrl(): string | undefined {
+  // URL is the production address; DEPLOY_PRIME_URL is the branch or preview.
+  const value = process.env.URL ?? process.env.DEPLOY_PRIME_URL;
+  return value?.startsWith("http") ? value.replace(/\/$/, "") : undefined;
+}
+
 export function getAppUrl(): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -53,7 +64,12 @@ export function getAppUrl(): string {
     return configured;
   }
 
-  // On Vercel, fall back to the live deployment domain (fixes localhost in prod).
+  // Then whichever host we are actually running on.
+  const fromNetlify = netlifyUrl();
+  if (fromNetlify) {
+    return fromNetlify;
+  }
+
   if (productionHost) {
     return `https://${productionHost}`;
   }

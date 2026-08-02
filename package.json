@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
-    "vercel-build": "node scripts/vercel-build.mjs",
+    "vercel-build": "node scripts/deploy-build.mjs",
+    "deploy-build": "node scripts/deploy-build.mjs",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
@@ -69,6 +70,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@netlify/plugin-nextjs": "^5.15.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

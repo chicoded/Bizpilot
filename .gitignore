@@ -29,8 +29,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
+# Every .env variant is ignored, then the checked-in templates are allowed back.
+# The previous ".env" plus ".env*.local" left .env.production tracked — which is
+# the exact filename `vercel env pull` writes real secrets into.
 .env
-.env*.local
+.env.*
+!.env.example
+!.env*.example
 
 # vercel
 .vercel
