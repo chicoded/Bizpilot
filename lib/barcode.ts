@@ -1,12 +1,47 @@
-import { BarcodeFormat } from "@zxing/library";
+/**
+ * Deliberately no `@zxing/library` import.
+ *
+ * BarcodeFormat is a numeric enum, but importing it drags the entire decoder
+ * into any bundle that touches this file — and POS, inventory and the barcode
+ * API route all do. The camera scanner is already lazy-loaded, so that was a
+ * few hundred kilobytes of decoder shipped to every cashier who never opens
+ * the camera, on the phones least able to afford it.
+ *
+ * The numbers below are ZXing's own enum ordering. They are pinned by a test
+ * that compares them against the real library, which is free to import there:
+ * tests run in Node and are never bundled.
+ */
+const BARCODE_FORMAT_NAMES: Record<number, string> = {
+  0: "AZTEC",
+  1: "CODABAR",
+  2: "CODE_39",
+  3: "CODE_93",
+  4: "CODE_128",
+  5: "DATA_MATRIX",
+  6: "EAN_8",
+  7: "EAN_13",
+  8: "ITF",
+  9: "MAXICODE",
+  10: "PDF_417",
+  11: "QR_CODE",
+  12: "RSS_14",
+  13: "RSS_EXPANDED",
+  14: "UPC_A",
+  15: "UPC_E",
+  16: "UPC_EAN_EXTENSION",
+  17: "MICRO_QR_CODE",
+};
 
-const RETAIL_FORMATS = new Set<string>([
+/** The only formats a Nigerian retail counter actually scans. */
+export const RETAIL_FORMAT_NAMES = [
   "EAN_13",
   "EAN_8",
   "UPC_A",
   "UPC_E",
   "CODE_128",
-]);
+] as const;
+
+const RETAIL_FORMATS = new Set<string>(RETAIL_FORMAT_NAMES);
 
 export function normalizeBarcode(raw: string): string {
   return raw.replace(/\s+/g, "").trim();
@@ -59,7 +94,7 @@ export function formatBarcodeType(format: unknown): string {
   if (format === undefined || format === null) return "Unknown";
   if (typeof format === "string") return format;
   if (typeof format === "number") {
-    return BarcodeFormat[format] ?? `Format_${format}`;
+    return BARCODE_FORMAT_NAMES[format] ?? `Format_${format}`;
   }
   return String(format);
 }
@@ -132,10 +167,8 @@ export function validateScannedBarcode(
   };
 }
 
-export const ZXING_RETAIL_FORMATS = [
-  BarcodeFormat.EAN_13,
-  BarcodeFormat.EAN_8,
-  BarcodeFormat.UPC_A,
-  BarcodeFormat.UPC_E,
-  BarcodeFormat.CODE_128,
-];
+/**
+ * Exposed for the pinning test only — the numeric table above has to stay in
+ * step with the library it is standing in for.
+ */
+export const BARCODE_FORMAT_NAMES_FOR_TEST = BARCODE_FORMAT_NAMES;

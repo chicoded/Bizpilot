@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import {
   formatBarcodeType,
   validateScannedBarcode,
-  ZXING_RETAIL_FORMATS,
+  RETAIL_FORMAT_NAMES,
 } from "@/lib/barcode";
 
 type ScannerControls = { stop: () => void };
@@ -250,12 +250,16 @@ export function MobileBarcodeScanner({
         const { BrowserMultiFormatReader, BrowserCodeReader } = await import(
           "@zxing/browser"
         );
-        const { DecodeHintType } = await import("@zxing/library");
+        const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
 
         if (cancelled || !videoRef.current) return;
 
+        // Resolved here rather than in lib/barcode so the enum — and the
+        // decoder attached to it — stays inside this lazily loaded chunk.
+        const retailFormats = RETAIL_FORMAT_NAMES.map((name) => BarcodeFormat[name]);
+
         const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, ZXING_RETAIL_FORMATS);
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, retailFormats);
         hints.set(DecodeHintType.TRY_HARDER, true);
         hints.set(DecodeHintType.ASSUME_GS1, true);
 
