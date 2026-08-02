@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   Boxes,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/features/landing/reveal";
+import { LandingIllustration } from "@/features/landing/illustration";
 
 /** Shared section heading, so spacing and rhythm stay identical throughout. */
 function SectionHead({
@@ -412,21 +414,36 @@ export function Automation() {
           body="You ring up a sale. Everything downstream of it happens without anyone remembering to do it."
         />
 
-        <ol className="mt-14 space-y-2.5">
-          {FLOW.map((step, index) => (
-            <Reveal key={step} delay={index * 70}>
-              <li className="relative flex items-center gap-4 rounded-xl border border-border bg-card p-4 backdrop-blur-md">
-                <span className="tnum flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-sm font-bold text-primary">
-                  {index + 1}
-                </span>
-                <span className="font-medium text-foreground">{step}</span>
-                {index === FLOW.length - 1 && (
-                  <Check className="ml-auto h-5 w-5 shrink-0 text-success" aria-hidden />
-                )}
-              </li>
-            </Reveal>
-          ))}
-        </ol>
+        <div className="mt-14 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <ol className="space-y-2.5">
+            {FLOW.map((step, index) => (
+              <Reveal key={step} delay={index * 70}>
+                <li className="relative flex items-center gap-4 rounded-xl border border-border bg-card p-4 backdrop-blur-md">
+                  <span className="tnum flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-sm font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  <span className="font-medium text-foreground">{step}</span>
+                  {index === FLOW.length - 1 && (
+                    <Check className="ml-auto h-5 w-5 shrink-0 text-success" aria-hidden />
+                  )}
+                </li>
+              </Reveal>
+            ))}
+          </ol>
+
+          {/* The payoff of the list, stated as a picture: the work is done and
+              nobody had to remember to do it. */}
+          <Reveal delay={140}>
+            <LandingIllustration
+              src="/illustrations/work-handled.jpg"
+              alt="A shop owner leaning back from their desk while a checklist on the laptop completes itself"
+              width={1200}
+              height={1200}
+              sizes="(min-width: 1024px) 19rem, 100vw"
+              className="mx-auto max-w-sm lg:max-w-none"
+            />
+          </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -445,6 +462,16 @@ export function FinalCta() {
       />
       <div className="relative mx-auto max-w-3xl px-5 py-32 text-center">
         <Reveal>
+          {/* This section was the only one carrying no image at all, and it is
+              the one asking for the signup. A face here beats a gradient. */}
+          <LandingIllustration
+            src="/illustrations/owner-reading-insights.jpg"
+            alt="A business owner studying their sales dashboard, with charts and a magnifying glass"
+            width={1200}
+            height={1200}
+            sizes="(min-width: 640px) 17rem, 13rem"
+            className="mx-auto mb-10 max-w-[13rem] sm:max-w-[17rem]"
+          />
           <h2 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Your business deserves better software
           </h2>
@@ -452,13 +479,13 @@ export function FinalCta() {
             Add your stock, ring up one sale, and see where the day stands. It
             takes about ten minutes, and nothing is charged for two weeks.
           </p>
-          <a
+          <Link
             href="/sign-up"
             className="group mt-9 inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground transition-shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Start using Zaplex today
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
-          </a>
+          </Link>
         </Reveal>
       </div>
     </section>

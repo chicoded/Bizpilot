@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { ZaplexMark } from "@/components/brand/zaplex-mark";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ShowcaseStage } from "@/features/landing/showcase/showcase-stage";
+import { LandingIllustration } from "@/features/landing/illustration";
 import {
   ChaosToControl,
   AiAssistant,
@@ -107,6 +108,19 @@ export default function LandingPage() {
               working when the signal doesn&rsquo;t.
             </p>
           </div>
+
+          {/* Faces before hardware. The scroll tour below is all devices and
+              screens; leading with people using them is what a visitor is
+              actually trying to picture. priority because at this position it
+              is the largest-contentful paint on most screens. */}
+          <LandingIllustration
+            src="/illustrations/team-reviewing-analytics.jpg"
+            alt="A team gathered around laptops and a tablet, reviewing sales charts together on a screen"
+            width={735}
+            height={490}
+            priority
+            className="mx-auto mt-12 max-w-4xl"
+          />
         </section>
 
         <ShowcaseStage />
