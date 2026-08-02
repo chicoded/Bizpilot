@@ -39,19 +39,28 @@ export async function GET(request: Request) {
     }
   }
 
-  const healthy = envCheck.valid && database === "ok" && schema === "ok";
-  const statusCode = healthy ? 200 : 503;
+  /**
+   * Reachability and completeness are different questions, and only the first
+   * one belongs in the status code.
+   *
+   * The optional product columns are optional by design — the code omits them
+   * when absent and carries on. Failing the health check on a missing column
+   * made the app report "Cloud database sleeping" at a database that was awake
+   * and answering, because the sync banner reads this endpoint and a 503 is
+   * the only thing it can interpret.
+   */
+  const reachable = envCheck.valid && database === "ok";
+  const healthy = reachable && schema === "ok";
+  const statusCode = reachable ? 200 : 503;
+  const status = healthy ? "healthy" : reachable ? "degraded" : "unhealthy";
 
   if (!detailed) {
-    return NextResponse.json(
-      { status: healthy ? "healthy" : "unhealthy" },
-      { status: statusCode }
-    );
+    return NextResponse.json({ status }, { status: statusCode });
   }
 
   return NextResponse.json(
     {
-      status: healthy ? "healthy" : "unhealthy",
+      status,
       version: process.env.npm_package_version ?? "0.1.0",
       environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
       appUrl: getAppUrl(),

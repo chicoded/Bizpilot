@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   getLastCloudStatus,
@@ -16,13 +17,35 @@ import { cn } from "@/lib/utils";
 const KEEP_ALIVE_MS = 4 * 60 * 1000;
 const TOUCH_THROTTLE_MS = 90 * 1000;
 
+/**
+ * Pages where this banner means nothing to the reader.
+ *
+ * It lives in the root layout, so without this it also greeted visitors on the
+ * marketing page and anyone opening the public survey — telling a stranger that
+ * "team sync is paused, sales still work on this device" when they have no
+ * shop, no sales and no idea what sync is. The warning only makes sense to
+ * someone actually selling.
+ */
+const HIDE_ON = ["/", "/survey", "/support", "/sign-in", "/sign-up", "/offline", "/invite"];
+
+function isPublicPage(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return HIDE_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 export function CloudKeepAlive() {
+  const pathname = usePathname();
+  const hidden = isPublicPage(pathname);
   const [status, setStatus] = useState<CloudPingResult>(getLastCloudStatus);
   const [waking, setWaking] = useState(false);
 
   useEffect(() => subscribeCloudStatus(setStatus), []);
 
   useEffect(() => {
+    // No point polling a database on behalf of someone reading the marketing
+    // page — it is wasted requests and wasted battery on a phone.
+    if (hidden) return;
+
     let cancelled = false;
     let lastTouchPing = 0;
 
@@ -67,7 +90,7 @@ export function CloudKeepAlive() {
       window.removeEventListener("pointerdown", onActivity);
       window.removeEventListener("keydown", onActivity);
     };
-  }, []);
+  }, [hidden]);
 
   const wake = useCallback(async () => {
     setWaking(true);
@@ -87,9 +110,10 @@ export function CloudKeepAlive() {
   }, []);
 
   const showBanner =
-    status.status === "sleeping" ||
-    status.status === "offline" ||
-    (status.status === "unknown" && waking);
+    !hidden &&
+    (status.status === "sleeping" ||
+      status.status === "offline" ||
+      (status.status === "unknown" && waking));
 
   if (!showBanner) return null;
 
