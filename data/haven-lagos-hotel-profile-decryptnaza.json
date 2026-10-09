@@ -1,0 +1,436 @@
+{
+  "_profile_meta": {
+    "generated_at": "2026-10-09",
+    "owner_email": "decryptnaza@gmail.com",
+    "account_owner": "Haven Lagos / Lustro Group",
+    "source_scrape": "https://www.havenlagos.com",
+    "source_file": "data/haven-lagos-scraped-data.json",
+    "profile_type": "Hotel / Hospitality industry profile for Haven Lagos property",
+    "description": "Pre-built Hotel/Hospitality profile — property details, contact, pricing, inventory, product seeds, default departments, roles & permissions, and reporting template for Haven Lagos boutique hotel.",
+    "industry": "HOTEL",
+    "industry_fallback": "HOSPITALITY",
+    "currency": "NGN",
+    "timezone": "Africa/Lagos",
+    "country": "Nigeria"
+  },
+  "business_profile": {
+    "name": "Haven Lagos",
+    "legalName": "Haven by Lustro",
+    "displayName": "Haven Lagos — Hotel, Restaurant & Spa",
+    "tagline": "Hotel · Restaurant · Spa",
+    "email": "havenbylustro@gmail.com",
+    "ownerEmail": "decryptnaza@gmail.com",
+    "phone": "+234 812 886 8067",
+    "whatsapp": "https://wa.me/2348128868067",
+    "website": "https://www.havenlagos.com",
+    "address": "21 Amusa Street, Abule Ijesha, Yaba, Lagos",
+    "city": "Lagos",
+    "state": "Lagos State",
+    "social_media": {
+      "instagram_hotel": "https://www.instagram.com/thehavenlagos_",
+      "instagram_restaurant": "https://www.instagram.com/havenlagos_restaurant",
+      "tiktok": "https://www.tiktok.com/@thehavenlagos_"
+    },
+    "operating_hours": "8am – 12am daily",
+    "default_industry": "HOTEL"
+  },
+  "reporting_department_structure": {
+    "reporting_frequency": "DAILY",
+    "template_aligned_to": "Haven Lagos operations — 5 departments: Reception, Kitchen, Bar, Spa/Masseuse, Stores & Issuance",
+    "departments": [
+      {
+        "id": "RECEPTION",
+        "label": "Reception / Front Office",
+        "primary_role": "CASHIER",
+        "manager_role": "MANAGER",
+        "submission_required": true,
+        "daily_checklist": [
+          "Room count reconciliation (booked vs vacant by wing)",
+          "Booked room value for day (NOT payment received)",
+          "Complimentary rooms count + value",
+          "Payments actually received (Cash / Transfer / POS / Credit)",
+          "Wing-level booked rooms breakdown",
+          "Wing-level vacant rooms available",
+          "Items issued from Stores & Issuance (log per item)"
+        ]
+      },
+      {
+        "id": "KITCHEN",
+        "label": "Kitchen (Restaurant)",
+        "primary_role": "STAFF",
+        "manager_role": "MANAGER",
+        "submission_required": true,
+        "daily_checklist": [
+          "Total food sales for day",
+          "Cost of goods sold (COGS)",
+          "Waste / spoilage cost",
+          "Gross profit auto check (Sales − COGS − Waste)",
+          "Complementary meals count + value (VIPs, staff, etc.)",
+          "Staff meals count + value",
+          "Optional summarized item entries (qty × value per dish)"
+        ],
+        "menu_sections": ["noodles", "rice", "pasta", "wings_and_sides", "haven_combos", "tacos", "breakfast_and_brunch"]
+      },
+      {
+        "id": "BAR",
+        "label": "Bar & Lounge",
+        "primary_role": "CASHIER",
+        "manager_role": "MANAGER",
+        "submission_required": true,
+        "daily_checklist": [
+          "Total drinks sales for day",
+          "Cost of goods sold (COGS)",
+          "Spillage & waste cost",
+          "Complementary drinks count + value",
+          "Optional summarized drink entries (qty × value)"
+        ],
+        "menu_sections": ["cocktails", "mocktails", "milkshakes", "smoothies", "shots", "cognac_and_whiskey", "champagne_and_wine", "tequila", "haven_special_premium", "shisha_and_beverages"]
+      },
+      {
+        "id": "SPA",
+        "label": "Spa & Masseuse",
+        "primary_role": "STAFF",
+        "manager_role": "MANAGER",
+        "submission_required": true,
+        "daily_checklist": [
+          "Paid spa revenue ONLY (exclude complimentary & pending)",
+          "Product retail sales (oils, scrubs, gift sets)",
+          "Treatment summary table (treatment × therapist × qty × value)",
+          "Complimentary services count + value (for staff / VIPs)",
+          "Pending services count + value (post-paid / invoiced to room)",
+          "Per-therapist breakdown (revenue + no. of treatments performed)",
+          "Per-therapist hours worked"
+        ],
+        "spa_sections": ["massage", "waxing", "manicure", "pedicure", "nail_combinations", "spa_experiences", "add_ons"]
+      },
+      {
+        "id": "STORE",
+        "label": "Stores & Issuance",
+        "primary_role": "STAFF",
+        "manager_role": "MANAGER",
+        "submission_required": true,
+        "daily_checklist": [
+          "Opening stock value (per the 5 categories)",
+          "New external purchases for the day (NOT inter-department transfers — includes supplier, invoice #)",
+          "Receipts / returns in value",
+          "Issues OUT to other departments (Kitchen, Spa, Reception, Laundry, Housekeeping — never counted as expense twice)",
+          "Closing stock value",
+          "Per-category quantity breakdown (Housekeeping / Kitchen / Spa / Laundry / Other)",
+          "Purchase line items (external only — supplier & invoice fields provided)",
+          "Issue line items (issued-to field for inter-department transfers)",
+          "Adjustment line items for shrinkage / damage"
+        ],
+        "enforced_categories": [
+          "HOUSEKEEPING",
+          "KITCHEN",
+          "SPA",
+          "LAUNDRY",
+          "OTHER"
+        ]
+      }
+    ]
+  },
+  "hotel_operations_policies": {
+    "check_in": "From 2pm",
+    "check_out": "By 12pm",
+    "cancellation": "Bookings are final and non-refundable once paid. Changes subject to availability via WhatsApp.",
+    "payment_methods_accepted": ["Cards", "Bank Transfer (online secure)", "Deposit (to confirm) — Cash, POS at reception"],
+    "december_surcharge_pct": 20,
+    "december_surcharge_note": "~20% premium applied in December across all room categories",
+    "add_ons": [
+      {
+        "code": "BREAKFAST",
+        "name": "Breakfast per guest per night",
+        "description": "Breakfast for one guest, every morning of your stay",
+        "price_ngn": 20000,
+        "max_guests_per_booking": 2,
+        "report_under_dept": "KITCHEN",
+        "expense_category_if_any": null
+      },
+      {
+        "code": "SPA_TREATMENT",
+        "name": "Spa treatment per guest per night",
+        "description": "One spa treatment per guest, for each night you stay",
+        "price_ngn": 40000,
+        "max_guests_per_booking": 2,
+        "report_under_dept": "SPA",
+        "expense_category_if_any": null
+      }
+    ],
+    "included_amenities_all_rooms": [
+      "Free access to the gym",
+      "Air-conditioning",
+      "Glass bathroom",
+      "Refrigerator",
+      "Raffia wardrobe",
+      "Netflix & smart TV",
+      "Kitchenette",
+      "Microwave",
+      "Toasting machine",
+      "Fast Wi-Fi throughout",
+      "Daily housekeeping",
+      "24/7 concierge",
+      "Digital Bluetooth screen",
+      "Ceiling sound system",
+      "Comfortable bedside chair",
+      "Smart door lock",
+      "Balcony",
+      "Fireplace"
+    ],
+    "hotel_wide_amenities": [
+      "Fine Dining",
+      "Spa & Wellness",
+      "Fast Wi-Fi",
+      "24/7 Concierge",
+      "Airport Pickup",
+      "Daily Housekeeping"
+    ]
+  },
+  "default_room_categories": {
+    "wing_categories": [
+      {
+        "wing": "Classic Wing",
+        "standard_rate_ngn": 80000,
+        "december_rate_ngn": 96000,
+        "surcharge_pct": 20,
+        "rooms": [
+          { "name": "Casa Bali", "type": "Classic", "bed_type": null, "floor": null },
+          { "name": "Casa Palm", "type": "Classic", "bed_type": null, "floor": null },
+          { "name": "Island Noir", "type": "Classic", "bed_type": null, "floor": null },
+          { "name": "Santa Rosa", "type": "Classic", "bed_type": null, "floor": null }
+        ],
+        "total_rooms_in_wing": 4
+      },
+      {
+        "wing": "Superior Wing",
+        "standard_rate_ngn": 90000,
+        "december_rate_ngn": 108000,
+        "surcharge_pct": 20,
+        "rooms": [
+          { "name": "Ayra Cove", "type": "Superior 90k", "bed_type": null, "floor": null },
+          { "name": "Eden Bali", "type": "Superior 90k", "bed_type": null, "floor": null },
+          { "name": "Ravello", "type": "Superior 90k", "bed_type": null, "floor": null },
+          { "name": "Amari Room", "type": "Superior 90k", "bed_type": null, "floor": null }
+        ],
+        "total_rooms_in_wing": 4
+      },
+      {
+        "wing": "Superior Wing — Premium",
+        "standard_rate_ngn": 100000,
+        "december_rate_ngn": 120000,
+        "surcharge_pct": 20,
+        "rooms": [
+          { "name": "Sora Luna", "type": "Superior 100k", "bed_type": null, "floor": null },
+          { "name": "Veloura", "type": "Superior 100k", "bed_type": null, "floor": null }
+        ],
+        "total_rooms_in_wing": 2
+      },
+      {
+        "wing": "Superior Wing — Bespoke Aquarium",
+        "standard_rate_ngn": 110000,
+        "december_rate_ngn": 132000,
+        "surcharge_pct": 20,
+        "featured_note": "Each has a BEDSIDE AQUARIUM — flagship rooms",
+        "rooms": [
+          { "name": "Maison Nusa", "type": "Superior 110k", "bed_type": null, "floor": null, "features": ["Bedside Aquarium"] },
+          { "name": "Sora Mira", "type": "Superior 110k", "bed_type": null, "floor": null, "features": ["Bedside Aquarium"] }
+        ],
+        "total_rooms_in_wing": 2
+      }
+    ],
+    "total_rooms_property": 12
+  },
+  "expense_categories_seeded_from_profile": {
+    "note": "These match the HotelExpenseCategory enum — 6 categories only",
+    "categories": [
+      {
+        "code": "FUEL",
+        "label": "Fuel & Power",
+        "example_items": ["Diesel for generator", "Petrol for logistics", "Gas for kitchen", "Pre-paid PHCN units"],
+        "payment_frequency": "As-required, often daily"
+      },
+      {
+        "code": "REPAIRS_AND_MAINTENANCE",
+        "label": "Repairs & Maintenance",
+        "example_items": ["Plumbing repairs", "AC servicing", "Carpentry fixes", "Roof / balcony leak", "Bedside aquarium filter servicing", "Bedroom appliance fixes"],
+        "payment_frequency": "As-required"
+      },
+      {
+        "code": "SALARIES_AND_WAGES",
+        "label": "Salaries & Wages",
+        "example_items": ["Front desk monthly", "Kitchen cooks", "Bar attendants", "Therapists", "Housekeeping", "Laundry staff", "Security", "Store keeper / issuance officer", "Manager monthly"],
+        "payment_frequency": "Monthly, with occasional daily tips / casuals"
+      },
+      {
+        "code": "SUPPLIES",
+        "label": "Supplies (Operational)",
+        "example_items": ["Housekeeping supplies (new purchase, not internal issue)", "Laundry detergent", "Spa oils & consumables (external purchase only)", "Cleaning chemicals", "Kitchen consumables"],
+        "warning_note": "IMPORTANT — Internal transfers (Kitchen takes from Stores & Issuance, Spa takes from Stores & Issuance etc.) MUST NEVER be re-entered here as an expense. Count them ONLY once as the original 'New external purchase' in STORE dept report (Purchases field).",
+        "payment_frequency": "Weekly"
+      },
+      {
+        "code": "UTILITIES",
+        "label": "Utilities",
+        "example_items": ["Internet (data / fibre / Starlink top-ups)", "Electricity bill post-paid", "Water", "Gym membership bulk for guests", "Cloud backups / subscriptions"],
+        "payment_frequency": "Monthly / prepaid"
+      },
+      {
+        "code": "OTHER_OPERATIONAL",
+        "label": "Other Operational",
+        "example_items": ["Airport pickup fuel + driver allowances separately if not in FUEL", "Decoration / festive items", "Signage", "Marketing collaterals", "Insurance premium", "Licenses"],
+        "payment_frequency": "As-required"
+      }
+    ],
+    "cash_outflow_rule_strict": "Only amount ACTUALLY PAID today (amountPaid) counts toward total cash outflow. Amount (invoice total if unpaid) is excluded from cash outflow. Outstanding = Invoice amount − amountPaid, shown as a liability only on Management dashboard.",
+    "partial_payment_tracking": "All 6 categories support partial payments. Each expense line stores: date, category, description, total invoice amount, amountPaid today, outstanding, receipt URL optional, paid-to (person / supplier), reference / invoice #, paymentStatus (UNPAID/PARTIAL/PAID auto-calculated)."
+  },
+  "product_inventory_seeded_profile": {
+    "note": "Use these category presets + product attribute fields when setting up inventory via the NEW INVENTORY flow on Haven Lagos' login.",
+    "industrypack_capabilities_present": ["hotel_daily_reports","hotel_reception_report","hotel_kitchen_report","hotel_bar_report","hotel_spa_report","hotel_store_report","hotel_expenses","hotel_management_dashboard"],
+    "category_presets": [
+      "Favorites",
+      "Room Items",
+      "Housekeeping",
+      "Kitchen",
+      "Bar",
+      "Spa",
+      "Laundry",
+      "Supplies",
+      "Drinks",
+      "Specials"
+    ],
+    "product_attributes_for_hotel": [
+      {
+        "name": "storeCategory",
+        "type": "select",
+        "label": "Store category (used for 5-way Stores & Issuance report)",
+        "options": [
+          "HOUSEKEEPING → Housekeeping Supplies",
+          "KITCHEN → Kitchen Supplies",
+          "SPA → Spa Supplies",
+          "LAUNDRY → Laundry Supplies",
+          "OTHER → Other Store Items"
+        ]
+      },
+      { "name": "reorderLevel", "type": "number", "label": "Reorder level (minimum units before raise purchase order)", "placeholder": "e.g. 10" },
+      { "name": "storageLocation", "type": "text", "label": "Storage location", "placeholder": "e.g. Store Room A / Walk-in Fridge 2 / Spa cabinet", "maxLength_60": true }
+    ],
+    "sample_inventory_to_seed": {
+      "KITCHEN_seeded_from_menu": [
+        { "category": "Kitchen", "name": "Hakka Noodles ingredient pack", "unit": "pack", "suggested_reorder": 5, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Chicken (whole, fresh)", "unit": "kg", "suggested_reorder": 10, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Basmati / Fried Rice grain", "unit": "bag", "suggested_reorder": 2, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Tiger prawn (large)", "unit": "kg", "suggested_reorder": 3, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Plantain", "unit": "bunch", "suggested_reorder": 5, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Yam", "unit": "tuber", "suggested_reorder": 10, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Eggs", "unit": "crate", "suggested_reorder": 3, "storeCategory": "KITCHEN" },
+        { "category": "Kitchen", "name": "Sausage", "unit": "pack", "suggested_reorder": 5, "storeCategory": "KITCHEN" },
+        { "category": "Specials", "name": "Lustro Haven signature plate (composite)", "unit": "serving", "suggested_reorder": 10, "storeCategory": "KITCHEN" }
+      ],
+      "BAR_seeded_from_menu": [
+        { "category": "Bar", "name": "White Rum (Havana Club 3Y)", "unit": "bottle", "suggested_reorder": 2, "storeCategory": "BAR" },
+        { "category": "Bar", "name": "Tequila Gold", "unit": "bottle", "suggested_reorder": 2, "storeCategory": "BAR" },
+        { "category": "Bar", "name": "Gordon's London Dry Gin", "unit": "bottle", "suggested_reorder": 2, "storeCategory": "BAR" },
+        { "category": "Drinks", "name": "Coca Cola 50cl", "unit": "case", "suggested_reorder": 5, "storeCategory": "OTHER" },
+        { "category": "Drinks", "name": "Sprite 50cl", "unit": "case", "suggested_reorder": 3, "storeCategory": "OTHER" },
+        { "category": "Drinks", "name": "Bottled Water 75cl", "unit": "pack", "suggested_reorder": 10, "storeCategory": "OTHER" },
+        { "category": "Specials", "name": "Royal Haven Long Island cocktail (glass)", "unit": "glass", "suggested_reorder": null, "storeCategory": "BAR" }
+      ],
+      "SPA_seeded_from_menu": [
+        { "category": "Spa", "name": "Massage oil (lavender)", "unit": "litre", "suggested_reorder": 3, "storeCategory": "SPA" },
+        { "category": "Spa", "name": "Body scrub (coffee/coconut)", "unit": "jar", "suggested_reorder": 5, "storeCategory": "SPA" },
+        { "category": "Spa", "name": "Wax beans", "unit": "kg", "suggested_reorder": 2, "storeCategory": "SPA" },
+        { "category": "Spa", "name": "Gel polish set", "unit": "kit", "suggested_reorder": 2, "storeCategory": "SPA" }
+      ],
+      "HOUSEKEEPING_seeded": [
+        { "category": "Housekeeping", "name": "Detergent", "unit": "4L pack", "suggested_reorder": 3, "storeCategory": "HOUSEKEEPING" },
+        { "category": "Housekeeping", "name": "Room air freshener", "unit": "can", "suggested_reorder": 6, "storeCategory": "HOUSEKEEPING" },
+        { "category": "Housekeeping", "name": "Bed linens (set)", "unit": "set", "suggested_reorder": 4, "storeCategory": "HOUSEKEEPING" },
+        { "category": "Housekeeping", "name": "Bath towels", "unit": "pcs", "suggested_reorder": 8, "storeCategory": "HOUSEKEEPING" }
+      ],
+      "LAUNDRY_seeded": [
+        { "category": "Laundry", "name": "Commercial detergent", "unit": "20L drum", "suggested_reorder": 1, "storeCategory": "LAUNDRY" },
+        { "category": "Laundry", "name": "Stain remover", "unit": "bottle", "suggested_reorder": 2, "storeCategory": "LAUNDRY" },
+        { "category": "Laundry", "name": "Fabric softener", "unit": "bottle", "suggested_reorder": 3, "storeCategory": "LAUNDRY" }
+      ],
+      "ROOM_ITEMS_seeded_for_minibar_and_sale": [
+        { "category": "Room Items", "name": "Mini-bar champagne (Moët)", "unit": "bottle", "suggested_reorder": 3, "storeCategory": "OTHER" },
+        { "category": "Room Items", "name": "Premium water 1L", "unit": "pcs", "suggested_reorder": 24, "storeCategory": "OTHER" },
+        { "category": "Room Items", "name": "Chocolates plate (complimentary on arrival, but reorder stock here)", "unit": "tray set", "suggested_reorder": 10, "storeCategory": "OTHER" }
+      ]
+    }
+  },
+  "management_dashboard_reporting_logic_strict": {
+    "note": "Exact formulas the Management dashboard should compute — these are enforced in code in actions/hotel.ts and in client UI calculations. For decryptnaza@gmail.com account review.",
+    "total_reported_inflow_formula": "Reception (totalPaymentsReceived, i.e. CASH + TRANSFER + POS + CREDIT payments COLLECTED today) + Kitchen (totalSales) + Bar (totalSales) + Spa (paidRevenue ONLY — never include complimentaryValue or pendingServicesValue here). NEVER use Reception.bookedRoomValue (that's just occupancy pricing, not money received).",
+    "actual_expenses_paid_outflow_formula": "SUM(ALL HotelExpense entries for today WHERE amountPaid > 0 → Σ amountPaid ONLY). Never Σ amount (invoice) and never include expenses with paymentStatus = UNPAID (0 paid).",
+    "outstanding_expenses_formula": "SUM(Σ outstanding = amount − amountPaid) across ALL expenses for the day — this is an accounts payable / liability view, not cash impact.",
+    "net_reported_cash_movement_formula": "totalReportedInflow − actualExpensesPaid. Green if >= 0, Red if < 0.",
+    "department_approval_workflow": {
+      "1_submission_statuses": ["DRAFT (default, open)", "SUBMITTED (dept head clicked Submit — locks for editing by staff)", "RETURNED (MANAGER or OWNER returned it with correction note — re-opens the dept form, note is shown in RED)", "APPROVED (only set via Management dashboard → Approve all 5 button — atomic)"],
+      "2_roles_who_can_submit": {
+        "OWNER": "All 5 departments",
+        "MANAGER": "All 5 departments",
+        "CASHIER": "Reception (front office) + Bar ONLY",
+        "STAFF": "Kitchen + Spa/Masseuse + Stores & Issuance ONLY"
+      },
+      "3_roles_who_can_return_or_approve": ["OWNER", "MANAGER"],
+      "4_roles_who_can_delete_expenses": ["OWNER only — Managers can create/edit expenses and mark paid but cannot delete them"]
+    },
+    "discrepancy_checks": [
+      "Reception: CASH + TRANSFER + POS + CREDIT auto fields MUST equal totalPaymentsReceived at save + load — flagged in Management dashboard discrepancy block if >₦500 difference.",
+      "Stores & Issuance: Opening + Purchases + Receipts − Issues MUST equal Closing — flagged if >₦500 difference.",
+      "Stores & Issuance per-category qty: openingQty + purchases + receipts − issues SHOULD equal closingQty per category row — RED inline marker if mismatch."
+    ],
+    "csv_exports": {
+      "management_dashboard_daily_csv": "Downloaded from Management page 'Daily CSV' — includes dept statuses, all inflow / outflow KPIs, the full expense table, discrepancy notes.",
+      "management_history_csv": "Downloaded via 'History CSV' — Daily / Weekly / Monthly rolled-up summary rows across the last 90 days.",
+      "hotel_expenses_csv": "Downloaded from Hotel Expenses page — period filter applied (Today / Week / Month / All)."
+    },
+    "printing": "All pages: Reports hub, each individual department report, expenses, management dashboard — all print correctly via window.print() button. Layout removes the sidebar, nav bar, modals."
+  },
+  "role_permission_suggestions_for_account_owner_decryptnaza_gmail_com": {
+    "note": "If the Haven Lagos account at decryptnaza@gmail.com has OWNER level, these recommendations apply to invitees (Settings → Team → Invite).",
+    "recommended_role_setup": [
+      {
+        "role": "MANAGER",
+        "name_example": "Property / Operations Manager",
+        "what_they_do": "Approve all 5 daily reports, return with notes for correction, add / edit expenses, see Management dashboard, see history. Everything except OWNER-only destructive actions (delete expenses, change plan).",
+        "suggested_email_prefix": "manager@havenlagos.com or operations@havenlagos.com"
+      },
+      {
+        "role": "CASHIER",
+        "name_example": "Receptionist / Front Desk Cashier",
+        "what_they_do": "Reception daily report (rooms, payments, wings, items issued) + Bar daily report (drinks sales, spillage, comps). Can SUBMIT both. Cannot see Spa or Kitchen, cannot see Management dashboard if access gating strict.",
+        "suggested_email_prefix": "reception@havenlagos.com"
+      },
+      {
+        "role": "STAFF",
+        "multiple_staff_accounts": true,
+        "variants": [
+          {
+            "sub_role": "Head Chef (Kitchen)",
+            "what_they_do": "Submit Kitchen daily report — food sales, COGS, waste, comp & staff meals, summarized dishes."
+          },
+          {
+            "sub_role": "Spa Therapist Lead",
+            "what_they_do": "Submit Spa/Masseuse daily report — paid revenue, treatments, comp & pending counts, per-therapist stats & hours."
+          },
+          {
+            "sub_role": "Store / Issuance Officer (Store Keeper)",
+            "what_they_do": "Submit Stores & Issuance daily report — opening, NEW external purchases, receipts, issues OUT to other departments, closing stock. RENAMED from Store Keeper in UI to 'Stores & Issuance' to reflect this cross-department issue role (they issue, not just stock)."
+          }
+        ]
+      }
+    ]
+  },
+  "checklist_before_first_live_day_for_decryptnaza_account": [
+    "1. Settings → Business profile → set industry dropdown = 'HOTEL' (or HOSPITALITY, both work).",
+    "2. Run Prisma migration on the database once: prisma migrate dev --name add_hotel_module (or prisma db push if Supabase has no other migrations).",
+    "3. Settings → Team → Invite the 4 recommended accounts above (Manager, Reception Cashier, Chef, Store & Issuance Officer, Spa Lead).",
+    "4. Inventory → seed the sample inventory above (KITCHEN / BAR / SPA / HOUSEKEEPING / LAUNDRY categories) with correct storeCategory select values so STORE dept reports aggregate by 5 categories properly.",
+    "5. Go to /hotel/reports on Day 1 and for each department, click 'Submit' once they fill it. The Management dashboard will then aggregate them automatically for that business date.",
+    "6. Expenses paid in cash on day 1 should be entered via /hotel/expenses with amountPaid populated correctly (never just invoice amount unless fully paid).",
+    "7. Any complimentary rooms or comp meals at launch should be entered by Reception (comp rooms) and Kitchen/Bar (comps) but explicitly NOT counted as cash inflow (dashboard correctly excludes them)."
+  ]
+}
