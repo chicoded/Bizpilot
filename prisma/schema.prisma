@@ -28,6 +28,46 @@ enum Industry {
   RESTAURANT
   FAST_FOOD
   CAFE
+  HOTEL
+  HOSPITALITY
+  OTHER
+}
+
+enum HotelDepartment {
+  RECEPTION
+  KITCHEN
+  BAR
+  SPA
+  STORE
+}
+
+enum HotelReportStatus {
+  DRAFT
+  SUBMITTED
+  RETURNED
+  APPROVED
+}
+
+enum HotelExpenseCategory {
+  FUEL
+  REPAIRS_AND_MAINTENANCE
+  SALARIES_AND_WAGES
+  SUPPLIES
+  UTILITIES
+  OTHER_OPERATIONAL
+}
+
+enum HotelExpensePaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum HotelStoreCategory {
+  HOUSEKEEPING
+  KITCHEN
+  SPA
+  LAUNDRY
   OTHER
 }
 
@@ -739,4 +779,185 @@ model SupportTicket {
   @@index([businessId])
   @@index([createdAt])
   @@map("support_tickets")
+}
+
+// ─── Hotel / Hospitality ─────────────────────────────────────────────────────
+
+model HotelDailyReport {
+  id                  String             @id @default(cuid())
+  businessId          String
+  reportDate          DateTime           @db.Date
+  receptionStatus     HotelReportStatus  @default(DRAFT)
+  kitchenStatus       HotelReportStatus  @default(DRAFT)
+  barStatus           HotelReportStatus  @default(DRAFT)
+  spaStatus           HotelReportStatus  @default(DRAFT)
+  storeStatus         HotelReportStatus  @default(DRAFT)
+  receptionSubmittedBy  String?
+  kitchenSubmittedBy    String?
+  barSubmittedBy        String?
+  spaSubmittedBy        String?
+  storeSubmittedBy      String?
+  receptionSubmittedAt  DateTime?
+  kitchenSubmittedAt    DateTime?
+  barSubmittedAt        DateTime?
+  spaSubmittedAt        DateTime?
+  storeSubmittedAt      DateTime?
+  approvedAt          DateTime?
+  approvedBy          String?
+  returnNotes         Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  receptionReport     HotelReceptionReport?
+  kitchenReport       HotelKitchenReport?
+  barReport           HotelBarReport?
+  spaReport           HotelSpaReport?
+  storeReport         HotelStoreReport?
+  expenses            HotelExpense[]
+
+  business            Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, reportDate])
+  @@index([businessId])
+  @@index([businessId, reportDate])
+  @@map("hotel_daily_reports")
+}
+
+model HotelReceptionReport {
+  id                     String   @id @default(cuid())
+  hotelDailyReportId     String   @unique
+  businessId             String
+  totalRooms             Int      @default(0)
+  bookedRoomValue        Decimal  @default(0) @db.Decimal(12, 2)
+  complimentaryRooms     Int      @default(0)
+  complimentaryValue     Decimal  @default(0) @db.Decimal(12, 2)
+  totalPaymentsReceived  Decimal  @default(0) @db.Decimal(12, 2)
+  cashPayments           Decimal  @default(0) @db.Decimal(12, 2)
+  transferPayments       Decimal  @default(0) @db.Decimal(12, 2)
+  posPayments            Decimal  @default(0) @db.Decimal(12, 2)
+  creditPayments         Decimal  @default(0) @db.Decimal(12, 2)
+  bookedRooms            Json
+  vacantRooms            Json
+  itemsIssued            Json?
+  notes                  String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  dailyReport            HotelDailyReport @relation(fields: [hotelDailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("hotel_reception_reports")
+}
+
+model HotelKitchenReport {
+  id                  String   @id @default(cuid())
+  hotelDailyReportId  String   @unique
+  businessId          String
+  totalSales          Decimal  @default(0) @db.Decimal(12, 2)
+  costOfGoodsSold     Decimal  @default(0) @db.Decimal(12, 2)
+  wasteCost           Decimal  @default(0) @db.Decimal(12, 2)
+  itemSummary         Json?
+  compMealsCount      Int      @default(0)
+  compMealsValue      Decimal  @default(0) @db.Decimal(12, 2)
+  staffMealsCount     Int      @default(0)
+  staffMealsValue     Decimal  @default(0) @db.Decimal(12, 2)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  dailyReport         HotelDailyReport @relation(fields: [hotelDailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("hotel_kitchen_reports")
+}
+
+model HotelBarReport {
+  id                  String   @id @default(cuid())
+  hotelDailyReportId  String   @unique
+  businessId          String
+  totalSales          Decimal  @default(0) @db.Decimal(12, 2)
+  costOfGoodsSold     Decimal  @default(0) @db.Decimal(12, 2)
+  itemSummary         Json?
+  compDrinksCount     Int      @default(0)
+  compDrinksValue     Decimal  @default(0) @db.Decimal(12, 2)
+  spillageWasteCost   Decimal  @default(0) @db.Decimal(12, 2)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  dailyReport         HotelDailyReport @relation(fields: [hotelDailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("hotel_bar_reports")
+}
+
+model HotelSpaReport {
+  id                   String   @id @default(cuid())
+  hotelDailyReportId   String   @unique
+  businessId           String
+  paidRevenue          Decimal  @default(0) @db.Decimal(12, 2)
+  treatmentSummary     Json
+  complimentaryCount   Int      @default(0)
+  complimentaryValue   Decimal  @default(0) @db.Decimal(12, 2)
+  pendingServicesCount Int      @default(0)
+  pendingServicesValue Decimal  @default(0) @db.Decimal(12, 2)
+  therapistBreakdown   Json?
+  therapistHoursWorked Json?
+  productRetailSales   Decimal  @default(0) @db.Decimal(12, 2)
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  dailyReport          HotelDailyReport @relation(fields: [hotelDailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("hotel_spa_reports")
+}
+
+model HotelStoreReport {
+  id                  String   @id @default(cuid())
+  hotelDailyReportId  String   @unique
+  businessId          String
+  openingStockValue   Decimal  @default(0) @db.Decimal(12, 2)
+  purchasesValue      Decimal  @default(0) @db.Decimal(12, 2)
+  receiptsValue       Decimal  @default(0) @db.Decimal(12, 2)
+  issuesValue         Decimal  @default(0) @db.Decimal(12, 2)
+  closingStockValue   Decimal  @default(0) @db.Decimal(12, 2)
+  categoryBreakdown   Json
+  purchaseItems       Json?
+  issueItems          Json?
+  adjustmentItems     Json?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  dailyReport         HotelDailyReport @relation(fields: [hotelDailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("hotel_store_reports")
+}
+
+model HotelExpense {
+  id               String                    @id @default(cuid())
+  businessId       String
+  hotelDailyReportId String?
+  date             DateTime                  @db.Date
+  category         HotelExpenseCategory
+  description      String
+  amount           Decimal                   @db.Decimal(12, 2)
+  paymentStatus    HotelExpensePaymentStatus @default(UNPAID)
+  amountPaid       Decimal                   @default(0) @db.Decimal(12, 2)
+  outstanding      Decimal                   @default(0) @db.Decimal(12, 2)
+  receiptUrl       String?
+  paidTo           String?
+  referenceNo      String?
+  createdBy        String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  dailyReport      HotelDailyReport?         @relation(fields: [hotelDailyReportId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([businessId, date])
+  @@map("hotel_expenses")
 }

@@ -1,0 +1,709 @@
+{
+  "_meta": {
+    "source": "https://www.havenlagos.com",
+    "scraped_at": "2026-10-09",
+    "description": "Haven Lagos Boutique Hotel - Restaurant, Spa, and Rooms data",
+    "hotel": {
+      "name": "Haven Lagos",
+      "tagline": "Hotel · Restaurant · Spa",
+      "address": "21 Amusa Street, Abule Ijesha, Yaba, Lagos",
+      "phone": "+234 812 886 8067",
+      "email": "havenbylustro@gmail.com",
+      "whatsapp": "https://wa.me/2348128868067",
+      "hours": "8am – 12am",
+      "social_media": {
+        "instagram_hotel": "https://www.instagram.com/thehavenlagos_",
+        "instagram_restaurant": "https://www.instagram.com/havenlagos_restaurant",
+        "tiktok": "https://www.tiktok.com/@thehavenlagos_"
+      },
+      "general_policies": {
+        "check_in": "From 2pm",
+        "check_out": "By 12pm",
+        "cancellation": "Bookings are final and non-refundable once paid. Changes subject to availability via WhatsApp.",
+        "payment_methods": "Cards and bank transfer securely online, with deposit to confirm booking.",
+        "december_surcharge": "~20% premium applied in December",
+        "add_ons": {
+          "breakfast_per_guest_per_night": {
+            "name": "Breakfast",
+            "description": "Breakfast for one guest, every morning of your stay",
+            "price_ngn": 20000,
+            "max_guests": 2
+          },
+          "spa_treatment_per_guest_per_night": {
+            "name": "Spa treatment",
+            "description": "One spa treatment per guest, for each night you stay",
+            "price_ngn": 40000,
+            "max_guests": 2
+          }
+        },
+        "included_amenities_all_rooms": [
+          "Free access to the gym",
+          "Air-conditioning",
+          "Glass bathroom",
+          "Refrigerator",
+          "Raffia wardrobe",
+          "Netflix & smart TV",
+          "Kitchenette",
+          "Microwave",
+          "Toasting machine",
+          "Fast Wi-Fi throughout",
+          "Daily housekeeping",
+          "24/7 concierge",
+          "Digital Bluetooth screen",
+          "Ceiling sound system",
+          "Comfortable bedside chair",
+          "Smart door lock",
+          "Balcony",
+          "Fireplace"
+        ],
+        "hotel_wide_amenities": [
+          "Fine Dining",
+          "Spa & Wellness",
+          "Fast Wi-Fi",
+          "24/7 Concierge",
+          "Airport Pickup",
+          "Daily Housekeeping"
+        ]
+      }
+    }
+  },
+  "restaurant": {
+    "overview": "Every meal deserves a beautiful setting, the kind of place you'll recommend after your first visit and look forward to returning to. Everything is served fresh to order.",
+    "sections": {
+      "kitchen": {
+        "noodles": [
+          {
+            "name": "Hakka Noodles",
+            "is_signature": true,
+            "price_ngn": 20000,
+            "description": "Wok-tossed noodles with prawn or baked egg, peppers and spring onion"
+          },
+          {
+            "name": "Ramen Noodles",
+            "price_ngn": 11900,
+            "description": "Ramen in chicken broth with vegetables and a poached egg"
+          }
+        ],
+        "rice": [
+          {
+            "name": "Lustro Haven",
+            "price_ngn": 35000,
+            "description": "Baked butter chicken with special fried rice or jollof and vegetables"
+          },
+          {
+            "name": "Jambalaya Rice Combo",
+            "price_ngn": 25000,
+            "description": "Rice with chicken, sausage, shrimp, vegetables, plantain and a side"
+          }
+        ],
+        "pasta": [
+          {
+            "name": "Chicken Alfredo Pasta",
+            "price_ngn": 19000,
+            "description": "Pasta in cream with chicken, herbs and parsley"
+          },
+          {
+            "name": "Seafood Pasta",
+            "price_ngn": 25000,
+            "description": "Tomato or cream pasta with shrimp, prawn and calamari"
+          }
+        ],
+        "wings_and_sides": [
+          { "name": "Spicy Chicken Wings", "price_ngn": 12000 },
+          { "name": "Honey Glazed Chicken Wings", "price_ngn": 12000 },
+          { "name": "Spicy Chicken", "price_ngn": 8500 },
+          { "name": "Spicy Turkey", "price_ngn": 10000 },
+          { "name": "French Fries", "price_ngn": 5000 },
+          { "name": "Yam Fries", "price_ngn": 4000 },
+          { "name": "Plantain", "price_ngn": 3000 }
+        ],
+        "haven_combos": [
+          {
+            "name": "Eden Combo",
+            "price_ngn": 19500,
+            "description": "Sweet corn, honey glazed wings, yam fries and sausages"
+          },
+          {
+            "name": "Bliss Combo",
+            "price_ngn": 25000,
+            "description": "Noodles, corn, pan-grilled prawn, eggs and sausages"
+          },
+          {
+            "name": "Dirty Fries",
+            "price_ngn": 15000,
+            "description": "Loaded fries with cheese and meat"
+          }
+        ],
+        "tacos": [
+          {
+            "name": "Chicken Tacos",
+            "price_ngn": 12000,
+            "description": "Chicken, tortilla, veggies and house sauce"
+          },
+          {
+            "name": "Beef Tacos",
+            "price_ngn": 12000,
+            "description": "Beef, tortilla, veggies and house sauce"
+          }
+        ],
+        "breakfast_and_brunch": [
+          {
+            "name": "Haven Breakfast Spread",
+            "price_ngn": 19500,
+            "description": "Pancakes, baked beans, chicken sausage, bacon and eggs"
+          },
+          { "name": "Classic Chicken Burger", "price_ngn": 6000 }
+        ]
+      },
+      "bar": {
+        "cocktails": [
+          {
+            "name": "Strawberry Daiquiri",
+            "price_ngn": 12000,
+            "ingredients": "Strawberry fruit, lime juice, rum, simple sugar"
+          },
+          {
+            "name": "Royal Haven Long Island",
+            "price_ngn": 12000,
+            "ingredients": "Vodka, gin, white rum, tequila, triple sec, lemon juice, simple syrup, cola, lemon wedge"
+          },
+          {
+            "name": "Sex on the Beach",
+            "price_ngn": 12000,
+            "ingredients": "Vodka, peach schnapps, orange juice, cranberry juice"
+          },
+          {
+            "name": "Tequila Sunrise",
+            "price_ngn": 12000,
+            "ingredients": "Tequila, orange juice, grenadine syrup"
+          },
+          {
+            "name": "Pina Colada",
+            "price_ngn": 12000,
+            "ingredients": "White rum, coconut cream, pineapple juice"
+          },
+          {
+            "name": "Blue Margarita",
+            "price_ngn": 12000,
+            "ingredients": "Tequila, blue curaçao, triple sec, fresh lime juice"
+          },
+          {
+            "name": "Blue Lagoon",
+            "price_ngn": 12000,
+            "ingredients": "Vodka, blue curaçao, lemonade"
+          },
+          {
+            "name": "Whisky Sour",
+            "price_ngn": 15000,
+            "ingredients": "Whiskey, fresh lemon juice, simple syrup, egg white (optional)"
+          },
+          {
+            "name": "Rainbow Paradise",
+            "price_ngn": 12000,
+            "ingredients": "White rum, vodka, blue curaçao, grenadine, orange juice, pineapple juice (layered)"
+          },
+          {
+            "name": "Haven Special",
+            "price_ngn": 15000,
+            "ingredients": "Mystery cocktail"
+          }
+        ],
+        "mocktails": [
+          {
+            "name": "Ruby Splash",
+            "price_ngn": 11000,
+            "ingredients": "Strawberry purée, watermelon juice, lemon juice, basil syrup, lemonade, strawberry fruit, fresh basil leaves"
+          },
+          {
+            "name": "Haven Sparkler Mojito",
+            "price_ngn": 11000,
+            "ingredients": "Fresh mint leaves, fresh lime wedges, lime juice, sugar syrup, soda water, crushed ice, mint"
+          },
+          {
+            "name": "Haven Watermelon Mojito",
+            "price_ngn": 11000,
+            "ingredients": "Fresh watermelon, mint leaves, lime juice, sugar syrup, soda water"
+          },
+          {
+            "name": "Haven Mango Mojito",
+            "price_ngn": 11000,
+            "ingredients": "Fresh mango purée, mint leaves, lime juice, sugar syrup, soda water"
+          },
+          {
+            "name": "Haven Fruit Punch",
+            "price_ngn": 11000,
+            "ingredients": "Orange juice, pineapple juice, cranberry juice, grenadine, fresh fruit garnish"
+          },
+          {
+            "name": "PINK LADY",
+            "price_ngn": 11000,
+            "ingredients": "Pina colada mix, apple juice, grenadine, strawberry fruit, strawberry syrup"
+          }
+        ],
+        "milkshakes": [
+          {
+            "name": "Strawberry Blush Delight",
+            "price_ngn": 12000,
+            "ingredients": "Strawberry ice cream, strawberry fruit, whipped cream, fresh milk"
+          },
+          {
+            "name": "Coffee Milkshake",
+            "price_ngn": 12000,
+            "ingredients": "Vanilla ice cream, fresh milk, espresso, chocolate syrup"
+          },
+          {
+            "name": "Oreo Milkshake",
+            "price_ngn": 12000,
+            "ingredients": "Vanilla ice cream, fresh milk, Oreo cookies, whipped cream"
+          },
+          { "name": "Haven special milkshake", "price_ngn": 15000 },
+          {
+            "name": "HAVEN CHOCOLATE ECLIPSE",
+            "is_signature": true,
+            "price_ngn": 12000,
+            "ingredients": "Chocolate ice cream, fresh milk, Oreo cookies, whipped cream, Nutella, dark cocoa, brownie chunks"
+          }
+        ],
+        "smoothies": [
+          {
+            "name": "Watermelon Smoothie",
+            "price_ngn": 10000,
+            "ingredients": "Fresh watermelon, ice, honey syrup, splash of lime juice"
+          },
+          {
+            "name": "Pineapple Smoothie",
+            "price_ngn": 10000,
+            "ingredients": "Fresh pineapple, plain yogurt, ice, honey syrup"
+          },
+          {
+            "name": "Banana Smoothie",
+            "price_ngn": 10000,
+            "ingredients": "Fresh banana, fresh milk, honey syrup, ice"
+          },
+          {
+            "name": "Apple Smoothie",
+            "price_ngn": 12000,
+            "ingredients": "Fresh apple, plain yogurt, honey syrup, ice, hint of cinnamon"
+          },
+          {
+            "name": "HAVEN SPECIAL SMOOTHIE",
+            "is_signature": true,
+            "price_ngn": 15000,
+            "ingredients": "Combination of Apple, pineapple, Banana, watermelon smoothie"
+          },
+          {
+            "name": "STRAWBERRY SMOOTHIE",
+            "is_signature": true,
+            "price_ngn": 14000,
+            "ingredients": "Fresh strawberry fruit, ice, honey syrup, splash of lime juice, plain yoghurt"
+          }
+        ],
+        "shots": [
+          {
+            "name": "Haven Shot",
+            "price_ngn": 4500,
+            "ingredients": "Tequila/Vodka"
+          }
+        ],
+        "cognac_and_whiskey": [
+          { "name": "Jameson Black", "price_ngn": 100000 },
+          { "name": "Martell Blue Swift", "price_ngn": 200000 },
+          { "name": "Martell VS", "price_ngn": 100000 },
+          { "name": "Hennessy VS", "price_ngn": 100000 },
+          { "name": "Hennessy VSOP", "price_ngn": 130000 },
+          { "name": "Jack Daniel's", "price_ngn": 100000 }
+        ],
+        "champagne_wine_and_tequila": [
+          { "name": "Red Wine", "price_ngn": 35000 },
+          { "name": "White Wine", "price_ngn": 35000 },
+          { "name": "Moët & Chandon", "price_ngn": 150000 },
+          {
+            "name": "Sierra Tequila",
+            "price_ngn": 4500,
+            "note": "Single shot"
+          }
+        ],
+        "haven_special_premium": [
+          { "name": "Casamigos", "price_ngn": 350000 },
+          { "name": "Don Julio", "price_ngn": 500000 },
+          { "name": "Hennessy XO", "price_ngn": 470000 },
+          { "name": "Martell XO", "price_ngn": 420000 }
+        ],
+        "shisha_and_beverages": [
+          { "name": "Shisha Pot", "price_ngn": 15000 },
+          { "name": "Shisha Coal", "price_ngn": 5000, "note": "Extra" },
+          { "name": "Fruit Juice", "price_ngn": 10000 },
+          { "name": "Cranberry Juice", "price_ngn": 12000 },
+          { "name": "Soda", "price_ngn": 2000 },
+          { "name": "Energy Drink", "price_ngn": 3000 },
+          { "name": "Smirnoff Ice", "price_ngn": 3000 },
+          { "name": "Water", "price_ngn": 1500 }
+        ]
+      }
+    }
+  },
+  "spa": {
+    "overview": "A quiet space where skilled hands, calming surroundings and unhurried moments come together to help you relax, recharge and feel your best.",
+    "treatments": {
+      "massage": [
+        { "name": "Swedish Massage", "duration_min": 60, "price_ngn": 45000 },
+        { "name": "Swedish Massage", "duration_min": 90, "price_ngn": 67500 },
+        { "name": "Deep Tissue Massage", "duration_min": 60, "price_ngn": 50000 },
+        { "name": "Deep Tissue Massage", "duration_min": 90, "price_ngn": 75000 },
+        { "name": "Wood Therapy", "duration_min": 60, "price_ngn": 50000 },
+        { "name": "Wood Therapy", "duration_min": 90, "price_ngn": 75000 },
+        { "name": "Relaxation Therapy Massage", "duration_min": 30, "price_ngn": 30000 },
+        { "name": "Relaxation Therapy Massage", "duration_min": 60, "price_ngn": 60000 },
+        { "name": "Head, Neck & Shoulder Massage", "duration_min": 30, "price_ngn": 30000 },
+        { "name": "Head, Neck & Shoulder Massage", "duration_min": 45, "price_ngn": 40000 },
+        {
+          "name": "Haven Signature Massage",
+          "duration_min": 60,
+          "price_ngn": 55000,
+          "description": "Our signature full-body treatment combining relaxing strokes, therapeutic pressure and carefully selected techniques"
+        },
+        {
+          "name": "Haven Signature Massage",
+          "duration_min": 90,
+          "price_ngn": 82500,
+          "description": "Our signature full-body treatment combining relaxing strokes, therapeutic pressure and carefully selected techniques"
+        },
+        {
+          "name": "Couples Massage",
+          "duration_min": 60,
+          "price_ngn": 90000,
+          "description": "A relaxing side-by-side massage experience for two"
+        },
+        {
+          "name": "Couples Massage",
+          "duration_min": 90,
+          "price_ngn": 135000,
+          "description": "A relaxing side-by-side massage experience for two"
+        },
+        {
+          "name": "Couples Deep Tissue Massage",
+          "duration_min": 60,
+          "price_ngn": 100000,
+          "description": "A deeper, more therapeutic experience for two"
+        },
+        {
+          "name": "Couples Deep Tissue Massage",
+          "duration_min": 90,
+          "price_ngn": 150000,
+          "description": "A deeper, more therapeutic experience for two"
+        }
+      ],
+      "waxing": [
+        { "name": "Eyebrow Wax", "duration_min": 15, "price_ngn": 12000 },
+        { "name": "Upper Lip Wax", "duration_min": 15, "price_ngn": 10000 },
+        { "name": "Chin Wax", "duration_min": 15, "price_ngn": 10000 },
+        { "name": "Full Face Wax", "duration_min": 30, "price_ngn": 25000 },
+        { "name": "Underarm Wax", "duration_min": 15, "price_ngn": 15000 },
+        { "name": "Half Arm Wax", "duration_min": 20, "price_ngn": 18000 },
+        { "name": "Full Arm Wax", "duration_min": 30, "price_ngn": 25000 },
+        { "name": "Half Leg Wax", "duration_min": 30, "price_ngn": 22000 },
+        { "name": "Full Leg Wax", "duration_min": 45, "price_ngn": 35000 },
+        { "name": "Stomach Wax", "duration_min": 30, "price_ngn": 25000 },
+        { "name": "Back Wax", "duration_min": 30, "price_ngn": 30000 },
+        { "name": "Chest Wax", "duration_min": 30, "price_ngn": 30000 },
+        { "name": "Bikini Wax", "duration_min": 30, "price_ngn": 25000 },
+        { "name": "Brazilian Wax", "duration_min": 45, "price_ngn": 35000 },
+        { "name": "Full Body Wax", "duration_min": 120, "price_ngn": 100000 }
+      ],
+      "manicure": [
+        {
+          "name": "Classic Manicure",
+          "duration_min": 30,
+          "price_ngn": 15000,
+          "description": "Nail shaping, cuticle care, buffing and polish"
+        },
+        {
+          "name": "Deluxe Manicure",
+          "duration_min": 45,
+          "price_ngn": 20000,
+          "description": "Classic manicure with exfoliation, nourishing treatment and relaxing hand massage"
+        },
+        {
+          "name": "Gel Manicure",
+          "duration_min": 60,
+          "price_ngn": 25000,
+          "description": "Nail preparation, cuticle care and long-lasting gel polish"
+        },
+        {
+          "name": "Gel Polish",
+          "duration_min": 30,
+          "price_ngn": 15000,
+          "description": "Application of gel polish"
+        },
+        {
+          "name": "Gel Removal",
+          "duration_min": 15,
+          "price_ngn": 8000,
+          "description": "Safe removal of existing gel polish"
+        },
+        {
+          "name": "Acrylic Removal",
+          "duration_min": 20,
+          "price_ngn": 10000,
+          "description": "Professional removal of acrylic enhancements"
+        }
+      ],
+      "pedicure": [
+        {
+          "name": "Classic Pedicure",
+          "duration_min": 45,
+          "price_ngn": 18000,
+          "description": "Nail shaping, cuticle care, exfoliation, buffing and polish"
+        },
+        {
+          "name": "Deluxe Pedicure",
+          "duration_min": 60,
+          "price_ngn": 25000,
+          "description": "Classic pedicure with deeper exfoliation, nourishing treatment and relaxing foot massage"
+        },
+        {
+          "name": "Gel Pedicure",
+          "duration_min": 60,
+          "price_ngn": 30000,
+          "description": "Full pedicure with long-lasting gel polish"
+        },
+        {
+          "name": "Haven Signature Pedicure",
+          "duration_min": 75,
+          "price_ngn": 35000,
+          "description": "Deep exfoliation, cuticle treatment, intensive foot care, relaxing massage and polish"
+        }
+      ],
+      "nail_combinations": [
+        {
+          "name": "Classic Mani + Pedi",
+          "duration_min": 75,
+          "price_ngn": 30000,
+          "description": "Classic manicure and classic pedicure"
+        },
+        {
+          "name": "Deluxe Mani + Pedi",
+          "duration_min": 105,
+          "price_ngn": 42000,
+          "description": "Deluxe manicure and deluxe pedicure"
+        },
+        {
+          "name": "Gel Mani + Gel Pedi",
+          "duration_min": 120,
+          "price_ngn": 50000,
+          "description": "Gel manicure and gel pedicure"
+        },
+        {
+          "name": "Haven Nail Ritual",
+          "duration_min": 120,
+          "price_ngn": 50000,
+          "description": "Deluxe manicure, Haven Signature Pedicure, and hand & foot massage"
+        }
+      ],
+      "spa_experiences": [
+        {
+          "name": "The Haven Reset",
+          "duration_min": 70,
+          "price_ngn": 55000,
+          "description": "A complete reset for the body — 10 minutes of relaxation and steam preparation, then a 60-minute Swedish massage"
+        },
+        {
+          "name": "The Haven Restore",
+          "duration_min": 90,
+          "price_ngn": 75000,
+          "description": "Body preparation, a 60-minute massage, and 30 minutes of foot reflexology"
+        },
+        {
+          "name": "The Haven Glow",
+          "duration_min": 150,
+          "price_ngn": 90000,
+          "description": "A 60-minute Swedish massage, a deluxe manicure and a deluxe pedicure"
+        },
+        {
+          "name": "The Haven Escape",
+          "duration_min": 180,
+          "price_ngn": 110000,
+          "description": "Relaxation preparation, a 60-minute Swedish massage, 30 minutes of reflexology, a deluxe manicure and a deluxe pedicure"
+        },
+        {
+          "name": "The Haven Signature",
+          "duration_min": 200,
+          "price_ngn": 125000,
+          "description": "Relaxation preparation, a full-body massage, reflexology, a deluxe manicure and the Haven Signature Pedicure"
+        },
+        {
+          "name": "Haven Couples Retreat",
+          "duration_min": 120,
+          "price_ngn": 130000,
+          "description": "For two — a couples Swedish massage, a foot ritual and a relaxation experience",
+          "couples": true
+        },
+        {
+          "name": "Haven Couples Escape",
+          "duration_min": 210,
+          "price_ngn": 190000,
+          "description": "For two — a couples 90-minute massage, couples manicure and pedicure, and a foot relaxation ritual",
+          "couples": true
+        }
+      ],
+      "add_ons": [
+        { "name": "Extra 15-Minute Massage", "duration_min": 15, "price_ngn": 15000 },
+        { "name": "Foot Massage Add-on", "duration_min": 15, "price_ngn": 15000 },
+        { "name": "Hand Massage Add-on", "duration_min": 10, "price_ngn": 10000 },
+        { "name": "Bibian", "duration_min": 60, "price_ngn": 0, "note": "Head neck massage" }
+      ]
+    }
+  },
+  "rooms": [
+    {
+      "name": "Maison Nusa",
+      "slug": "maison-nusa",
+      "category": "Superior",
+      "price_per_night_ngn": 110000,
+      "december_price_per_night_ngn": 132000,
+      "max_guests": 2,
+      "bed_type": "King bed",
+      "floor": "First floor",
+      "description": "Our most spacious room, complete with an aquarium",
+      "unique_highlights": [
+        "Bedside aquarium"
+      ],
+      "url": "https://www.havenlagos.com/rooms/maison-nusa"
+    },
+    {
+      "name": "Sora Mira",
+      "slug": "sora-mira",
+      "category": "Superior",
+      "price_per_night_ngn": 110000,
+      "december_price_per_night_ngn": 132000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "First floor",
+      "description": "One of our most spacious rooms, with plenty of space and thoughtful extras for a more indulgent stay",
+      "unique_highlights": [
+        "Bedside aquarium"
+      ],
+      "url": "https://www.havenlagos.com/rooms/sora-mira"
+    },
+    {
+      "name": "Sora Luna",
+      "slug": "sora-luna",
+      "category": "Superior",
+      "price_per_night_ngn": 100000,
+      "december_price_per_night_ngn": 120000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "First floor",
+      "description": "Spacious and beautifully equipped, with room to properly settle in and enjoy your stay",
+      "url": "https://www.havenlagos.com/rooms/sora-luna"
+    },
+    {
+      "name": "Veloura",
+      "slug": "veloura",
+      "category": "Superior",
+      "price_per_night_ngn": 100000,
+      "december_price_per_night_ngn": 120000,
+      "max_guests": 2,
+      "bed_type": "King bed",
+      "floor": null,
+      "description": "A generously sized room with plenty of space to relax and get comfortable",
+      "url": "https://www.havenlagos.com/rooms/veloura"
+    },
+    {
+      "name": "Ayra Cove",
+      "slug": "ayra-cove",
+      "category": "Superior",
+      "price_per_night_ngn": 90000,
+      "december_price_per_night_ngn": 108000,
+      "max_guests": 2,
+      "bed_type": "King bed",
+      "floor": "Ground floor",
+      "description": "A roomy, well-equipped space made for a comfortable night away",
+      "url": "https://www.havenlagos.com/rooms/ayra-cove"
+    },
+    {
+      "name": "Eden Bali",
+      "slug": "eden-bali",
+      "category": "Superior",
+      "price_per_night_ngn": 90000,
+      "december_price_per_night_ngn": 108000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": null,
+      "description": "Spacious, warm and fitted with everything you need to enjoy your time at Haven",
+      "url": "https://www.havenlagos.com/rooms/eden-bali"
+    },
+    {
+      "name": "Ravello",
+      "slug": "ravello",
+      "category": "Superior",
+      "price_per_night_ngn": 90000,
+      "december_price_per_night_ngn": 108000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "First floor",
+      "description": "Generous in size and fully fitted with the comforts that make staying in easy",
+      "url": "https://www.havenlagos.com/rooms/ravello"
+    },
+    {
+      "name": "The Amari Room",
+      "slug": "amari-room",
+      "category": "Superior",
+      "price_per_night_ngn": 90000,
+      "december_price_per_night_ngn": 108000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "First floor",
+      "description": "A spacious, fully equipped room with everything in place for a comfortable stay",
+      "url": "https://www.havenlagos.com/rooms/amari-room"
+    },
+    {
+      "name": "Casa Bali",
+      "slug": "casa-bali",
+      "category": "Classic",
+      "price_per_night_ngn": 80000,
+      "december_price_per_night_ngn": 96000,
+      "max_guests": 2,
+      "bed_type": "King bed",
+      "floor": "Ground floor",
+      "description": "A cosy, well fitted room designed to make your stay feel easy",
+      "url": "https://www.havenlagos.com/rooms/casa-bali"
+    },
+    {
+      "name": "Casa Palm",
+      "slug": "casa-palm",
+      "category": "Classic",
+      "price_per_night_ngn": 80000,
+      "december_price_per_night_ngn": 96000,
+      "max_guests": 2,
+      "bed_type": "King bed",
+      "floor": "Ground floor",
+      "description": "Comfortable and well equipped, with everything you need right within the room",
+      "url": "https://www.havenlagos.com/rooms/casa-palm"
+    },
+    {
+      "name": "Island Noir",
+      "slug": "island-noir",
+      "category": "Classic",
+      "price_per_night_ngn": 80000,
+      "december_price_per_night_ngn": 96000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "Ground floor",
+      "description": "A warm, fully equipped room with enough space to settle in comfortably",
+      "url": "https://www.havenlagos.com/rooms/island-noir"
+    },
+    {
+      "name": "Santa Rosa",
+      "slug": "santa-rosa",
+      "category": "Classic",
+      "price_per_night_ngn": 80000,
+      "december_price_per_night_ngn": 96000,
+      "max_guests": 2,
+      "bed_type": "Queen bed",
+      "floor": "Ground floor",
+      "description": "A comfortable, welcoming room with all the essentials for an easy stay",
+      "url": "https://www.havenlagos.com/rooms/santa-rosa"
+    }
+  ]
+}

@@ -15,6 +15,10 @@ export type AppSectionId =
   | "ai"
   /** Pharmacy only — gated by the prescription_log capability, not by role alone. */
   | "prescriptions"
+  /** Hotel / Hospitality only — gated by hotel_* capabilities. */
+  | "hotel_reports"
+  | "hotel_expenses"
+  | "hotel_management"
   | "settings"
   | "billing";
 
@@ -93,6 +97,24 @@ export const APP_SECTIONS: {
     label: "Controlled register",
     description: "Controlled drugs and dispensing record",
     pathPrefix: "/prescriptions",
+  },
+  {
+    id: "hotel_reports",
+    label: "Hotel Reports",
+    description: "Daily department reporting",
+    pathPrefix: "/hotel/reports",
+  },
+  {
+    id: "hotel_expenses",
+    label: "Hotel Expenses",
+    description: "Operational expenses tracking",
+    pathPrefix: "/hotel/expenses",
+  },
+  {
+    id: "hotel_management",
+    label: "Hotel Management",
+    description: "Consolidated management dashboard",
+    pathPrefix: "/hotel/management",
   },
   {
     id: "ai",

@@ -13,6 +13,10 @@ import {
   History,
   LayoutGrid,
   ClipboardList,
+  Hotel,
+  ClipboardCheck,
+  FileSpreadsheet,
+  Layers,
 } from "lucide-react";
 import type { Capability } from "@/lib/industries/types";
 
@@ -44,6 +48,27 @@ export const mainNavItems: AppNavItem[] = [
     icon: ClipboardList,
     description: "Controlled drugs and dispensing",
     requiresCapability: "controlled_register",
+  },
+  {
+    href: "/hotel/reports",
+    label: "Hotel Reports",
+    icon: ClipboardCheck,
+    description: "Department daily reports",
+    requiresCapability: "hotel_daily_reports",
+  },
+  {
+    href: "/hotel/expenses",
+    label: "Hotel Expenses",
+    icon: FileSpreadsheet,
+    description: "Operational expenses",
+    requiresCapability: "hotel_expenses",
+  },
+  {
+    href: "/hotel/management",
+    label: "Hotel Management",
+    icon: Layers,
+    description: "Consolidated dashboard",
+    requiresCapability: "hotel_management_dashboard",
   },
   { href: "/ai", label: "AI Assistant", icon: Sparkles, description: "Ask your AI advisor" },
   { href: "/settings", label: "Settings", icon: Settings, description: "Business & billing" },

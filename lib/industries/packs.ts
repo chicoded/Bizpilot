@@ -197,12 +197,63 @@ export const electronicsPack: IndustryPack = {
   ],
 };
 
+export const hotelPack: IndustryPack = {
+  industries: ["HOTEL", "HOSPITALITY"],
+  capabilities: [
+    "hotel_daily_reports",
+    "hotel_reception_report",
+    "hotel_kitchen_report",
+    "hotel_bar_report",
+    "hotel_spa_report",
+    "hotel_store_report",
+    "hotel_expenses",
+    "hotel_management_dashboard",
+  ],
+  categoryPresets: [
+    "Favorites",
+    "Room Items",
+    "Housekeeping",
+    "Kitchen",
+    "Bar",
+    "Spa",
+    "Laundry",
+    "Supplies",
+    "Drinks",
+    "Specials",
+  ],
+  productNoun: { singular: "Item", plural: "Inventory" },
+  posMode: "standard",
+  productAttributes: [
+    {
+      name: "storeCategory",
+      label: "Store category",
+      type: "select",
+      options: [
+        { value: "HOUSEKEEPING", label: "Housekeeping Supplies" },
+        { value: "KITCHEN", label: "Kitchen Supplies" },
+        { value: "SPA", label: "Spa Supplies" },
+        { value: "LAUNDRY", label: "Laundry Supplies" },
+        { value: "OTHER", label: "Other Store Items" },
+      ],
+    },
+    {
+      name: "reorderLevel",
+      label: "Reorder level",
+      type: "number",
+      min: 0,
+      placeholder: "10",
+    },
+    { name: "storageLocation", label: "Storage location", type: "text", maxLength: 60, placeholder: "Store Room A" },
+  ],
+};
+
 export const ALL_PACKS: readonly IndustryPack[] = [
   retailPack,
   foodServicePack,
   pharmacyPack,
   fashionPack,
   electronicsPack,
+  hotelPack,
 ];
 
 /** Used when a business has no industry set, or one we don't recognise. */

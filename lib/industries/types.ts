@@ -23,7 +23,16 @@ export type Capability =
   | "season_tracking"
   // Serialised stock
   | "serial_tracking"
-  | "warranty_tracking";
+  | "warranty_tracking"
+  // Hotel / Hospitality
+  | "hotel_daily_reports"
+  | "hotel_reception_report"
+  | "hotel_kitchen_report"
+  | "hotel_bar_report"
+  | "hotel_spa_report"
+  | "hotel_store_report"
+  | "hotel_expenses"
+  | "hotel_management_dashboard";
 
 /**
  * One extra product field a trade needs. Declared once and used twice — to
