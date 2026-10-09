@@ -64,10 +64,10 @@ const DEPARTMENTS = [
   },
   {
     id: "store",
-    label: "Store",
+    label: "Stores & Issuance",
     href: "/hotel/reports/store",
     icon: Warehouse,
-    description: "Supplies, stock, purchases & issues",
+    description: "Issue stock to Kitchen/Spa/Reception, purchases & count",
     tint: "from-amber-500 to-yellow-600",
   },
 ] as const;

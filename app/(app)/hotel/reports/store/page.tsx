@@ -11,7 +11,7 @@ export default async function StoreReportPage() {
   return (
     <Suspense
       fallback={
-        <AppShell title="Store Report" subtitle="Loading…" maxWidth="wide">
+        <AppShell title="Stores & Issuance" subtitle="Loading…" maxWidth="wide">
           <Skeleton className="h-96 rounded-2xl" />
         </AppShell>
       }

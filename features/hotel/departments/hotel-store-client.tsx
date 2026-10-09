@@ -101,8 +101,8 @@ function loadFrom(report: any): Form {
 export function HotelStoreClient() {
   return (
     <DepartmentShell<Form>
-      title="Store Report"
-      subtitle="5 supply categories — stock, purchases, receipts, issues & costs"
+      title="Stores & Issuance"
+      subtitle="Issue stock to Kitchen/Spa/Reception. Purchases, receipts, closing by category."
       deptId="store"
       empty={EMPTY}
       loadFromReport={loadFrom}

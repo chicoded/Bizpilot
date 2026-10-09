@@ -57,7 +57,7 @@ const DEPTS = [
   { id: "kitchen", label: "Kitchen", icon: ChefHat, href: "/hotel/reports/kitchen", tint: "text-orange-500 bg-orange-50 dark:bg-orange-950/30" },
   { id: "bar", label: "Bar", icon: Wine, href: "/hotel/reports/bar", tint: "text-purple-500 bg-purple-50 dark:bg-purple-950/30" },
   { id: "spa", label: "Spa", icon: Sparkles, href: "/hotel/reports/spa", tint: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30" },
-  { id: "store", label: "Store", icon: Warehouse, href: "/hotel/reports/store", tint: "text-amber-500 bg-amber-50 dark:bg-amber-950/30" },
+  { id: "store", label: "Stores & Issuance", icon: Warehouse, href: "/hotel/reports/store", tint: "text-amber-500 bg-amber-50 dark:bg-amber-950/30" },
 ] as const;
 
 const STATUS_VARIANT: Record<string, "default" | "success" | "info" | "warning"> = {

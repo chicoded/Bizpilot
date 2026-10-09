@@ -8,7 +8,18 @@ import type { IndustryPack } from "./types";
 /** General retail: the fallback every unclassified shop lands on. */
 export const retailPack: IndustryPack = {
   industries: ["RETAIL", "SUPERMARKET", "MINI_MART", "COSMETICS", "OTHER"],
-  capabilities: ["batch_tracking", "expiry_alerts"],
+  capabilities: [
+    "batch_tracking",
+    "expiry_alerts",
+    "hotel_daily_reports",
+    "hotel_reception_report",
+    "hotel_kitchen_report",
+    "hotel_bar_report",
+    "hotel_spa_report",
+    "hotel_store_report",
+    "hotel_expenses",
+    "hotel_management_dashboard",
+  ],
   categoryPresets: [
     "Favorites",
     "Drinks",
