@@ -67,7 +67,7 @@ export const mainNavItems: AppNavItem[] = [
 export const mobileNavItems = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/sales", label: "Sales", icon: ShoppingCart, primary: true },
+  { href: "/sales/history", label: "History", icon: History },
   { href: "/ai", label: "AI", icon: Sparkles },
   { href: "/menu", label: "Menu", icon: LayoutGrid },
 ] as const;
