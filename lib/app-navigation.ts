@@ -3,8 +3,6 @@ import {
   Home,
   Package,
   Receipt,
-  Users,
-  CreditCard,
   Truck,
   BarChart3,
   Sparkles,
@@ -35,8 +33,6 @@ export const mainNavItems: AppNavItem[] = [
   { href: "/sales/history", label: "Sales History", icon: History, description: "Past sales & receipts" },
   { href: "/inventory", label: "Inventory", icon: Package, description: "Products & stock" },
   { href: "/expenses", label: "Expenses", icon: Receipt, description: "Track spending" },
-  { href: "/customers", label: "Customers", icon: Users, description: "Customer list" },
-  { href: "/debts", label: "Debts", icon: CreditCard, description: "Credit & payments" },
   { href: "/suppliers", label: "Suppliers", icon: Truck, description: "Supplier contacts" },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Business reports" },
   {
