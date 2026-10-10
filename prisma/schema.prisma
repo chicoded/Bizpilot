@@ -193,6 +193,8 @@ model Business {
   favoriteProducts FavoriteProduct[]
   kitchenOrders  KitchenOrder[]
   supportTickets SupportTicket[]
+  hotelDailyReports HotelDailyReport[]
+  hotelExpenses     HotelExpense[]
 
   @@map("businesses")
 }
@@ -956,6 +958,7 @@ model HotelExpense {
   updatedAt        DateTime                  @updatedAt
 
   dailyReport      HotelDailyReport?         @relation(fields: [hotelDailyReportId], references: [id], onDelete: SetNull)
+  business         Business                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([businessId, date])
