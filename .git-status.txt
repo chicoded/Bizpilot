@@ -1,0 +1,37 @@
+--- git status --short ---
+{
+  "args": [
+    "status",
+    "--short"
+  ],
+  "status": 0,
+  "error": null,
+  "stdout": " M lib/app-navigation.ts\n?? .deps-check.txt\n?? .dev-server.err.log\n?? .dev-server.out.log\n?? .next-cli-check.txt\n?? .write-test.txt\n?? scripts/check-deps.js\n?? scripts/find-next-cli.js\n?? scripts/git-status-log.js\n?? scripts/start-dev-write-log.js\n?? scripts/start-next-dev-server-v2.js\n?? scripts/start-next-dev-server.js\n?? scripts/write-test.js\n",
+  "stderr": ""
+}
+
+--- git log --oneline -8 ---
+{
+  "args": [
+    "--no-pager",
+    "log",
+    "--oneline",
+    "-8"
+  ],
+  "status": 0,
+  "error": null,
+  "stdout": "e9787c8 refactor(nav): remove Customers and Debts from main sidebar\nb02a8fe data(hotel): Haven Lagos tailored profile for decryptnaza@gmail.com\n3469d9e refactor(nav): remove Point of Sale entry, rename Store to Stores & Issuance\n966485e feat(hospitality): Haven Lagos 5-dept daily reporting + expense + management\naf7cc56 Set maxDuration on Telegram webhook for longer AI processing.\n6ed0837 Deduplicate Telegram webhook calls and improve AI error messages.\n2d9a8f0 Fix voice notes on Telegram: await processing and use correct content type.\n3a69734 Add manager commands to Telegram bot and fix inventory detection.\n",
+  "stderr": ""
+}
+
+--- git remote -v ---
+{
+  "args": [
+    "remote",
+    "-v"
+  ],
+  "status": 0,
+  "error": null,
+  "stdout": "origin\thttps://github.com/mythic-zone/zaplex.git (fetch)\norigin\thttps://github.com/mythic-zone/zaplex.git (push)\n",
+  "stderr": ""
+}

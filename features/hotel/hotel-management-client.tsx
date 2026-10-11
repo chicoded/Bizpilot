@@ -43,11 +43,11 @@ import {
 import {
   approveDailyReport,
   returnDepartment,
-  formatNGN,
   getDailyReport,
   listDailyReports,
   exportDailyReportCsv,
 } from "@/actions/hotel";
+import { formatNGN } from "@/lib/hotel-utils";
 import { format } from "date-fns";
 import { startTransition } from "react";
 import Link from "next/link";

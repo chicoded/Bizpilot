@@ -1,0 +1,52 @@
+[start] 2026-10-10T18:27:05.073Z
+   ▲ Next.js 15.5.19
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./actions/hotel.ts
+Error:   [31mx[0m Server Actions must be async functions.
+
+     ,-[[36;1;4mC:\Users\HP\Documents\trae_projects\implex\actions\hotel.ts[0m:715:1]
+ [2m712[0m |   });
+ [2m713[0m | }
+ [2m714[0m | 
+ [2m715[0m | export function formatNGN(amount: number | string | bigint): string {
+     : [35;1m                ^^^^^^^^^[0m
+ [2m716[0m |   const n = typeof amount === "bigint" ? Number(amount) : Number(amount);
+ [2m717[0m |   return new Intl.NumberFormat("en-NG", {
+ [2m718[0m |     style: "currency",
+     `----
+  [31mx[0m Server Actions must be async functions.
+
+     ,-[[36;1;4mC:\Users\HP\Documents\trae_projects\implex\actions\hotel.ts[0m:724:1]
+ [2m721[0m |   }).format(n);
+ [2m722[0m | }
+ [2m723[0m | 
+ [2m724[0m | export function hotelStoreCategories(): { value: HotelStoreCategory; label: string }[] {
+     : [35;1m                ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m725[0m |   return [
+ [2m726[0m |     { value: "HOUSEKEEPING", label: "Housekeeping Supplies" },
+ [2m727[0m |     { value: "KITCHEN", label: "Kitchen Supplies" },
+     `----
+  [31mx[0m Server Actions must be async functions.
+
+     ,-[[36;1;4mC:\Users\HP\Documents\trae_projects\implex\actions\hotel.ts[0m:734:1]
+ [2m731[0m |   ];
+ [2m732[0m | }
+ [2m733[0m | 
+ [2m734[0m | export function hotelExpenseCategories(): { value: HotelExpenseCategory; label: string }[] {
+     : [35;1m                ^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m735[0m |   return [
+ [2m736[0m |     { value: "FUEL", label: "Fuel" },
+ [2m737[0m |     { value: "REPAIRS_AND_MAINTENANCE", label: "Repairs & Maintenance" },
+     `----
+
+Import trace for requested module:
+./actions/hotel.ts
+./features/hotel/hotel-expenses-page-client.tsx
+
+
+> Build failed because of webpack errors
+
+[exit] code=1 sig=null 2026-10-10T18:29:30.965Z

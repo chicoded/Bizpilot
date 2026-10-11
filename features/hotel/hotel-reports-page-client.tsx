@@ -22,10 +22,10 @@ import {
   Printer,
 } from "lucide-react";
 import {
-  formatNGN,
   getDailyReport,
   exportDailyReportCsv,
 } from "@/actions/hotel";
+import { formatNGN } from "@/lib/hotel-utils";
 import { startTransition } from "react";
 import Link from "next/link";
 

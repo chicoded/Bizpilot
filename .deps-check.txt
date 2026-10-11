@@ -1,0 +1,41 @@
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\.bin
+MISSING  C:\Users\HP\Documents\trae_projects\implex\node_modules\.bin\next.cmd
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\next
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\@prisma
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\lucide-react
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\@radix-ui
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\clsx
+EXISTS  C:\Users\HP\Documents\trae_projects\implex\node_modules\tailwindcss
+
+package.json deps (keys):
+  dep: @clerk/nextjs
+  dep: @hookform/resolvers
+  dep: @prisma/client
+  dep: @radix-ui/react-avatar
+  dep: @radix-ui/react-dialog
+  dep: @radix-ui/react-dropdown-menu
+  dep: @radix-ui/react-label
+  dep: @radix-ui/react-popover
+  dep: @radix-ui/react-progress
+  dep: @radix-ui/react-scroll-area
+  dep: @radix-ui/react-select
+  dep: @radix-ui/react-separator
+  dep: @radix-ui/react-slot
+  dep: @radix-ui/react-tabs
+  dep: @radix-ui/react-toast
+  dep: @radix-ui/react-tooltip
+  dep: @react-three/drei
+  dep: @react-three/fiber
+  dep: @sentry/nextjs
+  dep: @supabase/supabase-js
+  dep: @zxing/browser
+  dep: @zxing/library
+  dep: class-variance-authority
+  dep: clsx
+  dep: cmdk
+  dep: date-fns
+  dep: dexie
+  dep: framer-motion
+  dep: jspdf
+  dep: jspdf-autotable

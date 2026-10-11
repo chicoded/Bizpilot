@@ -1,0 +1,11 @@
+NEXT_ROOT=C:\Users\HP\Documents\trae_projects\implex\node_modules\next exists=true
+name=next
+version=15.5.19
+bin={"next":"./dist/bin/next"}
+main=./dist/server/next.js
+bin[next]=C:\Users\HP\Documents\trae_projects\implex\node_modules\next\dist\bin\next exists=true
+--- CLI entry candidates ---
+FOUND 
+miss  C:\Users\HP\Documents\trae_projects\implex\node_modules\next\dist\bin\next.js
+miss  C:\Users\HP\Documents\trae_projects\implex\node_modules\next\bin\next
+miss  C:\Users\HP\Documents\trae_projects\implex\node_modules\next\bin\next.js

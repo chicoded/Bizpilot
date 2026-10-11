@@ -1,0 +1,7 @@
+OK   node_modules/.bin/next.cmd
+OK   node_modules/.bin/prisma.cmd
+MISS node_modules/.bin/npx.cmd
+OK   node_modules/next/dist/bin/next
+OK   node_modules/@prisma/client/index.js
+MISS node_modules/lucide-react/dist/esm/icons/home.mjs
+OK   node_modules/@radix-ui/react-slot/package.json

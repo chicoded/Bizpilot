@@ -1,0 +1,5 @@
+[v5 start] pid=18052 PORT=4000
+[TypeError: _resolveContext_stack.delete is not a function]
+ ⨯ uncaughtException: [TypeError: _resolveContext_stack.delete is not a function]
+ ⨯ uncaughtException:  [TypeError: _resolveContext_stack.delete is not a function]
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (192kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)

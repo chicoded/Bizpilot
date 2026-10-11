@@ -1,0 +1,47 @@
+============== STEP 3: npm install + prisma generate START 10/10/2026  1:23:04.54 ============== 
+Kill remaining node zombies... 
+ERROR: The process "node.exe" not found.
+Running "C:\Program Files\nodejs\npm.cmd" install --force 
+start: 10/10/2026  1:23:06.18 
+npm warn using --force Recommended protections disabled.
+
+> bizpilot-ai@0.1.0 postinstall
+> prisma generate
+
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v6.19.3) to .\node_modules\@prisma\client in 1.14s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+
+up to date, audited 877 packages in 17s
+
+188 packages are looking for funding
+  run `npm fund` for details
+
+54 vulnerabilities (29 moderate, 23 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm warn allow-scripts 8 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   @clerk/shared@3.47.7 (install: (install scripts present))
+npm warn allow-scripts   @prisma/client@6.19.3 (install: (install scripts present))
+npm warn allow-scripts   @prisma/engines@6.19.3 (install: (install scripts present))
+npm warn allow-scripts   @sentry/cli@2.58.6 (install: (install scripts present))
+npm warn allow-scripts   core-js@3.49.0 (install: (install scripts present))
+npm warn allow-scripts   prisma@6.19.3 (install: (install scripts present))
+npm warn allow-scripts   sharp@0.34.5 (install: (install scripts present))
+npm warn allow-scripts   unrs-resolver@1.12.2 (install: (install scripts present))
+npm warn allow-scripts
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.

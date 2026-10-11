@@ -1,0 +1,39 @@
+========================================================== 
+START STEP 1-2: 10/10/2026  1:20:00.52 
+ 
+[1/5] Killing zombie node/next processes... 
+ERROR: The process "next.exe" not found.
+done. 
+ 
+[2/5] Cleaning .next cache, .next-swc-cache, swc native lock... 
+found @next/swc-win32-x64-msvc, moving to unlock 
+        1 dir(s) moved.
+done. 
+ 
+[3/5] Running npm.cmd install --force (rebuilds .bin shims) 
+start: 10/10/2026  1:20:02.57 
+npm warn using --force Recommended protections disabled.
+
+> bizpilot-ai@0.1.0 postinstall
+> prisma generate
+
+Prisma schema loaded from prisma\schema.prisma
+Error: Prisma schema validation - (get-dmmf wasm)
+Error code: P1012
+[1;91merror[0m: [1mError validating field `business` in model `HotelDailyReport`: The relation field `business` on model `HotelDailyReport` is missing an opposite relation field on the model `Business`. Either run `prisma format` or add it manually.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:818[0m
+[1;94m   | [0m
+[1;94m817 | [0m
+[1;94m818 | [0m  [1;91mbusiness            Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)[0m
+[1;94m819 | [0m
+[1;94m   | [0m
+
+Validation Error Count: 1
+[Context: getDmmf]
+
+Prisma CLI Version : 6.19.3
+npm error code 1
+npm error path C:\Users\HP\Documents\trae_projects\implex
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c prisma generate
+npm error A complete log of this run can be found in: C:\Users\HP\AppData\Local\npm-cache\_logs\2026-10-10T00_20_03_361Z-debug-0.log

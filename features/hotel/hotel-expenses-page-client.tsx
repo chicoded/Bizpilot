@@ -34,9 +34,8 @@ import {
   updateHotelExpense,
   deleteHotelExpense,
   listHotelExpenses,
-  hotelExpenseCategories,
-  formatNGN,
 } from "@/actions/hotel";
+import { hotelExpenseCategories, formatNGN } from "@/lib/hotel-utils";
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { startTransition } from "react";
 

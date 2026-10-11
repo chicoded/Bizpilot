@@ -1,0 +1,13 @@
+[start v6] 2026-10-10T00:46:03.131Z
+pid=14576
+port=3001
+host=127.0.0.1
+next=C:\Users\HP\Documents\trae_projects\implex\node_modules\next\dist\bin\next exists=true
+   ▲ Next.js 15.5.19 (Turbopack)
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 1936ms
+ ✓ Ready in 7.1s

@@ -3,7 +3,8 @@
 import { DepartmentShell, Section, NairaField, IntField, NotesField, fmt } from "./department-shell";
 import { upsertBarReport } from "@/actions/hotel";
 import { Wine, Plus, Trash2 } from "lucide-react";
-import { Input, Button } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 type Form = {

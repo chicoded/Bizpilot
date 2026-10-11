@@ -1,9 +1,11 @@
 "use client";
 
 import { DepartmentShell, Section, NairaField, NotesField, fmt } from "./department-shell";
-import { upsertStoreReport, hotelStoreCategories } from "@/actions/hotel";
+import { upsertStoreReport } from "@/actions/hotel";
+import { hotelStoreCategories } from "@/lib/hotel-utils";
 import { Warehouse, Plus, Trash2, Upload, ArrowRightLeft } from "lucide-react";
-import { Input, Button } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { HotelStoreCategory } from "@prisma/client";

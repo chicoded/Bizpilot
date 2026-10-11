@@ -21,7 +21,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import { getDailyReport, submitDepartment, formatNGN } from "@/actions/hotel";
+import { getDailyReport, submitDepartment } from "@/actions/hotel";
+import { formatNGN } from "@/lib/hotel-utils";
 import { startTransition } from "react";
 
 export interface DepartmentShellProps<T> {

@@ -1,0 +1,5 @@
+[START v4-final] 2026-10-10T00:24:33.705Z
+next cli exists: true path=C:\Users\HP\Documents\trae_projects\implex\node_modules\.bin\next.cmd
+[TypeError: _resolveContext_stack.delete is not a function]
+[TypeError: _resolveContext_stack.delete is not a function]
+[TypeError: _resolveContext_stack.delete is not a function]
