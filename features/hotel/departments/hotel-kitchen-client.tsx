@@ -3,6 +3,9 @@
 import { DepartmentShell, Section, NairaField, IntField, NotesField, fmt } from "./department-shell";
 import { upsertKitchenReport } from "@/actions/hotel";
 import { ChefHat } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 type Form = {
   totalSales: number;
